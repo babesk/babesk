@@ -28,6 +28,10 @@ class AdminSoliInterface extends AdminInterface {
 		$this->smarty->display($this->tplFilePath.'conf_del_coupon.tpl');
 	}
 	
+	function AskWeekForPdf() {
+		$this->smarty->display($this->tplFilePath.'week_for_pdf.tpl');
+	}
+	
 	/**
 	 * This function shows specific orders of soli-Users
 	 * 

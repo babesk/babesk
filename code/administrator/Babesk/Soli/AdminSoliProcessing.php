@@ -304,6 +304,72 @@ class AdminSoliProcessing {
 			$this->soliInterface->ChangeSettings($soli_price);
 		}
 	}
+	
+	/**
+	 * Creates an PDF with the Orders of all SoliUsers in a given week or month.
+	 * @param $kw week/month number
+	 * @param $weekMode true, if filtered by week
+	 * 					false, if filtered by month
+	 */
+	function AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $kw, $weekMode) {
+		require_once PATH_ACCESS . '/UserManager.php';
+		require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
+		$userManager = new UserManager();
+		
+		$pdo = $dataContainer->getPdo();
+		$smarty = $dataContainer->getSmarty();
+		
+		if($weekMode){
+			$firstDay = getFirstDayOfWeek(date('Y'), $kw);
+			$days = 5;
+			$title = "SoliBestellungen Kalenderwoche " . $kw;
+		}else{
+			$firstDay = mktime(0,0,0,$kw,1,date('Y'));
+			$days = cal_days_in_month(CAL_GREGORIAN, $kw, date('Y'));
+			$month_ger = array('Januar','Februar','März', 'April','Mai','Juni', 'Juli','August','September', 'Oktober','November','Dezember');
+			$title = "SoliBestellungen " . $month_ger[$kw-1];
+			$kw = $month_ger[$kw-1] ;
+		}
+		
+		$secs_per_day = 86400;
+		$number = 0;
+		$sum_pricediff = 0.0;
+
+		$solis = $userManager->getAllSoli();
+		
+		foreach ($solis as $soli){
+			$pricediff = 0.00;
+			$SoliOrders[$number]['soli'] = $soli;
+			$orders = array();
+			for($i = 0; $i < $days; $i++) {
+				$buffer = array();
+				try {
+					$buffer = $this->soliOrderManager->
+						getOrdersByUserandMealdate($soli['ID'], date('Y-m-d',
+							$firstDay + ($i * $secs_per_day)));
+				} catch (MySQLVoidDataException $e) {
+					//	$this->soliInterface->showMsg($this->msg['ERR_ORDERS_NOT_FOUND']);
+				}
+				foreach ($buffer as &$order)
+					$orders[] = $order;
+			}
+			foreach ($orders as &$order) {
+				$pricediff += $order['mealprice'] - $order['soliprice'];
+			}
+			$sum_pricediff += $pricediff;
+			$SoliOrders[$number]['orders'] = $orders;
+			$SoliOrders[$number]['pricediff'] = $pricediff;
+			$number++;
+		}
+		$smarty->assign('SoliOrders', $SoliOrders);
+		$smarty->assign('weekMode', $weekMode);
+		$smarty->assign('ordering_date', $kw);
+		$smarty->assign('sum', $sum_pricediff);
+		$pdf_content = $smarty->fetch(PATH_SMARTY_TPL.'/pdf/orders_of_soliuser_per_week.pdf.tpl');
+		$pdf = new GeneralPdf($pdo);
+		$pdf->create($title, $pdf_content);
+		$pdf->output();
+	}
 
 	/**
 	 * Object of class AdminSoliInterface
