@@ -72,14 +72,22 @@ class Menu extends Babesk {
 						'name' => $mealname["name"],
 						'orderID' => $order['ID'],
 						'cancel' => $cancelAllowed);
+				} else {
+					$mealHistory[] = array(
+						'date' => formatDate($order["date"]),
+						'name' => $mealname["name"],
+						'orderID' => $order['ID'],
+						'cancel' => false,
+						'fetched' =>$order['fetched']);
 				}
 			}
 		}
-		if (!count($meal) && !$meal_problems) {
+		if (!count($meal) && !count($mealHistory) && !$meal_problems) {
 			//no new meals there
 			$smarty->assign('error', 'Keine Bestellungen vorhanden.');
 		}
 		$smarty->assign('meal', $meal);
+		$smarty->assign('mealHistory', $mealHistory);
 		$smarty->display($this->smartyPath . 'menu.tpl');
 	}
 

@@ -47,7 +47,7 @@
 	<p>BaBeSK {$babesk_version} &copy; 2011 Lessing Gymnasium Uelzen</p>
 </div>
 
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http{if $https_enabled}s{/if}://code.jquery.com/jquery-1.9.1.js"></script>
 <script type="text/javascript">
 $(document).ready(function() {
 	$('input[name=Username]').keypress(function(event){

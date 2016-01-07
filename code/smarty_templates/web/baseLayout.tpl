@@ -28,52 +28,41 @@
 			role="navigation">
 			<div class="container">
 				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
 					<a class="navbar-brand" href="index.php">BaBeSK</a>
 				</div>
-				<div class="navbar-collapse collapse">
-
+				<div>
 					<ul class="nav navbar-nav navbar-right">
-						{if $babeskActivated && isset($credit)}
-							<li>
-								<p class="navbar-text" title="Dein Guthaben"
-									data-toggle="tooltip" data-placement="bottom">
-									<span class="highlighted">
-										<span class="icon icon-credit"></span>
-										{$credit} €
-									</span>
-								</p>
-							</li>
-						{/if}
-						{block name="nav_help_button"}
-							<li>
-								<form>
-									<a class="btn btn-info navbar-btn"
-									href="index.php?module=web|Help">
-										{t}Help{/t}
-									</a>
-								</form>
-							</li>
-						{/block}
 						{block name="nav_user_dropdown"}
 							<li class="dropdown">
 								<a href="#" class="dropdown-toggle" data-toggle="dropdown">
 									{$username} <b class="caret"></b>
 								</a>
 								<ul id="dropdown-user" class="dropdown-menu">
-									<li>
+								{if $babeskActivated && isset($credit)}
+							<li>
+								<p class="navbar-text"
+									data-toggle="tooltip" data-placement="bottom">
+									<span class="highlighted">
+										<span class="icon icon-credit"></span>
+										{$credit} € {t}Guthaben{/t}
+									</span>
+								</p>
+							</li>
+						{/if}
+									<li>	
 										<a href="index.php?module=web|Settings">
-											{t}Settings{/t}
-											<span class="fa fa-cog"></span>
+										<span class="fa fa-cog"></span> {t}Settings{/t}	
 										</a>
 									</li>
 									<li>
-										<a href="index.php?action=logout">{t}Logout{/t}</a>
+										<a href="index.php?module=web|Help">
+										<span class="fa fa-question"></span> {t}Help{/t}
+										</a>
+									</li>
+									<li>
+										<a href="index.php?action=logout">
+											<span class="fa fa-sign-out"></span> {t}Logout{/t}
+										</a>
 									</li>
 								</ul>
 							</li>
@@ -86,7 +75,7 @@
 		{block name="program_title"}
 			<div class="container">
 				<h2 class="program_title">
-					Schoolname or other nice title here...
+					BaBeSK LeG Uelzen
 				</h2>
 			</div>
 		{/block}
@@ -256,55 +245,29 @@
 				<div class="container footer-text">
 					<div class="modules col-sm-4 col-xs-12">
 						{block name="footer_actions"}
-							<div class="footer-heading">{t}Actions:{/t}</div>
-							<p><a href="index.php?module=web|Babesk">Essen bestellen</a></p>
-							<p><a href="index.php?module=web|Kuwasys">Kurswahlen</a></p>
-							<p><a href="index.php?module=web|Schbas">Schulbuchausleihe</a></p>
-							<p><a href="index.php?module=web|PVau">Vertretungsplan</a></p>
-							<p><a href="index.php?module=web|Fits">Internet-Führerschein</a></p>
-							<p><a href="index.php?module=web|Messages">Nachrichten</a></p>
-							<p><a href="index.php?module=web|Settings">Einstellungen</a></p>
+							
 						{/block}
 					</div>
 					<div class="contact col-sm-4 col-xs-12">
 						<div class="footer-heading">{t}Contact:{/t}</div>
-
-
-						<!-- Remove following paragraphs and put your own information in -->
 						<p>+++</p>
-						<p>Insert your contact-information here</p>
+						<p>Lessing-Gymnasium Uelzen</p>
+						<p>Ilmenauufer 49</p>
+						<p>29525 Uelzen</p>
 						<p>+++</p>
-
 					</div>
 					<div class="col-sm-4 col-xs-12 right-col">
 						<div class="footer-heading">
-							{t}More:{/t}
+							{t}Info:{/t}
 						</div>
-						{block name="footer_help_button"}
-							<div class="help">
-								<a class="btn btn-sm btn-info"
-									href="index.php?module=web|Help"
-								>{t}Help{/t}</a>
-							</div>
-						{/block}
+						
 						<div class="program_version">
 							<p>
 								BaBeSK {$babesk_version}<br />
 								GNU aGPLv3.0 licensed
 							</p>
-							<p>You can reach us at
-							<a href="http://sourceforge.net/projects/babesk/"
-							target="_blank">
-								SourceForge.
-							</a>
-							We also have a
-							<a href="http://sourceforge.net/p/babesk/bugs" target="_blank">
-								Bugtracker
-							</a>
-							for bugs and feature requests.
-						</p>
 						<p style="font-size: 10px; position:relative; top: 50px">
-							Also, <a href="#" onclick="javascript: toastr.info('<div class=&quot;fa fa-gamepad&quot; style=&quot;font-size:48px&quot;></div>', 'A wild Gamepad appeared!')">spam.</a>
+							
 						</p>
 						</div>
 					</div>

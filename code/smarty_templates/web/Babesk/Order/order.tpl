@@ -28,22 +28,28 @@ table ul > li {
 		{foreach $mealweeklist as $mealweek}
 			{foreach $mealweek->weekdayDataGet() as $day}
 				{foreach $day.meals as $meal}
-					{if isset($meal->id)}
-						<div class="panel panel-primary" id="MealDiv{$meal->id}" style="display: none;">
-							<div class="panel-heading">
-								<div class="panel-title">
-									Informationen zu {$meal->name}
+					{if isset($meal->id)}	
+						<div id="MealModal{$meal->id}" class="modal fade" role="dialog">
+							<div class="modal-dialog">
+								<!-- Modal content-->
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal">&times;</button>
+										<h4 class="modal-title">Informationen zu {$meal->name}</h4>
+									</div>
+									<div class="modal-body">
+										<p>{$meal->description}</p>
+										<p>
+											<b>Preis:</b> {$meal->price} &euro;
+										</p>
+									</div>
+									<div class="modal-footer">
+										<form class="div-info-submit"
+											action="index.php?section=Babesk|Order&order={$meal->id}" method="post">
+											<input class="btn btn-default" type="submit" value='{$meal->name} bestellen'>
+										</form>
+									</div>
 								</div>
-							</div>
-							<div class="panel-body">
-								{$meal->description}
-								<p>
-									<b>Preis:</b> {$meal->price} &euro;
-								</p>
-								<form class="div-info-submit"
-									action="index.php?section=Babesk|Order&order={$meal->id}" method="post">
-									<input class="btn btn-default" type="submit" value='{$meal->name} bestellen'>
-								</form>
 							</div>
 						</div>
 					{/if}
@@ -82,9 +88,9 @@ table ul > li {
 									{$mealTs = strtotime($meal->date)}
 									{$orderEnd = strtotime($orderEnddate, $mealTs)}
 									{if $orderEnd >= time()}
-										<a class="meal-link" data-meal-id="{$meal->id}">
+										<a href="#" data-toggle="modal" data-target="#MealModal{$meal->id}">
 											{$meal->name}
-										</a>
+										</a>					
 									{else}
 										<p class="notOrderable">
 											{$meal->name}
@@ -136,21 +142,4 @@ table ul > li {
 {/block}
 
 {block name=js_include append}
-
-<script type="text/javascript">
-
-$(document).ready(function() {
-	var displayed = false;
-	$('a.meal-link').on('click', function(ev) {
-		var mealId = $(ev.target).data('meal-id');
-		if(displayed) {
-			$(displayed).slideUp();
-		}
-		$('#MealDiv' + mealId).slideDown();
-		displayed = '#MealDiv' + mealId;
-	});
-});
-
-</script>
-
 {/block}

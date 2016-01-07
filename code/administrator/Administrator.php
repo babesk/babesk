@@ -191,6 +191,7 @@ class Administrator {
 		$version=@file_get_contents("../version.txt");
 		if ($version===FALSE) $version = "";
 		$smarty->assign('babesk_version', $version);
+		$smarty->assign('https_enabled', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on'); 
 	}
 
 	/**
