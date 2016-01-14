@@ -18,7 +18,10 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 	public function execute($dataContainer) {
 
 		parent::entryPoint($dataContainer);
-		$this->generate();
+		if(isset($_GET['action']))
+			$this->checkRooms();
+		else
+			$this->generate();
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -28,7 +31,7 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 	/**
 	 * Generates the PDFs and provides the download
 	 */
-	protected function generate() {
+	protected function generate($skipWarning = false) {
 
 		$hosts = $this->fetchHosts();
 		$this->_categories = $this->fetchCategories();
@@ -36,6 +39,21 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 			$this->generatePdf($host);
 		}
 		$this->provideDownload();
+	}
+	
+	protected function checkRooms(){
+		$str = "";
+		$warning = false;
+		$inString = array();
+		foreach ($this->_em->getRepository("DM:ElawaMeeting")->findAll() as $meeting){
+			if($meeting->getRoom()->getId() == 0 && !in_array($meeting->getHost()->getId(), $inString)){
+				$str .="Für ".$meeting->getHost()->getForename()." ".$meeting->getHost()->getName()." wurde noch kein Raum ausgewählt.<br>";
+				$warning = true;
+				$inString[] = $meeting->getHost()->getId();
+			}
+		}
+		$str .= "Trotzdem fortfahren?";
+		dieJson(array($warning, $str));
 	}
 
 	/**

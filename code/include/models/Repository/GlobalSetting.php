@@ -27,7 +27,7 @@ class GlobalSetting extends \Doctrine\ORM\EntityRepository {
 	public function setSetting($name, $value) {
 
 		try {
-			$entry = $this->_em->findOneByName($name);
+			$entry = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName($name);
 			if(!$entry) {
 				$entry = new \Babesk\ORM\SystemGlobalSettings();
 				$entry->setName($name);

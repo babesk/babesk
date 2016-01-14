@@ -2,23 +2,22 @@
 $(document).ready(function() {
   var $selectionsSwitch, changeSelections, displaySelectHostGroup;
   changeSelections = function($btnSwitch, state) {
-    var onSuccess;
-    onSuccess = function(data, statusText, jqXHR) {
-      var val;
-      val = data === 'true' ? 'freigegeben' : 'nicht freigegeben';
-      if (jqXHR.status === 204) {
-        return toastr.success("Die Wahlen sind nun " + val, 'Wahl-Erlaubnis erfolgreich verändert');
-      } else if (jqXHR.status === 201) {
-        return toastr.info("Es wurde nichts verändert, die Wahlen sind " + val, 'Die Wahlen sind bereits so gesetzt');
-      }
-    };
     return $.ajax({
       type: 'POST',
       url: 'index.php?module=administrator|Elawa|SetSelectionsEnabled',
       data: {
         areSelectionsEnabled: state
       },
-      success: onSuccess,
+      dataType: 'json',
+      success: function(data, statusText, jqXHR) {
+        var val;
+        val = data === '1' ? 'freigegeben' : 'nicht freigegeben';
+        if (jqXHR.status === 200) {
+          return toastr.success("Die Wahlen sind nun " + val, 'Wahl-Erlaubnis erfolgreich verändert');
+        } else if (jqXHR.status === 201) {
+          return toastr.info("Es wurde nichts verändert, die Wahlen sind " + val, 'Die Wahlen sind bereits so gesetzt');
+        }
+      },
       error: function(jqXHR, textStatus, errorThrown) {
         toastr.error('Ein Fehler ist beim Bearbeiten aufgetreten.');
         return console.log(jqXHR);
@@ -26,9 +25,19 @@ $(document).ready(function() {
     });
   };
   displaySelectHostGroup = function() {
-    var form, hosts;
-    hosts = ["abc", "cde", "zdf"];
-    form = "<div class='row'> <div class='col-md-4'> <label for='host-group-select'>Gruppe auswählen:</label> </div> <div class='col-md-8'> <select id='host-group-select' name='host-group-select'> </select> </div> </div>";
+    var form, hosts, data;
+    hosts = "[]";
+    data = document.getElementById('groups').dataset.groups;
+    console.log(data);
+    hosts = JSON.parse(data);
+    form = "<form name='changeHostGroup' method='post' action='index.php?module=administrator|Elawa|MainMenu&action=1'><div class='row'> <div class='col-md-4'> <label for='host-group-select'>Gruppe auswählen:</label> </div> <div class='col-md-8'> <select id='host-group-select' name='host-group-select'></form>";
+    hosts.forEach(function(i, j, k){
+    			form += "<option value='"+i.ID+"'";
+    			if(i.selected == true)
+    				form += " selected ";
+    			form += ">"+i.name+"</option>";
+    });
+    form += "</select> </div> </div>";
     return bootbox.dialog({
       title: "Ändern der Gruppe der Lehrer",
       message: form,
@@ -37,7 +46,7 @@ $(document).ready(function() {
           label: "Gruppe ändern",
           className: "btn-success",
           callback: function() {
-            return alert('ToDo');
+            document.changeHostGroup.submit();
           }
         }
       }
@@ -57,7 +66,55 @@ $(document).ready(function() {
       }
     });
   });
-  return $('a#select-host-group-button').on('click', function(event) {
+  $('a#select-host-group-button').on('click', function(event) {
     return displaySelectHostGroup();
   });
+  
+  $('#generatePDF').on('click', function(event){
+	  $.ajax({
+	        type: 'POST',
+	        url: 'index.php?module=administrator|Elawa|GenerateHostPdf&action=1',
+	        dataType: 'json',
+	        success: function(data, statusText, jqXHR) {
+	          if (jqXHR.status === 200) {
+	        	  if(data[0]){
+	        		  return showConfirmation(data[1]);
+	        	  }
+	        	  else{
+	        		  window.location.href= "index.php?module=administrator|Elawa|GenerateHostPdf";
+	        	  }
+	          } else if (jqXHR.status === 204) {
+	            return toastr.error('Es ist ein Fehler aufgetreten');
+	          }
+	        },
+	        error: function(jqXHR, textStatus, errorThrown) {
+	          toastr.error('Ein Fehler ist beim holen der Daten aufgetreten.');
+	          return console.log(jqXHR);
+	        }
+	      });
+	  return false;
+  });
+  
+  function showConfirmation(data){
+	  var str = "<form name='generate' method='post' action='index.php?module=administrator|Elawa|GenerateHostPdf'>"+data+"</form>";
+	  console.log(str);
+	  bootbox.dialog({
+	      title: "Achtung",
+	      message: str,
+	      buttons: {
+	        success: {
+	          label: "Fortfahren",
+	          className: "btn-success",
+	          callback: function() {
+	        	  document.generate.submit();
+	          }
+	        },
+	  		main: {
+	  			label: "Abbrechen",
+	  			className: "btn-primary"
+	  		}
+	      }
+	    });
+  }
+  
 });

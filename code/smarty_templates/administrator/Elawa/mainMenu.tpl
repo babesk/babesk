@@ -4,9 +4,9 @@
 
 <div class="row">
 	<div class="col-md-6">
-		{if $group}
+		{if $hostGroup}
 			Lehrergruppe:
-			{$group->getName()}
+			{$hostGroup->getName()}
 		{else}
 			Keine Lehrergruppe definiert!
 		{/if}
@@ -27,23 +27,27 @@
 	</div>
 </div>
 
+
 <fieldset>
 	<legend>Aktionen</legend>
 	<ul class="submodulelinkList">
 		<li>
 			<a href="index.php?module=administrator|Elawa|Meetings">
-				Sprechstunden
+				1. Sprechstunden verwalten
 			</a>
 		</li>
 		<li>
-			<a href="index.php?module=administrator|Elawa|GenerateHostPdf">
-				PDFs für die Lehrer
+			<a id="generatePDF" href="index.php?module=administrator|Elawa|GenerateHostPdf"">
+				2. Aushänge im PDF-Format generieren (ben&ouml;tigt etwas Zeit!)
 			</a>
 		</li>
 	</ul>
 </fieldset>
 
+<div type="hidden" id="groups" data-groups={$allGroups} />
+
 {/block}
+
 
 
 {block name=style_include append}

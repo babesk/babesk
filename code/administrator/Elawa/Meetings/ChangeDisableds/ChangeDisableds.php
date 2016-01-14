@@ -3,6 +3,10 @@
 namespace administrator\Elawa\Meetings\ChangeDisableds;
 
 require_once PATH_ADMIN . '/Elawa/Meetings/Meetings.php';
+use Babesk\ORM\SystemRoom;
+use Babesk\ORM\SystemUsers;
+use Babesk\ORM\ElawaCategory;
+use Babesk\ORM\ElawaMeeting;
 
 class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 
@@ -13,7 +17,18 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 	public function execute($dataContainer) {
 
 		parent::entryPoint($dataContainer);
-		if(isset($_POST['hostId'])) {
+		if(isset($_POST['room']) && isset($_POST['host']) && isset($_POST['category'])){
+			$room = $this->_em->getRepository("DM:SystemRoom")->findOneByName($_POST['room']);
+			$host = $this->_em->getRepository("DM:SystemUsers")->findOneById($_POST['host']);
+			$cat = $this->_em->getRepository("DM:ElawaCategory")->findOneByName($_POST['category']);
+			$times = $this->_em->getRepository("DM:ElawaMeeting")->findAll();
+			foreach ($times as $time){
+				if($time->getHost() == $host && $time->getCategory()==$cat)
+					$time->setRoom($room);
+				$this->_em->persist($time);
+			}
+			$this->_em->flush();
+		}else if(isset($_POST['hostId'])) {
 			$host = $this->_em->getReference(
 				'DM:SystemUsers', $_POST['hostId']
 			);
@@ -40,7 +55,7 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 	/////////////////////////////////////////////////////////////////////
 
 	protected function getHosts() {
-
+		
 		$query = $this->_em->createQuery(
 			'SELECT u, m FROM DM:SystemUsers u
 			INNER JOIN u.elawaMeetingsHosting m
@@ -53,6 +68,17 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 			$this->_interface->dieError(
 				'Es gibt keine Benutzer, die Sprechzeiten haben.'
 			);
+		}
+	}
+	
+	protected function getRooms() {
+	
+		$query = $this->_em->createQuery(
+				'SELECT u FROM DM:SystemRoom u
+		');
+		$rooms = $query->getResult();
+		if($rooms && count($rooms)) {
+			return $rooms;
 		}
 	}
 
@@ -77,16 +103,41 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 					'isDisabled' => $meeting->getIsDisabled()
 				);
 			}
-			die(json_encode($meetingAr));
+			$roomArr = array();
+			$roomArr[] = array(
+					'id' => 0,
+					'name' => "---"
+			);
+			$rooms = $this->getRooms();
+			if(isset($rooms)){
+				foreach ($rooms as $room){
+					$roomArr[] = array(
+						'id' => $room->getId(),
+						'name' => $room->getName()
+					);
+				}
+			}else{
+				$this->_interface->showWarning("Es sind keine Räume vorhanden");
+			}
+			$selectedArr = array();
+			$categories = $this->_em->getRepository("DM:ElawaCategory")->findAll();
+			foreach ($categories as $category){
+				$selectedRoom = $this->_em->getRepository("DM:ElawaMeeting")->findOneBy(array('host' => $host,
+																								'category' => $category
+				));
+				if(isset($selectedRoom)){
+					if($selectedRoom->getRoom()->getId() != 0)
+						$selectedArr[$category->getName()] = $selectedRoom->getRoom()->getName();
+				}
+			}
+			$elawaEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName('elawaSelectionsEnabled');
+			$sendingArr = array($meetingAr, $roomArr, $selectedArr, $elawaEnabled->getValue() != "0");
+			die(json_encode($sendingArr));
 		}
 		else {
 			http_response_code(204);
 			die();
 		}
 	}
-
-	/////////////////////////////////////////////////////////////////////
-	//Attributes
-	/////////////////////////////////////////////////////////////////////
 
 }

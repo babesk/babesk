@@ -13,8 +13,7 @@ $(document).ready(function() {
         dataType: 'json',
         success: function(data, statusText, jqXHR) {
           if (jqXHR.status === 200) {
-            console.log(data);
-            return insertStatuses(data);
+            return insertStatuses(data[0], data[1], data[2], data[3]);
           } else if (jqXHR.status === 204) {
             return toastr.info('Es sind keine Sprechzeiten für diesen Benutzer eingetragen', 'Keine Sprechzeiten');
           }
@@ -25,8 +24,8 @@ $(document).ready(function() {
         }
       });
     };
-    insertStatuses = function(data) {
-      var $tbody, $thead, categories, fillTableBody, getAllCategories, setTableHeaders, updateSwitches;
+    insertStatuses = function(data, roomData, selectedData, elawaEnabled) {
+      var $tbody, $thead, categories, fillTableBody, getAllCategories, setTableHeaders, updateSwitches, rooms;
       $tbody = $('table#meeting-statuses > tbody');
       $thead = $('table#meeting-statuses > thead');
       getAllCategories = function(data) {
@@ -41,15 +40,55 @@ $(document).ready(function() {
         return categories;
       };
       setTableHeaders = function(categories) {
-        var $globalSwitches, $headRow, category, index;
+        var $globalSwitches, $headRow, category, index, row;
+        row = "";
         $headRow = $('<tr></tr>');
         $headRow.append("<th class='time'>Zeit</th>");
         $headRow.append("<th class='length'>Länge</th>");
         for (index in categories) {
           category = categories[index];
-          $headRow.append("<th class='category' data-name='" + category + "'> " + category + " <input type='checkbox' class='global-category-switch' data-category='" + category + "' checked> </th>");
+          row += "<th class='category' data-name='" + category + "'> " + category + " <input type='checkbox' class='global-category-switch' data-category='" + category + "' checked";
+          if(elawaEnabled){
+        	  row += " disabled";
+          }
+          row += "> ";
+          row += '<select name="room" class="rooms-select">';
+          roomData.forEach(function(c, i, a){
+        	  row += "<option data-cat='"+category+"' data-host='"+hostId+"'";
+        	  if(selectedData[category] == c.name){
+        		  row += " selected";
+        	  }
+        	  row+= ">";
+        	  row += c.name;
+        	  row += "</option>";
+          });
+          row += "</select></th>";
         }
+        $headRow.append(row);
         $thead.append($headRow);
+        $('.rooms-select').multiselect({
+            maxHeight: 400,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            filterPlaceholder: 'Suche nach...',
+            onChange: function(element, checked) {
+            	console.log($(element).data('host'));
+            	return $.ajax({
+            		type: 'POST',
+                    url: 'index.php?module=administrator|Elawa|Meetings|ChangeDisableds',
+                    data: {
+                    	room: $(element).val(),
+                    	category: $(element).data('cat'),
+                    	host: $(element).data('host')
+                    },
+                    dataType: 'json'
+                  });
+            },
+            templates: {
+              filter: '<li class="multiselect-item filter"><div class="input-group"> <span class="input-group-addon"><i class="fa fa-search fa-fw"> </i></span><input class="form-control multiselect-search" type="text"> </div></li>',
+              filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
+            }
+          });
         $globalSwitches = $('table#meeting-statuses > thead > tr > th.category > input.global-category-switch');
         $globalSwitches.bootstrapSwitch({
           size: 'mini',
@@ -82,6 +121,7 @@ $(document).ready(function() {
           }
           $toggle = $("<input type='checkbox' data-meeting-id='" + val['id'] + "'>");
           $toggle.prop('checked', !val['isDisabled']);
+          $toggle.prop('disabled', elawaEnabled);
           _results.push($row.children("td[data-name='" + val['category'] + "']").append($toggle));
         }
         return _results;
@@ -141,5 +181,6 @@ $(document).ready(function() {
       filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
     }
   });
+  
   return updateStatuses();
 });

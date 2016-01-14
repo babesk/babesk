@@ -1,2 +1,2 @@
-ALTER TABLE `c1babesk`.`SystemAttendances`
+ALTER TABLE `SystemAttendances`
 	ADD UNIQUE `ixUserGradeSchoolyear` (`userId`, `gradeId`, `schoolyearId`);

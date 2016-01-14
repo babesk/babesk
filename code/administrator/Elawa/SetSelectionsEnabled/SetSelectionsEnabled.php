@@ -41,7 +41,6 @@ class SetSelectionsEnabled extends \administrator\Elawa\Elawa {
 		$currentSel = ($selection->getValue() != '0');
 		if($currentSel == $areSelEnabled) {
 			//Nothing changed
-			http_response_code(201);
 			die(json_encode($currentSel));
 		}
 		else {
@@ -49,7 +48,6 @@ class SetSelectionsEnabled extends \administrator\Elawa\Elawa {
 			$selection->setValue($newSel);
 			$this->_em->persist($selection);
 			$this->_em->flush();
-			http_response_code(204);
 			die(json_encode($newSel));
 		}
 	}

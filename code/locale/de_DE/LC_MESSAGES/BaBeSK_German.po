@@ -2079,12 +2079,12 @@ msgid "modulepath_root/administrator/Elawa/MainMenu"
 msgstr "Hauptmenü"
 
 #: include/modulepathNames.php:61
-msgid "modulepath_root/administrator/Elawa/GenerateHostPdf"
-msgstr "PDF der Lehrer generieren"
+msgid "modulepath_root/administrator/Elawa/MeetingTimes"
+msgstr "Standard-Zeiten"
 
 #: include/modulepathNames.php:62
-msgid "modulepath_root/administrator/Elawa/SetHostGroup"
-msgstr "Lehrer-Gruppe setzen"
+msgid "modulepath_root/administrator/Elawa/Categories"
+msgstr "Kategorien"
 
 #: include/modulepathNames.php:63
 msgid "modulepath_root/administrator/Elawa/SetSelectionsEnabled"
@@ -2293,6 +2293,10 @@ msgstr "Moduleinstellungen"
 #: include/modulepathNames.php:114
 msgid "modulepath_root/administrator/System/Schoolyear"
 msgstr "Schuljahr"
+
+#: include/modulepathNames.php:115
+msgid "modulepath_root/administrator/System/Rooms"
+msgstr "Räumeverwaltung"
 
 #: include/sql_access/MealManager.php:80
 msgid "Error occured while fetching the meals"

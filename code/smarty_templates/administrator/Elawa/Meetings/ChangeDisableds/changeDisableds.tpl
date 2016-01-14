@@ -29,4 +29,5 @@
 <script type="text/javascript" src="{$path_js}/vendor/bootstrap-switch.min.js"></script>
 <script type="text/javascript" src="{$path_js}/vendor/bootstrap-multiselect.min.js"></script>
 <script type="text/javascript" src="{$path_js}/administrator/Elawa/Meetings/ChangeDisableds/change-disableds.js"></script>
+<script type="text/javascript" src="{$path_js}/vendor/bootbox.min.js"></script>
 {/block}
