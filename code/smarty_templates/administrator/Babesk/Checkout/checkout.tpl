@@ -9,24 +9,53 @@ a.nextOrder {
 	border: 1px solid #006699;
 }
 
+a.pull-right{
+	background: transparent;
+	font-size: 0px;
+	border: none;
+}
+	
+td, th  { 
+	border: 1px solid; 
+}
+
+table{
+	min-width: 100%;
+}
+
 </style>
 
-<p>Bestellt:</p>
-<ul>
-{section name=meal_name loop=$meal_names}
-	<li>
-		{if strpos($meal_names[meal_name], 'Die Bestellung wurde schon abgeholt') === false}
-			<h4>{$meal_names[meal_name]}</h4><br /><br />
-		{else}
-			<p class="error">{$meal_names[meal_name]}</p><br />
-			<script type="text/javascript">
-				adminInterface.errorShow('Die Bestellung wurde schon abgeholt!');
-			</script>
-		{/if}
-	</li>
-{/section}
-</ul>
-<a class="nextOrder" href="index.php?section=Babesk|Checkout&amp;{$sid}">
-	weiter zur n&auml;chsten Bestellung
-</a>
+	<table style="text-align: center;">
+		<thead>
+			<tr>
+				<th align="center"><b>Name</b></th>
+				<th align="center"><b>Men&uuml;</b></th>
+				<th align="center"><b>Gericht</b></th>
+			</tr>
+		</thead>
+	
+		<tbody>
+		{foreach $orders as $order}
+			<tr style="background-color:#{$order.color}">
+				<td align="center">{$order.name}</td>
+				<td align="center">{$order.menu}</td>
+				<td align="center">{$order.meal}</td>
+				
+			</tr>
+		{/foreach}
+		</tbody>
+	
+	</table>
+<p>
+
+<form action="index.php?section=Babesk|Checkout&action=1&{$sid}" method="post">
+	<fieldset>
+		<legend>Karte</legend>
+		<label>ID</label>
+			<input type="text" name="card_ID" size="10" maxlength="10"
+				autofocus />
+			<br />
+	</fieldset>
+	<input type="submit" value="Submit" />
+</form>
 {/block}

@@ -120,5 +120,27 @@ class PriceClassManager extends TableManager {
 
 		return $highest_pc_ID;
 	}
+	
+	public function getColor($pc_ID) {
+		try {
+			$color = TableManager::getTableData(sprintf("pc_ID=%s LIMIT 1", $pc_ID));
+		} catch (Exception $e) {
+			echo "Error getting priceclass: " . $e->getMessage();
+			die();
+		}
+		return $color[0]['color'];
+	}
+	
+	public function setColor($pc_ID, $color) {
+		try {
+			$ids = TableManager::getTableData(sprintf("pc_ID=%s", $pc_ID));
+			foreach ($ids as &$id){
+				TableManager::alterEntry($id['ID'], 'color', $color);
+			}
+		} catch (Exception $e) {
+			echo "Error getting priceclass: " . $e->getMessage();
+			die();
+		}
+	}
 }
 ?>

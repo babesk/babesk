@@ -147,6 +147,17 @@ class MealManager extends TableManager {
 		if (!$result)
 			throw new MySQLConnectionException($this->db->error);
 	}
+	
+	/**
+	 * 
+	 */
+	public function getPriceclass($mid){
+		$query = sql_prev_inj(sprintf('SELECT price_class FROM %s WHERE ID="%s"', $this->tablename, $mid));
+		$result = $this->db->query($query);
+		if (!$result)
+			throw new MySQLConnectionException($this->db->error);
+		return $result->fetch_assoc()['price_class'];
+	}
 }
 
 ?>

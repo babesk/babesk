@@ -25,12 +25,26 @@ class AdminCheckoutInterface extends AdminInterface {
 	}
 	
 	public function Checkout($mealnames) {
-		$this->smarty->assign('meal_names', $mealnames);
+		$this->smarty->assign('orders', $mealnames);
 		$this->smarty->display($this->tplFilePath  . 'checkout.tpl');
 	}
 	
 	public function CardId() {
 		$this->smarty->display($this->tplFilePath . 'form.tpl');
+	}
+	
+	public function ShowInitialMenu(){
+		$this->smarty->display($this->tplFilePath . 'checkout_initial_menu.tpl');
+	}
+	
+	public function ShowSettings($count){
+		$this->smarty->assign('count', $count);
+		$this->smarty->display($this->tplFilePath . 'show_settings.tpl');
+	}
+	
+	public function ShowColorSettings($pcs){
+		$this->smarty->assign('pcs', $pcs);
+		$this->smarty->display($this->tplFilePath . 'show_color_settings.tpl');
 	}
 	
 }

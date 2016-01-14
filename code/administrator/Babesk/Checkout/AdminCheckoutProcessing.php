@@ -8,6 +8,8 @@ class AdminCheckoutProcessing {
 	private $userManager;
 	private $orderManager;
 	private $mealManager;
+	private $globalSettingsManager;
+	private $priceClassManager;
 	private $checkoutInterface;
 	private $msg;
 
@@ -15,16 +17,20 @@ class AdminCheckoutProcessing {
 	//Constructor
 	public function __construct ($checkoutInterface) {
 
+		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 		require_once PATH_ACCESS . '/CardManager.php';
 		require_once PATH_ACCESS . '/UserManager.php';
 		require_once PATH_ACCESS . '/OrderManager.php';
 		require_once PATH_ACCESS . '/MealManager.php';
+		require_once PATH_ACCESS . '/PriceClassManager.php';
 		require_once 'AdminCheckoutInterface.php';
 
+		$this->globalSettingsManager = new GlobalSettingsManager();
 		$this->cardManager = new CardManager();
 		$this->userManager = new UserManager();
 		$this->orderManager = new OrderManager();
 		$this->mealManager = new MealManager();
+		$this->priceClassManager = new PriceClassManager();
 		$this->checkoutInterface = $checkoutInterface;
 
 		$this->msg = array(
@@ -43,20 +49,56 @@ class AdminCheckoutProcessing {
 	 * @param string $card_id The ID of the Card
 	 */
 	public function Checkout ($card_id) {
-
+		if ($card_id == null) {
+			$meals = array();
+			if(isset($_COOKIE['meals']))
+				$meals = json_decode($_COOKIE['meals'], true);
+			$last_meals_cnt = $this->globalSettingsManager->valueGet('checkout_last_meals_counter');
+			if (count($meals)>$last_meals_cnt)
+				$meals = array_slice($meals, $last_meals_cnt*(-1));
+			foreach ($meals as &$meal){
+				$meal['color'] = $this->priceClassManager->getColor($meal['pc']);
+			}
+			$this->checkoutInterface->Checkout($meals);
+			return;
+		}
 		if (!$this->cardManager->valid_card_ID($card_id))
-			$this->checkoutInterface->dieError(sprintf($this->msg['err_card_id'], $card_id));
+			$this->checkoutInterface->showMsg(sprintf($this->msg['err_card_id'], $card_id));
 
 		$uid = $this->GetUser($card_id);
 		$orders = $this->GetOrders($uid);
-		$mealnames = array();
-
+		if(!isset($_COOKIE['meals']))
+			$meals = array();
+		else 
+			$meals = json_decode($_COOKIE['meals'], true);
+		
+		//if(isset($orders)){
 		foreach ($orders as $order) {
 			$mealname = $this->GetMealName($order['MID']);
-			$mealnames[] = $this->OrderFetched($order['ID'], $mealname);
+			//$mealname = $this->OrderFetched($order['ID'], $mealname);
+			$row['name'] = $this->userManager->getForename($uid)." ".$this->userManager->getName($uid);
+			$pc = $this->mealManager->getPriceclass($order['MID']);
+			$row['pc'] = $pc;
+			$row['menu'] = $this->priceClassManager->getPriceClassName($pc)[0]['name'];
+			$row['meal'] = $mealname;
+			$row['color'] = $this->priceClassManager->getColor($pc);
+			if($this->orderManager->OrderFetched($order['ID']))
+				$this->checkoutInterface->showWarning($this->msg['msg_order_fetched'].": ".$row['menu']);
+			$this->orderManager->setOrderFetched($order['ID']);
+			$meals[] = $row;
+		}//}
+		$last_meals_cnt = $this->globalSettingsManager->valueGet('checkout_last_meals_counter');
+		
+		if (count($meals)>$last_meals_cnt)
+			$meals = array_slice($meals, $last_meals_cnt*(-1));
+		
+		foreach ($meals as &$meal){
+			$meal['color'] = $this->priceClassManager->getColor($meal['pc']);
 		}
+		setcookie('meals', json_encode($meals));
+		
 
-		$this->checkoutInterface->Checkout($mealnames);
+		$this->checkoutInterface->Checkout($meals);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +116,8 @@ class AdminCheckoutProcessing {
 				$this->checkoutInterface->CardLocked();
 			}
 		} catch (Exception $e) {
-			$this->checkoutInterface->dieError(_g('Could not find the User by Cardnumber %1$s', $card_id));
+			$uid = NULL;
+			$this->checkoutInterface->showError(_g('Could not find the User by Cardnumber %1$s', $card_id));
 		}
 		return $uid;
 	}
@@ -90,10 +133,11 @@ class AdminCheckoutProcessing {
 		try {
 			$orders = $this->orderManager->getAllOrdersOfUserAtDate($uid, $date);
 		} catch (MySQLVoidDataException $e) {
-			$this->checkoutInterface->dieError($this->msg['err_no_orders']);
+			$orders = array();
+			$this->checkoutInterface->showError($this->msg['err_no_orders']);
 		}
 		catch (Exception $e) {
-			$this->checkoutInterface->dieError($e->getMessage);
+			$this->checkoutInterface->showError($e->getMessage);
 		}
 		return $orders;
 	}
@@ -136,6 +180,33 @@ class AdminCheckoutProcessing {
 			$final_mealname = $this->msg['msg_order_fetched'] . ' : ' . $mealname;
 		}
 		return $final_mealname;
+	}
+	
+	public function ShowSettings() {
+		$count = $this->globalSettingsManager->valueGet('checkout_last_meals_counter');
+		$this->checkoutInterface->ShowSettings($count);
+	}
+	
+	public function SaveSettings($count) {
+		$count = $this->globalSettingsManager->valueSet('checkout_last_meals_counter', $count);
+		$this->checkoutInterface->showInitialMenu();
+	}
+	
+	public function ShowColorSettings() {
+		$pcs = $this->priceClassManager->getAllPriceClassesPooled();
+		foreach ($pcs as &$pc){
+			$pc['color'] = $this->priceClassManager->getColor($pc['pc_ID']);
+		}
+		$this->checkoutInterface->ShowColorSettings($pcs);
+	}
+	
+	public function SaveColorSettings($colors) {
+		$pcs = $this->priceClassManager->getAllPriceClassesPooled();
+		foreach ($pcs as $pc){
+			//if(isset($colors[$pc['pc_ID']]))
+			$this->priceClassManager->setColor($pc['pc_ID'], $colors[$pc['pc_ID']]);
+		}
+		$this->checkoutInterface->showInitialMenu();
 	}
 }
 
