@@ -66,8 +66,9 @@ class AdminSoliInterface extends AdminInterface {
 		$this->smarty->display($this->tplFilePath.'show_soli.tpl');
 	}
 	
-	function ChangeSettings($soli_price) {
+	function ChangeSettings($soli_price, $priceclasses) {
 		$this->smarty->assign('old_price', $soli_price);
+		$this->smarty->assign('priceclasses', $priceclasses);
 		$this->smarty->display($this->tplFilePath.'show_settings.tpl');
 	}
 	

@@ -272,7 +272,7 @@ class Order extends Babesk {
 	protected function mealGet($mealId, $userId) {
 
 		try {
-			$meal = TableMng::query("SELECT pc.price AS price, m.*
+			$meal = TableMng::query("SELECT pc.price AS price, pc.soliPrice AS soliPrice, m.*
 				FROM BabeskMeals m
 				JOIN SystemUsers u ON u.ID = $userId
 				JOIN BabeskPriceClasses pc
@@ -300,11 +300,9 @@ class Order extends Babesk {
 	protected function paymentGet() {
 
 		$solipriceEnabled = $this->isSolipriceEnabledGet();
-
 		if(!$this->_hasValidCoupon || !$solipriceEnabled) {
 			return $this->_meal['price'];
-		}
-		else {
+		}else {
 			return $this->soliPriceGet();
 		}
 	}
@@ -354,13 +352,26 @@ class Order extends Babesk {
 	 */
 	protected function soliPriceGet() {
 
-		$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
-			WHERE name = "soli_price"');
-		if(count($soliPrice)) {
-			return $soliPrice[0]['value'];
-		}
-		else {
-			throw new Exception('Soli-Price not set, but Coupon used!');
+		$seperatePricesEnabled = TableMng::query('SELECT * FROM SystemGlobalSettings
+			WHERE name = "seperateSoliPrices"');
+		if($seperatePricesEnabled[0]['value'] == "1"){
+			$pc_ID = $this->_meal['price_class'];
+			$soliPrice = TableMng::query("SELECT soliPrice FROM BabeskPriceClasses WHERE pc_ID = $pc_ID GROUP BY pc_ID");
+			if(count($soliPrice)) {
+				return $soliPrice[0]['soliPrice'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
+		}else{
+			$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
+				WHERE name = "soli_price"');
+			if(count($soliPrice)) {
+				return $soliPrice[0]['value'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
 		}
 	}
 

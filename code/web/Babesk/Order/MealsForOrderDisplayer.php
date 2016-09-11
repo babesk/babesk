@@ -183,7 +183,7 @@ class MealsForOrderDisplayer {
 
 				foreach ($meals as &$meal) {
 					if ($this->userHasValidCoupon($meal['ID'])) {
-						$meal['price'] = $soliPrice[0]['value'];
+						$meal['price'] = $this->soliPriceGet($meal['price_class']);
 					}
 				}
 				unset($meal);
@@ -294,6 +294,36 @@ class MealsForOrderDisplayer {
 		} catch (PDOException $e) {
 			$this->_interface->dieError(
 				_g('Could not check if the Soliprice is enabled!'));
+		}
+	}
+	
+	/**
+	 * 
+	 * @param unknown $pc_ID
+	 * @throws Exception
+	 * @return unknown
+	 */
+	
+	protected function soliPriceGet($pc_ID) {
+		$seperatePricesEnabled = TableMng::query('SELECT * FROM SystemGlobalSettings
+			WHERE name = "seperateSoliPrices"');
+		if($seperatePricesEnabled[0]['value'] == "1"){
+			$soliPrice = TableMng::query("SELECT soliPrice FROM BabeskPriceClasses WHERE pc_ID = $pc_ID GROUP BY pc_ID");
+			if(count($soliPrice)) {
+				return $soliPrice[0]['soliPrice'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
+		}else{
+			$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
+				WHERE name = "soli_price"');
+			if(count($soliPrice)) {
+				return $soliPrice[0]['value'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
 		}
 	}
 

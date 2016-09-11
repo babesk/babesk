@@ -278,8 +278,11 @@ class AdminSoliProcessing {
 	function ChangeSettings($soli_price) {
 
 		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+		require_once PATH_ACCESS . '/PriceClassManager.php';
 
 		$gbManager = new GlobalSettingsManager();
+		$pcManager = new PriceClassManager();
+		die_error(SOLI_ERR_INP_PRICE);
 
 		if ($soli_price !== NULL) {
 			try {
@@ -298,10 +301,11 @@ class AdminSoliProcessing {
 		} else {
 			try {
 				$soli_price = $gbManager->getSoliPrice();
+				$priceclasses = $pcManager->getTableData();
 			} catch (Exception $e) {
 				$this->soliInterface->dieError($this->msg['SOLI_ERR_PRICE']);
 			}
-			$this->soliInterface->ChangeSettings($soli_price);
+			$this->soliInterface->ChangeSettings($soli_price, $priceclasses);
 		}
 	}
 	
