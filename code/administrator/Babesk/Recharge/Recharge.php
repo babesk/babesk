@@ -224,7 +224,7 @@ class Recharge extends Babesk {
 		}
 		else {
 			$this->_interface->backlink(
-				'administrator|Babesk|Recharge|RechargeCard'
+				'administrator|Babesk|Recharge'
 			);
 			$this->_interface->dieError(_g('The given amount to recharge added to the Credits is more than the Maximum Amount of Credits allowed for the Users Pricegroup!'));
 		}
