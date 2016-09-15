@@ -139,7 +139,7 @@ class AdminMealProcessing {
 			//$meals = $this->mealManager->getTableData();
 			$meals = $this->_pdo->query(
 				'SELECT m.*, pc.name AS priceClassName FROM BabeskMeals m
-					INNER JOIN BabeskPriceClasses pc ON pc.pc_ID = m.price_class
+					INNER JOIN BabeskPriceClasses pc ON pc.pc_ID = m.price_class GROUP BY m.id
 			')->fetchAll();
 		} catch (MySQLVoidDataException $e) {
 			$this->mealInterface->dieError($this->msg['err_no_meals']);

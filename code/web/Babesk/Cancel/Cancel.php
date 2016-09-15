@@ -195,13 +195,28 @@ class Cancel extends Babesk {
 	 */
 	protected function soliPriceGet() {
 
-		$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
-			WHERE name = "soli_price"');
-		if(count($soliPrice)) {
-			return ((int) $soliPrice[0]['value']);
-		}
-		else {
-			throw new Exception('Soli-Price not set, but Coupon used!');
+	$seperatePricesEnabled = TableMng::query('SELECT * FROM SystemGlobalSettings
+			WHERE name = "seperateSoliPrices"');
+		if($seperatePricesEnabled[0]['value'] == "1"){
+			$mid = $this->_orderData['MID'];
+			$pc_ID = TableMng::query("SELECT price_class FROM BabeskMeals WHERE ID = $mid ");
+			$pc_ID = $pc_ID[0]['price_class'];
+			$soliPrice = TableMng::query("SELECT soliPrice FROM BabeskPriceClasses WHERE pc_ID = $pc_ID GROUP BY pc_ID");
+			if(count($soliPrice)) {
+				return $soliPrice[0]['soliPrice'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
+		}else{
+			$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
+				WHERE name = "soli_price"');
+			if(count($soliPrice)) {
+				return $soliPrice[0]['value'];
+			}
+			else {
+				throw new Exception('Soli-Price not set, but Coupon used!');
+			}
 		}
 	}
 

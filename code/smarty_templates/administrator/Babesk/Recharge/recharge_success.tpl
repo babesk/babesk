@@ -8,7 +8,7 @@
 			Dem Benutzer "{$username}" wurden {$amount}&euro; gutgeschrieben
 		</div>
 		<div class="panel-footer">
-			<a class="btn btn-primary" href="index.php?module=administrator|Babesk|Recharge|RechargeCard">weiter zur n&auml;chsten Geldaufladung</a>
+			<a class="btn btn-primary" href="index.php?module=administrator|Babesk|Recharge|Recharge{if $userform}User{else}Card{/if}">weiter zur n&auml;chsten Geldaufladung</a>
 		</div>
 </div>
 

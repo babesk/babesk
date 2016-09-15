@@ -15,6 +15,11 @@
 			</a>
 		</li>
 		<li>
+			<a href="index.php?module=administrator|Babesk|Recharge|RechargeUser">
+			Nutzerkonto aufladen
+			</a>
+		</li>
+		<li>
 			<a href="index.php?module=administrator|Babesk|Recharge|PrintRechargeBalance">
 				{t}Print Recharge Balance{/t}
 			</a>

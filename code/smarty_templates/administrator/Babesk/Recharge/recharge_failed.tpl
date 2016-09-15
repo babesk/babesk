@@ -1,6 +1,6 @@
 {extends file=$base_path}{block name=content}
 <p>Geldaufladung war <b>nicht</b> erfolgreich! Bitte versuchen sie es erneut</p>
-<a href="index.php?module=administrator|Babesk|Recharge|RechargeCard">weiter zur n&auml;chsten Geldaufladung</a>
+<a href="index.php?module=administrator|Babesk|Recharge">weiter zur n&auml;chsten Geldaufladung</a>
 
 <script type="text/javascript">
 var ref = 'index.php?module=administrator|Babesk|Recharge|RechargeCard';

@@ -69,7 +69,7 @@ class Recharge extends Babesk {
 			$this->changeAmountDisplay($_POST['card_ID']);
 		}
 		else if(isset($_POST['amount'], $_POST['uid'])) {
-			$this->rechargeUsercredits($_POST['amount'], $_POST['uid']);
+			$this->rechargeUsercredits($_POST['amount'], $_POST['uid'], false);
 		}
 		else {
 			$this->displayTpl('form1.tpl');
@@ -191,8 +191,6 @@ class Recharge extends Babesk {
 		}
 
 		$data = $stmt->fetch();
-		var_dump($data);
-		var_dump($userId);
 		if($data) {
 			return $data['maxCredits'] - $data['credits'];
 		}
@@ -211,7 +209,7 @@ class Recharge extends Babesk {
 	 * @param  int    $userId         The ID of the User which Card to recharge
 	 * @param  float  $rechargeAmount The Amount to recharge [add]
 	 */
-	protected function rechargeUsercredits($rechargeAmount, $userId) {
+	protected function rechargeUsercredits($rechargeAmount, $userId, $userform) {
 
 		$rechargeAmount = floatval(str_replace(',', '.', $rechargeAmount));
 
@@ -226,12 +224,12 @@ class Recharge extends Babesk {
 		}
 		else {
 			$this->_interface->backlink(
-				'administrator|Babesk|Recharge|RechargeCard'
+				'administrator|Babesk|Recharge'
 			);
 			$this->_interface->dieError(_g('The given amount to recharge added to the Credits is more than the Maximum Amount of Credits allowed for the Users Pricegroup!'));
 		}
 
-		$this->rechargeSuccessDisplay($rechargeAmount, $userId);
+		$this->rechargeSuccessDisplay($rechargeAmount, $userId, $userform);
 	}
 
 	/**
@@ -296,7 +294,7 @@ class Recharge extends Babesk {
 	 * @param  float  $amount The Amount that was reloaded
 	 * @param  int    $userId The ID of the User
 	 */
-	protected function rechargeSuccessDisplay($amount, $userId) {
+	protected function rechargeSuccessDisplay($amount, $userId, $userform) {
 
 		$stmt = $this->_pdo->prepare(
 			'SELECT CONCAT(forename, " ", name) FROM SystemUsers
@@ -309,6 +307,7 @@ class Recharge extends Babesk {
 
 		$this->_smarty->assign('username', $username);
 		$this->_smarty->assign('amount', sprintf('%01.2f', $amount));
+		$this->_smarty->assign('userform', $userform);
 		$this->displayTpl('recharge_success.tpl');
 	}
 
@@ -513,6 +512,46 @@ class Recharge extends Babesk {
 			return false;
 		}
 	}
+	
+	protected function submoduleRechargeUserExecute(){
+		if(isset($_POST['id'])){
+			$maxRechargeAmount = $this->getMaxRechargeAmountOfUser($_POST['id']);
+			$maxRechargeAmount = sprintf('%01.2f', $maxRechargeAmount);
+			
+			$isSoliRecharge = $this->userHasValidSoliCoupon(
+					$_POST['id'], date('Y-m-d')
+					);
+			echo json_encode(['maxRecharge' => $maxRechargeAmount, 'soli' => $isSoliRecharge]);
+		}elseif(isset($_POST['amount']) && isset($_POST['uid'])){
+			$this->rechargeUsercredits($_POST['amount'], $_POST['uid'], true);
+		}else{
+			$users = $this->_em->getRepository("DM:SystemUsers")->findAll();
+			$usersArr = array();
+			foreach ($users as &$user){
+				try{
+					$row['ID'] = $user->getID();
+					$row['forename'] = $user->getForename();
+					$row['name'] = $user->getName();
+					$row['priceGroup'] = $user->getPriceGroup()->getName();
+					$attendances = $user->getAttendances()[0];
+					if($attendances != null){
+						$grade = $user->getAttendances()[0]->getGrade();
+						if($grade != null)
+						$row['grade'] = $grade->getGradelevel() . $grade->getLabel();
+					}else{
+						$row['grade'] = "Keiner Klasse zugeordnet";
+					}
+					$usersArr[] = $row;
+				}catch (Exception $e){
+					
+				}
+			}
+			$this->_smarty->assign('users', $usersArr);
+			$this->displayTpl('rechargeUser.tpl');
+		}
+	}
+	
+	
 
 	/////////////////////////////////////////////////////////////////////
 	//Attributes

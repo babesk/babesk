@@ -132,7 +132,12 @@ class Soli extends Babesk {
 
 		$this->_pdo->beginTransaction();
 		$this->solipriceEnabledSet(isset($_POST['solipriceEnabled']));
-		$this->solipriceSet($_POST['soliprice']);
+		$this->seperatePricesEnabledSet(isset($_POST['toggleSeperatePrices']));
+		if(isset($_POST['toggleSeperatePrices'])){
+			$this->seperatePricesSet($_POST);
+		}else{
+			$this->solipriceSet($_POST['soliprice']);
+		}
 		$this->_pdo->commit();
 	}
 
@@ -144,9 +149,11 @@ class Soli extends Babesk {
 
 		$data = $this->soliSettingsDataFetch();
 		$data = $this->soliSettingsDataAddIfNonexistend($data);
-		$this->_smarty->assign('soliprice', $data['soli_price']);
+		$this->_smarty->assign('soliprice', $data[0]['soli_price']);
 		$this->_smarty->assign(
-			'solipriceEnabled', $data['solipriceEnabled']);
+			'solipriceEnabled', $data[0]['solipriceEnabled']);
+		$this->_smarty->assign('seperate', $data[0]['seperateSoliPrices']);
+		$this->_smarty->assign('priceclasses', $data[1]);
 		$this->displayTpl('show_settings.tpl');
 	}
 
@@ -160,10 +167,13 @@ class Soli extends Babesk {
 		try {
 			$stmt = $this->_pdo->query('SELECT `name`, `value`
 				FROM SystemGlobalSettings
-				WHERE `name` IN("soli_price", "solipriceEnabled");');
+				WHERE `name` IN("soli_price", "solipriceEnabled", "seperateSoliPrices");');
 
-			$data = ArrayFunctions::arrayColumn(
+			$data[0] = ArrayFunctions::arrayColumn(
 				$stmt->fetchAll(), 'value', 'name');
+			
+			$stmt = $this->_pdo->query('SELECT * FROM BabeskPriceClasses GROUP BY pc_id');
+			$data[1] = $stmt->fetchAll();
 
 		} catch (PDOException $e) {
 			$this->_interface->dieError(_g('Could not fetch the Data!'));
@@ -180,10 +190,10 @@ class Soli extends Babesk {
 	 */
 	protected function soliSettingsDataAddIfNonexistend($data) {
 
-		if(!isset($data['soli_price'])) {
+		if(!isset($data[0]['soli_price'])) {
 			$data['soli_price'] = $this->solipriceInit();
 		}
-		if(!isset($data['solipriceEnabled'])) {
+		if(!isset($data[0]['solipriceEnabled'])) {
 			$data['solipriceEnabled'] = $this->solipriceEnabledInit();
 		}
 
@@ -276,6 +286,29 @@ class Soli extends Babesk {
 			$this->_interface->dieError(_g('Could not change the Soliprice!'));
 		}
 	}
+	
+	/**
+	 * Changes the Price for the Solis
+	 *
+	 * @param  float  $value The new Price
+	 */
+	protected function seperatePricesSet($post) {
+		
+		foreach ($post as $key => $value){
+			if(substr($key, 0, 9) == 'soliprice'){
+		$id = substr($key, 9);
+		$value = str_replace(',', '.', $value);
+	
+		try {
+			$stmt = $this->_pdo->prepare("UPDATE BabeskPriceClasses
+				SET soliPrice = :value WHERE pc_id = :id");
+	
+			$stmt->execute(array('value' => $value, 'id' => $id));
+	
+		} catch (PDOException $e) {
+			$this->_interface->dieError(_g('Could not change the Soliprice!'));
+		}}}
+	}
 
 	/**
 	 * Inserts the solipriceEnabled-Row into SystemGlobalSettings-Table
@@ -321,6 +354,25 @@ class Soli extends Babesk {
 		} catch (PDOException $e) {
 			$this->_interface->dieError(
 				_g('Could not set if the Soliprice is enabled or not'));
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	protected function seperatePricesEnabledSet($isEnabled) {
+	
+		try {
+			$stmt = $this->_pdo->prepare('UPDATE SystemGlobalSettings
+				SET `value` = :val WHERE `name` = "seperateSoliPrices"');
+	
+			$val = ($isEnabled) ? 1 : 0;
+	
+			$stmt->execute(array('val' => $val));
+	
+		} catch (PDOException $e) {
+			$this->_interface->dieError(
+					_g('Could not set if the Soliprice is enabled or not'));
 		}
 	}
 
