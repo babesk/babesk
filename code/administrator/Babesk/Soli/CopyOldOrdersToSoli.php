@@ -60,8 +60,9 @@ class CopyOldOrdersToSoli {
 					o.ordertime AS ordertime,
 					/*Does the Meal and the priceclass still exist?*/
 					(SELECT m.ID FROM BabeskMeals m
-						JOIN BabeskPriceClasses pc ON m.price_class = pc.ID
+						JOIN BabeskPriceClasses pc ON m.price_class = pc.pc_ID
 						WHERE m.ID = o.MID
+						GROUP BY pc.pc_ID
 					) AS existMealAndPriceclass
 				FROM SystemUsers u
 				JOIN BabeskOrders o ON o.UID = u.ID
