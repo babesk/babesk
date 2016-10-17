@@ -74,7 +74,7 @@ class Soli extends Babesk {
 				case 7: //copy old orders to soli
 					if (isset($_POST['copy'])) {
 						// $soliProcessing->CopyOldOrdersToSoli();
-						CopyOldOrdersToSoli::init($soliInterface);
+						CopyOldOrdersToSoli::init($soliInterface, $this->_em);
 						CopyOldOrdersToSoli::execute();
 					}
 					else if (isset($_POST['dont_copy']))

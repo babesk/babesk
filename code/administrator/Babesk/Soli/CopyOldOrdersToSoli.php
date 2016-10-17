@@ -11,8 +11,9 @@ class CopyOldOrdersToSoli {
 	//Constructor
 	/////////////////////////////////////////////////////////////////////
 
-	public static function init($interface) {
+	public static function init($interface, $em) {
 
+		self::$_em = $em;
 		self::$_interface = $interface;
 
 		self::$_errors = array();
@@ -28,7 +29,7 @@ class CopyOldOrdersToSoli {
 		try {
 			self::soliDataFetch();
 			self::couponDataFetch();
-			self::solipriceFetch();
+			//self::solipriceFetch();
 			self::upload();
 
 			self::errorsShow();
@@ -54,7 +55,7 @@ class CopyOldOrdersToSoli {
 		try {
 			self::$_soliData = TableMng::query(sprintf(
 				'SELECT u.ID AS userId, o.ID AS orderId, o.fetched AS fetched,
-					m.name AS mealname, pc.price AS price, m.date AS mealdate,
+					m.name AS mealname, m.price_class AS pc_ID, pc.price AS price, m.date AS mealdate,
 					o.ID AS orderId,
 					CONCAT(u.forename, " ", u.name) AS userWholename,
 					o.ordertime AS ordertime,
@@ -112,6 +113,8 @@ class CopyOldOrdersToSoli {
 	protected static function upload() {
 
 		TableMng::getDb()->autocommit(false);
+		
+		$chargeArr = array();
 
 		$stmt = TableMng::getDb()->prepare(
 			'INSERT INTO `BabeskSoliOrders`
@@ -122,8 +125,7 @@ class CopyOldOrdersToSoli {
 		foreach(self::$_soliData as $order) {
 			if(self::soliDataCheck($order)) {
 
-				$price = (isset(self::$_soliprice) && self::$_soliprice != '')
-					? self::$_soliprice : 0;
+				$price = self::solipriceFetch($order['pc_ID']);
 
 				$stmt->bind_param('sssssssss', $order['orderId'], $order['userId'],
 					$order['mealdate'], $order['ordertime'], $order['fetched'],
@@ -137,9 +139,29 @@ class CopyOldOrdersToSoli {
 					throw new Exception(
 						'Could not execute an upload successfully');
 				}
+				
+				$userRep = self::$_em->getRepository("DM:SystemUsers");
+				$user = $userRep->findOneById($order['userId']);
+				$curAmount = $user->getCredit();
+				$diff = $order['price'] - $price;
+				$user->setCredit($curAmount + $diff);
+				if(isset($chargeArr[$order['userId']]))
+					$chargeArr[$order['userId']] += $diff;
+				else 
+					$chargeArr[$order['userId']] = $diff;
 			}
 		}
+		/**
+		*Uncomment this to get the recharges as an extra SQL-Statement
+		* 
+		*foreach ($chargeArr as $key => $value){
+		*	file_put_contents("recharge_credit_sql.txt", "UPDATE systemusers SET credit = credit + ".$value." WHERE ID = ".$key.";\r\n", FILE_APPEND);
+		*}
+		*/
+		
 		$stmt->close();
+		self::$_em->persist($user);
+		self::$_em->flush();
 
 		TableMng::getDb()->autocommit(true);
 	}
@@ -192,17 +214,37 @@ class CopyOldOrdersToSoli {
 	 *
 	 * Saves it into the protected variable $_soliprice
 	 */
-	protected static function solipriceFetch() {
+	protected static function solipriceFetch($pc_ID) {
 
 		try {
-			$res = TableMng::query('SELECT value FROM SystemGlobalSettings
+			$seperatePricesEnabled = TableMng::query('SELECT * FROM SystemGlobalSettings
+			WHERE name = "seperateSoliPrices"');
+			if($seperatePricesEnabled[0]['value'] == "1"){
+				$soliPrice = TableMng::query("SELECT soliPrice FROM BabeskPriceClasses WHERE pc_ID = $pc_ID GROUP BY pc_ID");
+				if(count($soliPrice)) {
+					return $soliPrice[0]['soliPrice'];
+				}
+				else {
+					throw new Exception('Soli-Price not set, but Coupon used!');
+				}
+			}else{
+				$soliPrice = TableMng::query('SELECT * FROM SystemGlobalSettings
 				WHERE name = "soli_price"');
+				if(count($soliPrice)) {
+					return $soliPrice[0]['value'];
+				}
+				else {
+					throw new Exception('Soli-Price not set, but Coupon used!');
+				}
+			}
+			//$res = TableMng::query('SELECT value FROM SystemGlobalSettings
+				//WHERE name = "soli_price"');
 
 		} catch (Exception $e) {
 			throw new Exception('Could not fetch the soliprice');
 		}
 
-		self::$_soliprice = $res[0]['value'];
+		//self::$_soliprice = $res[0]['value'];
 	}
 
 	/**
@@ -220,12 +262,15 @@ class CopyOldOrdersToSoli {
 	/////////////////////////////////////////////////////////////////////
 
 	protected static $_interface;
+	
+	protected static $_em;
 
 	/**
 	 * All orders ordered by Soli-Users
 	 *
 	 * @var array(array(...))
 	 */
+	
 	protected static $_soliData;
 
 	/**
