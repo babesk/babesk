@@ -40,6 +40,7 @@ class Menu extends Babesk {
 		$meal = array();
 		$orders_existing = true;
 		$meal_problems = false;
+		$mealHistory = array();
 
 		try {
 			$orders = $orderManager->getAllOrdersOfUser($_SESSION['uid'], strtotime(date('Y-m-d')));
