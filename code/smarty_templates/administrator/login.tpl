@@ -44,7 +44,7 @@
 	</form>
 </div>
 <div id="footer">
-	<p>BaBeSK {$babesk_version} &copy; 2011 Lessing Gymnasium Uelzen</p>
+	<p>BaBeSK {$babesk_version} &copy; 2011 Lessing Gymnasium Uelzen {$smarty.version}</p>
 </div>
 
 <script src="http{if $https_enabled}s{/if}://code.jquery.com/jquery-1.9.1.js"></script>

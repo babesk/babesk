@@ -184,7 +184,8 @@ class Administrator {
 		$this->_smarty->assign('status', '');
 
 		$relRoot = '../';
-		$smarty->assign('path_smarty_tpl', $relRoot . 'smarty_templates');
+// 		$smarty->assign('path_smarty_tpl', $relRoot . 'smarty_templates');
+		$smarty->assign('path_smarty_tpl', PATH_SMARTY_TPL);
 		$smarty->assign('path_js', $relRoot . 'include/js');
 		$smarty->assign('path_css', $relRoot . 'include/css');
 
@@ -242,6 +243,7 @@ class Administrator {
 			);
 			$this->_smarty->assign('status',
 				'Account hat keine Admin-Berechtigung');
+			
 			$this->_smarty->display(
 				PATH_SMARTY_TPL . '/administrator/login.tpl'
 			);

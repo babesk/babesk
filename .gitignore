@@ -10,6 +10,7 @@
 .buildpath
 .project
 .settings
+.metadata
 
 #NetBeans-specific settings#
 ############################

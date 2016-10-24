@@ -86,7 +86,8 @@ class Web {
 		}
 		$smarty->assign('babesk_version', $version);
 		$relRoot = '../';
-		$smarty->assign('path_smarty_tpl', $relRoot . 'smarty_templates');
+		//$smarty->assign('path_smarty_tpl', $relRoot . 'smarty_templates');
+		$smarty->assign('path_smarty_tpl', PATH_SMARTY_TPL);
 		$smarty->assign('path_js', $relRoot . 'include/js');
 		$smarty->assign('path_css', $relRoot . 'include/css');
 		$smarty->assign('path_images', $relRoot . 'images');

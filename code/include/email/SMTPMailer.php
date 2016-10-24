@@ -1,6 +1,6 @@
 <?php
 
-require_once PATH_3RD_PARTY . '/PHPMailer_5.2.1/class.phpmailer.php';
+require_once PATH_3RD_PARTY . '/PHPMailer/class.phpmailer.php';
 require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 
 /** This class is a wrapper for PHPMailer, for easy sending of mails

@@ -1,8 +1,8 @@
 <?php
+require_once 'Smarty/Autoloader.php';
 
-require_once "Smarty/Smarty.class.php";
-
-$smarty = new Smarty;
+Smarty_Autoloader::register();
+$smarty = new Smarty();
 
 $smarty->setTemplateDir(dirname(__FILE__) . '../../../smarty_templates');
 $smarty->setCompileDir(dirname(__FILE__) . '/templates_c');
