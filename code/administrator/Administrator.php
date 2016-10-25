@@ -83,7 +83,7 @@ class Administrator {
 		$this->_smarty->assign('sid', htmlspecialchars(SID));
 
 		$this->_smarty->assign('base_path',
-			PATH_SMARTY_TPL . '/administrator/base_layout.tpl');
+			PATH_SMARTY_TPL . '/administrator/baseLayout.tpl');
 
 	}
 

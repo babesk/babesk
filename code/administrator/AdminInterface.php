@@ -16,7 +16,7 @@ class AdminInterface extends GeneralInterface {
 			$this->smarty = self::$smartyHelper;
 		}
 		$this->tplFilePath = PATH_SMARTY_TPL . '/administrator' . $mod_rel_path;
-		$this->parentPath = PATH_SMARTY_TPL . '/administrator/base_layout.tpl';
+		$this->parentPath = PATH_SMARTY_TPL . '/administrator/baseLayout.tpl';
 		$this->smarty->assign('tplFilePath', $this->tplFilePath);
 		$this->smarty->assign('inh_path', $this->parentPath);
 	}

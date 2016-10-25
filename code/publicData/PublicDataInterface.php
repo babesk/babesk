@@ -24,7 +24,7 @@ class PublicDataInterface extends GeneralInterface {
 			$this->_smarty = $smarty;
 		}
 		$this->_smartyModTemplates = PATH_SMARTY_TPL . '/publicData' . $modRelativePath;
-		$this->_smartyParentTemplate = PATH_SMARTY_TPL . '/publicData/base_layout.tpl';
+		$this->_smartyParentTemplate = PATH_SMARTY_TPL . '/publicData/baseLayout.tpl';
 		$this->_smarty->assign('inh_path', $this->_smartyParentTemplate);
 	}
 
