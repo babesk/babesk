@@ -138,6 +138,9 @@ class Statement implements \IteratorAggregate, DriverStatement
      */
     public function bindParam($name, &$var, $type = PDO::PARAM_STR, $length = null)
     {
+        $this->params[$name] = $var;
+        $this->types[$name] = $type;
+
         return $this->stmt->bindParam($name, $var, $type, $length);
     }
 
@@ -164,7 +167,15 @@ class Statement implements \IteratorAggregate, DriverStatement
         try {
             $stmt = $this->stmt->execute($params);
         } catch (\Exception $ex) {
-            throw DBALException::driverExceptionDuringQuery($ex, $this->sql, $this->conn->resolveParams($this->params, $this->types));
+            if ($logger) {
+                $logger->stopQuery();
+            }
+            throw DBALException::driverExceptionDuringQuery(
+                $this->conn->getDriver(),
+                $ex,
+                $this->sql,
+                $this->conn->resolveParams($this->params, $this->types)
+            );
         }
 
         if ($logger) {
@@ -223,7 +234,7 @@ class Statement implements \IteratorAggregate, DriverStatement
     {
         if ($arg2 === null) {
             return $this->stmt->setFetchMode($fetchMode);
-        } else if ($arg3 === null) {
+        } elseif ($arg3 === null) {
             return $this->stmt->setFetchMode($fetchMode, $arg2);
         }
 

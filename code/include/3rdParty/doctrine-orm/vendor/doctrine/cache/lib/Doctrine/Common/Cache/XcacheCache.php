@@ -71,7 +71,7 @@ class XcacheCache extends CacheProvider
     {
         $this->checkAuthorization();
 
-        xcache_clear_cache(XC_TYPE_VAR, 0);
+        xcache_clear_cache(XC_TYPE_VAR);
 
         return true;
     }
@@ -86,7 +86,10 @@ class XcacheCache extends CacheProvider
     protected function checkAuthorization()
     {
         if (ini_get('xcache.admin.enable_auth')) {
-            throw new \BadMethodCallException('To use all features of \Doctrine\Common\Cache\XcacheCache, you must set "xcache.admin.enable_auth" to "Off" in your php.ini.');
+            throw new \BadMethodCallException(
+                'To use all features of \Doctrine\Common\Cache\XcacheCache, '
+                . 'you must set "xcache.admin.enable_auth" to "Off" in your php.ini.'
+            );
         }
     }
 
@@ -98,12 +101,12 @@ class XcacheCache extends CacheProvider
         $this->checkAuthorization();
 
         $info = xcache_info(XC_TYPE_VAR, 0);
-        return array(
+        return [
             Cache::STATS_HITS   => $info['hits'],
             Cache::STATS_MISSES => $info['misses'],
             Cache::STATS_UPTIME => null,
             Cache::STATS_MEMORY_USAGE      => $info['size'],
             Cache::STATS_MEMORY_AVAILABLE  => $info['avail'],
-        );
+        ];
     }
 }

@@ -53,7 +53,7 @@ class WinCacheCache extends CacheProvider
      */
     protected function doSave($id, $data, $lifeTime = 0)
     {
-        return (bool) wincache_ucache_set($id, $data, (int) $lifeTime);
+        return wincache_ucache_set($id, $data, $lifeTime);
     }
 
     /**
@@ -75,17 +75,35 @@ class WinCacheCache extends CacheProvider
     /**
      * {@inheritdoc}
      */
+    protected function doFetchMultiple(array $keys)
+    {
+        return wincache_ucache_get($keys);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+    {
+        $result = wincache_ucache_set($keysAndValues, null, $lifetime);
+
+        return empty($result);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function doGetStats()
     {
         $info    = wincache_ucache_info();
         $meminfo = wincache_ucache_meminfo();
 
-        return array(
+        return [
             Cache::STATS_HITS             => $info['total_hit_count'],
             Cache::STATS_MISSES           => $info['total_miss_count'],
             Cache::STATS_UPTIME           => $info['total_cache_uptime'],
             Cache::STATS_MEMORY_USAGE     => $meminfo['memory_total'],
             Cache::STATS_MEMORY_AVAILABLE => $meminfo['memory_free'],
-        );
+        ];
     }
 }

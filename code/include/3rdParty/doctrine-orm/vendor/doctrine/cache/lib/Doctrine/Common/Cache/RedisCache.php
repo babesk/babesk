@@ -69,6 +69,47 @@ class RedisCache extends CacheProvider
     /**
      * {@inheritdoc}
      */
+    protected function doFetchMultiple(array $keys)
+    {
+        $fetchedItems = array_combine($keys, $this->redis->mget($keys));
+
+        // Redis mget returns false for keys that do not exist. So we need to filter those out unless it's the real data.
+        $foundItems   = [];
+
+        foreach ($fetchedItems as $key => $value) {
+            if (false !== $value || $this->redis->exists($key)) {
+                $foundItems[$key] = $value;
+            }
+        }
+
+        return $foundItems;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doSaveMultiple(array $keysAndValues, $lifetime = 0)
+    {
+        if ($lifetime) {
+            $success = true;
+
+            // Keys have lifetime, use SETEX for each of them
+            foreach ($keysAndValues as $key => $value) {
+                if (!$this->redis->setex($key, $lifetime, $value)) {
+                    $success = false;
+                }
+            }
+
+            return $success;
+        }
+
+        // No lifetime, use MSET
+        return (bool) $this->redis->mset($keysAndValues);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function doContains($id)
     {
         return $this->redis->exists($id);
@@ -82,6 +123,7 @@ class RedisCache extends CacheProvider
         if ($lifeTime > 0) {
             return $this->redis->setex($id, $lifeTime, $data);
         }
+
         return $this->redis->set($id, $data);
     }
 
@@ -90,7 +132,7 @@ class RedisCache extends CacheProvider
      */
     protected function doDelete($id)
     {
-        return $this->redis->delete($id);
+        return $this->redis->delete($id) >= 0;
     }
 
     /**
@@ -107,13 +149,13 @@ class RedisCache extends CacheProvider
     protected function doGetStats()
     {
         $info = $this->redis->info();
-        return array(
-            Cache::STATS_HITS   => false,
-            Cache::STATS_MISSES => false,
+        return [
+            Cache::STATS_HITS   => $info['keyspace_hits'],
+            Cache::STATS_MISSES => $info['keyspace_misses'],
             Cache::STATS_UPTIME => $info['uptime_in_seconds'],
             Cache::STATS_MEMORY_USAGE      => $info['used_memory'],
             Cache::STATS_MEMORY_AVAILABLE  => false
-        );
+        ];
     }
 
     /**
@@ -125,6 +167,14 @@ class RedisCache extends CacheProvider
      */
     protected function getSerializerValue()
     {
-        return defined('Redis::SERIALIZER_IGBINARY') ? Redis::SERIALIZER_IGBINARY : Redis::SERIALIZER_PHP;
+        if (defined('HHVM_VERSION')) {
+            return Redis::SERIALIZER_PHP;
+        }
+
+        if (defined('Redis::SERIALIZER_IGBINARY') && extension_loaded('igbinary')) {
+            return Redis::SERIALIZER_IGBINARY;
+        }
+
+        return Redis::SERIALIZER_PHP;
     }
 }

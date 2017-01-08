@@ -72,6 +72,15 @@ class OCI8Statement implements \IteratorAggregate, Statement
     protected $_paramMap = array();
 
     /**
+     * Holds references to bound parameter values.
+     *
+     * This is a new requirement for PHP7's oci8 extension that prevents bound values from being garbage collected.
+     *
+     * @var array
+     */
+    private $boundValues = array();
+
+    /**
      * Creates a new OCI8Statement that uses the given connection handle and SQL statement.
      *
      * @param resource                                  $dbh       The connection handle.
@@ -121,7 +130,7 @@ class OCI8Statement implements \IteratorAggregate, Statement
                 $i += $len-1; // jump ahead
                 $stmtLen = strlen($statement); // adjust statement length
                 ++$count;
-            } else if ($statement[$i] == "'" || $statement[$i] == '"') {
+            } elseif ($statement[$i] == "'" || $statement[$i] == '"') {
                 $inLiteral = ! $inLiteral; // switch state!
             }
         }
@@ -148,10 +157,16 @@ class OCI8Statement implements \IteratorAggregate, Statement
             $lob = oci_new_descriptor($this->_dbh, OCI_D_LOB);
             $lob->writeTemporary($variable, OCI_TEMP_BLOB);
 
+            $this->boundValues[$column] =& $lob;
+
             return oci_bind_by_name($this->_sth, $column, $lob, -1, OCI_B_BLOB);
-        } else if ($length !== null) {
+        } elseif ($length !== null) {
+            $this->boundValues[$column] =& $variable;
+
             return oci_bind_by_name($this->_sth, $column, $variable, $length);
         }
+
+        $this->boundValues[$column] =& $variable;
 
         return oci_bind_by_name($this->_sth, $column, $variable);
     }
@@ -272,7 +287,7 @@ class OCI8Statement implements \IteratorAggregate, Statement
             }
 
             oci_fetch_all($this->_sth, $result, 0, -1,
-                    self::$fetchModeMap[$fetchMode] | OCI_RETURN_NULLS | $fetchStructure | OCI_RETURN_LOBS);
+                self::$fetchModeMap[$fetchMode] | OCI_RETURN_NULLS | $fetchStructure | OCI_RETURN_LOBS);
 
             if ($fetchMode == PDO::FETCH_COLUMN) {
                 $result = $result[0];
@@ -289,7 +304,11 @@ class OCI8Statement implements \IteratorAggregate, Statement
     {
         $row = oci_fetch_array($this->_sth, OCI_NUM | OCI_RETURN_NULLS | OCI_RETURN_LOBS);
 
-        return isset($row[$columnIndex]) ? $row[$columnIndex] : false;
+        if (false === $row) {
+            return false;
+        }
+
+        return isset($row[$columnIndex]) ? $row[$columnIndex] : null;
     }
 
     /**
