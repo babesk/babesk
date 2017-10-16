@@ -1,9 +1,14 @@
 {extends file=$pcParent}{block name=content}
-<form align="center" action='index.php?section=Babesk|Priceclass&action=1' method='post'>
-	<input type='submit' value='Erstellen einer neuen Preisklasse' />
-</form><br>
-<form align="center" action='index.php?section=Babesk|Priceclass&action=2' method='post'>
-	<input type='submit' value='Die Preisklassen anzeigen und bearbeiten' />
-</form><br>
+	<fieldset>
+		<legend><b>Preisklassen</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Priceclass&action=1">Neue Preisklasse</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Priceclass&action=2">Preisklassen bearbeiten</a>
+			</li>
+		</ul>
+	</fieldset>
 
 {/block}

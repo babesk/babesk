@@ -11,7 +11,7 @@
 	<ul class="submodulelinkList">
 		<li>
 			<a href="index.php?module=administrator|Babesk|Recharge|RechargeCard">
-			{t}Recharge a Card{/t}
+			Karte aufladen
 			</a>
 		</li>
 		<li>
@@ -21,7 +21,7 @@
 		</li>
 		<li>
 			<a href="index.php?module=administrator|Babesk|Recharge|PrintRechargeBalance">
-				{t}Print Recharge Balance{/t}
+				Übersicht aller Aufladungen
 			</a>
 		</li>
 	</ul>

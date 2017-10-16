@@ -125,8 +125,7 @@ class BabeskTimeSettings extends Babesk {
 	 */
 	protected function changeDataFormDisplay($data) {
 
-		$this->_interface->showWarning('Verändern sie die folgenden Daten nur, wenn sie wissen was sie tun; Sonst können die Schüler keine Mahlzeiten mehr bestellen!');
-		$this->_interface->showWarning('Wenn sie nicht wissen, was strtotime() ist, dann sollten sie das folgende auf keinen Fall bearbeiten!');
+		$this->_interface->showWarning('Verändern Sie die folgenden Daten nur, wenn Sie wissen, was Sie tun! Bei einer ungültigen Eingabe sind keine Bestellungen mehr möglich.');
 
 		$this->_smarty->assign("displayMealsStartdate",
 			$data['displayMealsStartdate']);

@@ -2,19 +2,23 @@
 	<!-- the initial menu-->
 
 	<fieldset>
-	<legend><b></b></legend>
-	<form action="index.php?section=Babesk|Checkout&action=1" method="post">
-		<input type="submit" value="Ausgabe" />
-	</form>
+	<legend><b>Ausgabe</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Checkout&action=1">Ausgabe</a>
+			</li>
+		</ul>
 	</fieldset>
 	<fieldset>
 	<legend><b>Einstellungen</b></legend>
-	<form action="index.php?section=Babesk|Checkout&action=2" method="post">
-		<input type="submit" value="Ausgabe-Einstellungen ver&auml;ndern" />
-	</form>
-	<form action="index.php?section=Babesk|Checkout&action=4" method="post">
-		<input type="submit" value="Farbkennzeichnung anpassen" />
-	</form>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Checkout&action=2">Ausgabe-Einstellungen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Checkout&action=4">Farbkennzeichnung</a>
+			</li>
+		</ul>
 	</fieldset>
 	<br><br>
 	{/block}

@@ -3,29 +3,32 @@
 <h3>Mahlzeiten</h3>
 
 <!-- the initial menu-->
-<form action="index.php?section=Babesk|Meals&action=1" method="post">
-	<input class="btn btn-default" type="submit" value="Eine neue Mahlzeit erstellen" />
-</form>
-<br />
-<form action="index.php?section=Babesk|Meals&action=2" method="post">
-	<input class="btn btn-default" type="submit" value="Die Mahlzeiten anzeigen" />
-</form>
-<br />
-<form action="index.php?section=Babesk|Meals&action=3" method="post">
-	<input class="btn btn-default" type="submit" value="Die Bestellungen anzeigen" />
-</form>
-<br />
-<form action="index.php?module=administrator|Babesk|Meals|EditMenuInfotexts"
-	method="post">
-<input class="btn btn-default" type="submit" value="Infotexte f&uuml;r Speiseplan editieren" />
-</form>
-<br />
-<form action="index.php?module=administrator|Babesk|Meals|MaxOrderAmount"
-	method="post">
-<input class="btn btn-default" type="submit" value="Maximale Anzahl Bestellungen pro Tag setzen" />
-</form>
-<br />
-<form action="index.php?section=Babesk|Meals&action=4" method="post">
-<input class="btn btn-danger" type="submit" value="Alte Mahlzeiten und Bestellungen löschen" />
-</form>
+	<fieldset>
+		<legend><b>Mahlzeitenverwaltung</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Meals&action=1">Neue Mahlzeit erstellen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Meals&action=2">Mahlzeiten bearbeiten</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Meals&action=3">Bestellungen anzeigen</a>
+			</li>
+		</ul>
+	</fieldset>
+	<fieldset>
+		<legend><b>Erweiterte Einstellungen</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?module=administrator|Babesk|Meals|EditMenuInfotexts">Infotexte</a>
+			</li>
+			<li>
+				<a href="index.php?module=administrator|Babesk|Meals|MaxOrderAmount">Maximale Anzahl an Bestellungen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Meals&action=4">Alte Mahlzeiten löschen</a>
+			</li>
+		</ul>
+	</fieldset>
 {/block}

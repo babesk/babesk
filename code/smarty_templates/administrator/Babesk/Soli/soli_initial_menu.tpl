@@ -3,34 +3,39 @@
 
 	<fieldset>
 	<legend><b>Gutscheinverwaltung</b></legend>
-	<form action="index.php?section=Babesk|Soli&action=1" method="post">
-		<input type="submit" value="Ein neuen Coupon für einen Benutzer hinzufügen." />
-	</form>
-	<form action="index.php?section=Babesk|Soli&action=2" method="post">
-		<input type="submit" value="Gutscheine Anzeigen" />
-	</form>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=1">Coupon erstellen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=2">Coupons anzeigen</a>
+			</li>
+		</ul>
 	</fieldset>
 	<fieldset>
 	<legend><b>Benutzer</b></legend>
-	<form action="index.php?section=Babesk|Soli&action=3" method="post">
-		<input type="submit" value="Soli-Benutzer anzeigen" />
-	</form>
-	<form action="index.php?section=Babesk|Soli&action=8" method="post">
-		<input type="submit" value="Alle Bestellungen als PDF ausgeben" />
-	</form>
-	<form action="index.php?section=Babesk|Soli&action=4" method="post">
-		<input type="submit" value="Bestellungen eines Benutzers für eine Bestimmte Woche anzeigen" />
-	</form>
-	<form action="index.php?section=Babesk|Soli&action=7" method="post">
-		<input type="submit" value="Bestellungen r&uuml;ckwirkend &uuml;bernehmen" />
-	</form>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=3">Soli-Nutzer anzeigen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=8">Alle Bestellungen als PDF ausgeben</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=4">Bestellung für einen Nutzer in einer Woche anzeigen</a>
+			</li>
+			<li>
+				<a href="index.php?section=Babesk|Soli&action=7">Bestellungen r&uuml;ckwirkend &uuml;bernehmen</a>
+			</li>
+		</ul>
 	</fieldset>
 	<fieldset>
 	<legend><b>Einstellungen</b></legend>
-	<form action="index.php?module=administrator|Babesk|Soli|Settings"
-			method="post">
-		<input type="submit" value="Die Soli-Einstellungen verändern" />
-	</form>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?module=administrator|Babesk|Soli|Settings">Einstellungen</a>
+			</li>
+		</ul>
 	</fieldset>
 	<br><br>
 	{/block}
