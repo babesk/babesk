@@ -90,6 +90,10 @@ class Soli extends Babesk {
 					else 
 						$soliInterface->AskWeekForPdf();
 					break;
+				case 9: //Show Orders of the user while the Coupon was active
+					if(isset($_GET['ID'])){
+						$soliProcessing->showOrdersByCoupon($_GET['ID']);
+					}
 			}
 
 		}

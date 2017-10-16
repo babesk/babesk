@@ -1,5 +1,5 @@
 {extends file=$soliParent}{block name=content}
-<table cellpadding='10' cellspacing='10'>
+<table cellpadding='10' cellspacing='10' class="table table-responsive table-striped">
 	<thead> 
 		<tr> 
 			<th align="center">ID</th>
@@ -16,8 +16,10 @@
 			<td align="center">{$coupon['username']}</td>
 			<td align="center">{$coupon['startdate']}</td>
 			<td align="center">{$coupon['enddate']}</td>
+			<td align="center"><form action="index.php?section=Babesk|Soli&action=9&ID={$coupon['ID']}" method="post">
+                    <input class="btn btn-xs btn-default" type="submit" value="Bestellungen"></form></td>
 			<td align="center"><form action='index.php?section=Babesk|Soli&action=5&ID={$coupon["ID"]}' method='post'>
-				<input type="submit" value='löschen'>
+				<input class="btn btn-xs btn-danger" type="submit" value='löschen'>
 			</form></td>
 		</tr>
 	{/foreach}

@@ -64,7 +64,7 @@ class SoliOrderManager extends TableManager {
 	 */
 	function getOrdersBetMealdate($startdate, $enddate) {
 		///@todo sicher das Timestamp hier von MySQL automatisch konvertiert wird?
-		return parent::getTableData(sprintf('mealdate BETWEEN %s AND %s', $startdate, $enddate));
+		return parent::getTableData(sprintf('date BETWEEN "%s" AND "%s"', $startdate, $enddate));
 	}
 
 	function getOrdersByUserandMealdate($uid, $date) {

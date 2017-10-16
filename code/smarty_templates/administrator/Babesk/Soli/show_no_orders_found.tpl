@@ -1,5 +1,5 @@
 {extends file=$soliParent}{block name=content}
-<h3 align=center>{$name} - Essenszuschuss f&uuml;r KW {$ordering_date}</h3><br>
+<h3 align=center>{$name} - Essenszuschuss f&uuml;r den Zeitraum {$start} - {$end}</h3><br>
 {literal}
 <style>
 td {

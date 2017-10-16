@@ -226,49 +226,11 @@ class AdminSoliProcessing {
 	 * @param $uid the UserID of the soli-user who ordered meals
 	 */
 	function ShowSoliOrdersByDate($weeknum, $uid) {
-		require_once PATH_ACCESS . '/UserManager.php';
-		$userManager = new UserManager();
-		if ($weeknum && $uid) {
-
-			$orders = array();
-			$monday = getFirstDayOfWeek(date('Y'), $weeknum);
-			$sum_pricediff = 0.00;
-			$secs_per_day = 86400;
-
-			for ($i = 0; $i < 5; $i++) {
-				$buffer = array();
-				try {
-					$buffer = $this->soliOrderManager->
-						getOrdersByUserandMealdate($uid, date('Y-m-d',
-							$monday + ($i * $secs_per_day)));
-				} catch (MySQLVoidDataException $e) {
-				//	$this->soliInterface->showMsg($this->msg['ERR_ORDERS_NOT_FOUND']);
-				}
-				foreach ($buffer as $order)
-					$orders[] = $order;
-			}
-			$username = $userManager->getForename($uid) . ' ' . $userManager->getName($uid);
-			if (!count($orders)) {
-				//$this->soliInterface->dieError($this->msg['ERR_ORDERS_NOT_FOUND']);
-				$this->soliInterface->ShowNoOrdersFound($weeknum, $username);
-			} else {
-			foreach ($orders as &$order) {
-				$sum_pricediff += $order['mealprice'] - $order['soliprice'];
-			}
-
-
-			$this->soliInterface->ShowSpecOrders($orders, $weeknum, $username, $sum_pricediff);
-			}
-		} else {
-			try {
-				//Show Form to fill out Weeknumber and Soli
-				$solis = $userManager->getAllSoli();
-			} catch (Exception $e) {
-				$this->soliInterface->dieError($this->msg['ERR_USER_NO_SOLI_FOUND']);
-			}
-			$this->soliInterface->AskShowSoliUser($solis);
-		}
-
+        $dto = new DateTime();
+        $startday = $dto->setISODate(date('Y'), $weeknum)->format('Y-m-d');
+        $endday = $dto->modify('+6 days')->format('Y-m-d');
+        $this->showSoliOrdersByUserAndDate($startday, $endday, $uid);
+            //weeknum->firstDay, lastDay
 	}
 
 	/**
@@ -374,6 +336,59 @@ class AdminSoliProcessing {
 		$pdf->create($title, $pdf_content);
 		$pdf->output();
 	}
+
+	public function showOrdersByCoupon($id){
+	    $couponRep = $this->soliCouponManager->getAllCoupons();
+	    foreach ($couponRep as $c){
+	        if($c['ID'] == $id){
+	            $coupon = $c;
+            }
+        }
+	    $this->showSoliOrdersByUserAndDate($coupon['startdate'], $coupon['enddate'], $coupon['UID']);
+    }
+
+    public function showSoliOrdersByUserAndDate($startdate, $enddate, $uid){
+        require_once PATH_ACCESS . '/UserManager.php';
+        $userManager = new UserManager();
+        if ($startdate && $enddate && $uid) {
+
+            $orders = array();
+            $sum_pricediff = array_fill(0,3,0);
+
+            try {
+                $buffer = $this->soliOrderManager->getOrdersBetMealdate($startdate, $enddate);
+            }catch (Exception $e){
+                $buffer = array();
+            }
+            foreach ($buffer as $order){
+                if($order['UID'] == $uid){
+                    $orders[] = $order;
+                }
+            }
+            $username = $userManager->getForename($uid) . ' ' . $userManager->getName($uid);
+            if (!count($orders)) {
+                //$this->soliInterface->dieError($this->msg['ERR_ORDERS_NOT_FOUND']);
+                $this->soliInterface->ShowNoOrdersFound(formatDate($startdate), formatDate($enddate), $username);
+            } else {
+                foreach ($orders as &$order) {
+                    $sum_pricediff[0] += $order['mealprice'];
+                    $sum_pricediff[1] += $order['soliprice'];
+                    $sum_pricediff[2] += $order['mealprice'] - $order['soliprice'];
+                }
+
+
+                $this->soliInterface->ShowSpecOrders($orders, formatDate($startdate), formatDate($enddate), $username, $sum_pricediff);
+            }
+        } else {
+            try {
+                //Show Form to fill out Weeknumber and Soli
+                $solis = $userManager->getAllSoli();
+            } catch (Exception $e) {
+                $this->soliInterface->dieError($this->msg['ERR_USER_NO_SOLI_FOUND']);
+            }
+            $this->soliInterface->AskShowSoliUser($solis);
+        }
+    }
 
 	/**
 	 * Object of class AdminSoliInterface

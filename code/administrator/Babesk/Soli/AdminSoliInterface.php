@@ -42,16 +42,18 @@ class AdminSoliInterface extends AdminInterface {
 	 * @param float $sum_pricediff The overall Pricedifference of all orders (difference between soli_price and standard-
 	 * mealprice
 	 */
-	function ShowSpecOrders($orders, $weeknum, $username, $sum_pricediff) {
+	function ShowSpecOrders($orders, $startdate, $enddate, $username, $sum_pricediff) {
 		$this->smarty->assign('orders', $orders);
-		$this->smarty->assign('ordering_date', $weeknum);
+		$this->smarty->assign('start', $startdate);
+        $this->smarty->assign('end', $enddate);
 		$this->smarty->assign('name', $username);
 		$this->smarty->assign('sum', $sum_pricediff);
 		$this->smarty->display($this->tplFilePath.'show_orders.tpl');
 	}
 	
-	function ShowNoOrdersFound($weeknum, $username) {
-		$this->smarty->assign('ordering_date', $weeknum);
+	function ShowNoOrdersFound($startdate, $enddate, $username) {
+		$this->smarty->assign('start', $startdate);
+		$this->smarty->assign('end', $enddate);
 		$this->smarty->assign('name', $username);
 		$this->smarty->display($this->tplFilePath.'show_no_orders_found.tpl');
 	}
