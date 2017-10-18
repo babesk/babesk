@@ -5,15 +5,25 @@
 	{foreach $solis as $soli}
 		<option value='{$soli.ID}'> {$soli.forename} {$soli.name}</option>
 	{/foreach}
-	</select><br>
+	</select><br><br>
 	
-	<h4>Gültigkeitsbereich:</h4>
-	Von:<br>
-	{html_select_date prefix='StartDate' end_year="+1"}<br>
-	Bis:<br>
-	{html_select_date prefix='EndDate' end_year="+1"}<br>
+	<fieldset>
+		<legend>Gültigkeitsbereich</legend>
+	<b>Von:</b><br>
+	<input id="meal-date" name="startDate" class="datepicker"
+		   data-date-format="dd.mm.yyyy" /><br>
+	<b>Bis</b><br>
+	<input id="meal-date" name="endDate" class="datepicker"
+		   data-date-format="dd.mm.yyyy" /><br>
 	<input type="submit" value="Absenden" />
 </form>
+	</fieldset>
+{/block}
+
+{block name=style_include append}
+
+	<link rel="stylesheet" type="text/css" href="{$path_css}/datepicker3.css">
+
 {/block}
 
 {block name=js_include append}
@@ -33,5 +43,11 @@ $(document).ready(function() {
 <script type="text/javascript" src="{$path_js}/vendor/bootstrap-switch.min.js"></script>
 <script type="text/javascript" src="{$path_js}/vendor/bootstrap-multiselect.min.js"></script>
 <script type="text/javascript" src="{$path_js}/vendor/bootbox.min.js"></script>
-
+	<script type="text/javascript" src="{$path_js}/vendor/datepicker/bootstrap-datepicker.min.js"></script>
+	<script type="text/javascript">
+        $(document).ready(function() {
+            $('.datepicker').datepicker({
+            });
+        });
+	</script>
 {/block}

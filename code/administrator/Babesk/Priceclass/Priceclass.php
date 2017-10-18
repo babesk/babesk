@@ -32,8 +32,6 @@ class Priceclass extends Babesk {
 		$pcInterface = new AdminPriceclassInterface($this->relPath);
 		$pcProcessing = new AdminPriceclassProcessing($pcInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD']) {
-
 			switch ($_GET['action']) {
 				case 1:
 					$pcProcessing->NewPriceclass();
@@ -48,12 +46,8 @@ class Priceclass extends Babesk {
 					$pcProcessing->ChangePriceclass($_GET['where']);
 					break;
 				default:
-					$pcInterface->dieError('Wrong value of action');
+                    $pcInterface->Menu();
 			}
-		}
-		else {
-			$pcInterface->Menu();
-		}
 	}
 }
 

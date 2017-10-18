@@ -34,14 +34,15 @@ class Soli extends Babesk {
 		$soliInterface = new AdminSoliInterface($this->relPath);
 		$soliProcessing = new AdminSoliProcessing($soliInterface);
 
-		if (('POST' == $_SERVER['REQUEST_METHOD']) && isset($_GET['action'])) {
+		if (isset($_GET['action'])) {
 			$action = $_GET['action'];
 			switch ($action) {
 				case 1: //add coupon
 					if (isset($_POST['UID']) && isset($_POST['StartDateYear']))
-						$soliProcessing->AddCoupon($_POST['StartDateYear'] . '-' . $_POST['StartDateMonth'] . '-' .
-							$_POST['StartDateDay'], $_POST['EndDateYear'] . '-' . $_POST['EndDateMonth'] . '-' . $_POST[
-							'EndDateDay'], $_POST['UID']);
+						$soliProcessing->AddCoupon(
+								date('Y-m-d', strtotime($_POST['startDate'])),
+								date('Y-m-d', strtotime($_POST['endDate'])),
+								$_POST['UID']);
 					else
 						$soliProcessing->AddCoupon(NULL, NULL, NULL);
 					break;

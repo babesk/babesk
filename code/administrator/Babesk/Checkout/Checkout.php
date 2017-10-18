@@ -30,7 +30,7 @@ class Checkout extends Babesk {
 		$checkoutInterface = new AdminCheckoutInterface($this->relPath);
 		$checkoutProcessing = new AdminCheckoutProcessing($checkoutInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD'] && isset($_GET['action'])){
+		if (isset($_GET['action'])){
 			$action = $_GET['action'];
 			switch ($action){
 				case 1: //Checkout

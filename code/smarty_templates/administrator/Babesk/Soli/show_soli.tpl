@@ -1,10 +1,9 @@
 {extends file=$soliParent}{block name=content}
 
-<p>Um die Benutzer zu verändern oder zu löschen, benutzen sie bitte das Benutzer-Modul</p>
 
-<table>
+<table style="text-align: center;" class="table table-responsive table-striped">
 	<thead>
-		<tr bgcolor='#33CFF'>
+		<tr>
 			<th align='center'>ID</th>
 			<th align='center'>Vorname</th>
 			<th align='center'>Name</th>
@@ -17,7 +16,7 @@
 	</thead>
 	<tbody>
 		{foreach $users as $user}
-		<tr bgcolor='#FFC33'>
+		<tr>
 			<td align="center">{$user.ID}</td>
 			<td align="center">{$user.forename}</td>
 			<td align="center">{$user.name}</td>
@@ -26,7 +25,7 @@
 			<td align="center">{$user.credit}</td>
 			<td align="center">{$user.groupname}</td>
 			<td align="center">{$user.last_login}</td>
-			<td align="center" bgcolor='#FFD99'>
+			<td align="center">
 			</td>
 		</tr>
 		{/foreach}
