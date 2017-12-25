@@ -33,7 +33,7 @@ class CopyOldOrdersToSoli {
 			self::upload();
 
 			self::errorsShow();
-			self::$_interface->dieMsg('Die Bestellungen wurden erfolgreich verarbeitet.');
+			//self::$_interface->dieMsg('Die Bestellungen wurden erfolgreich verarbeitet.');
 
 		} catch (Exception $e) {
 			self::$_interface->dieError('Konnte die alten Bestellungen nicht verarbeiten.' . $e->getMessage());
@@ -115,6 +115,8 @@ class CopyOldOrdersToSoli {
 		TableMng::getDb()->autocommit(false);
 		
 		$chargeArr = array();
+		$user = null;
+		$changedMeals = array();
 
 		$stmt = TableMng::getDb()->prepare(
 			'INSERT INTO `BabeskSoliOrders`
@@ -125,7 +127,10 @@ class CopyOldOrdersToSoli {
 		foreach(self::$_soliData as $order) {
 			if(self::soliDataCheck($order)) {
 
+
 				$price = self::solipriceFetch($order['pc_ID']);
+				$order['soliprice'] = $price;
+				$changedMeals[] = $order;
 
 				$stmt->bind_param('sssssssss', $order['orderId'], $order['userId'],
 					$order['mealdate'], $order['ordertime'], $order['fetched'],
@@ -135,20 +140,22 @@ class CopyOldOrdersToSoli {
 					//good for us
 				}
 				else {
-					echo $stmt->error;
-					throw new Exception(
-						'Could not execute an upload successfully');
-				}
+                    echo $stmt->error;
+                    throw new Exception(
+                        'Could not execute an upload successfully');
+                }
 				
 				$userRep = self::$_em->getRepository("DM:SystemUsers");
 				$user = $userRep->findOneById($order['userId']);
 				$curAmount = $user->getCredit();
 				$diff = $order['price'] - $price;
 				$user->setCredit($curAmount + $diff);
-				if(isset($chargeArr[$order['userId']]))
-					$chargeArr[$order['userId']] += $diff;
-				else 
-					$chargeArr[$order['userId']] = $diff;
+				if(isset($chargeArr[$order['userId']])) {
+                    $chargeArr[$order['userId']]['amount'] += $diff;
+				}else {
+                    $chargeArr[$order['userId']]['amount'] = $diff;
+                }
+                $chargeArr[$order['userId']]['name'] = $user->getForename() . " " . $user->getName();
 			}
 		}
 		/**
@@ -158,12 +165,13 @@ class CopyOldOrdersToSoli {
 		*	file_put_contents("recharge_credit_sql.txt", "UPDATE systemusers SET credit = credit + ".$value." WHERE ID = ".$key.";\r\n", FILE_APPEND);
 		*}
 		*/
-		
-		$stmt->close();
-		self::$_em->persist($user);
-		self::$_em->flush();
-
+        $stmt->close();
+		if($user) {
+            self::$_em->persist($user);
+            self::$_em->flush();
+        }
 		TableMng::getDb()->autocommit(true);
+		self::$_interface->ResultsCopyOldOrdersToSoli($changedMeals, $chargeArr);
 	}
 
 	/**
