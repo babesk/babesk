@@ -36,11 +36,6 @@
 			</a>
 		</li>
 		<li>
-			<a href="index.php?module=administrator|System|User|UserCsvImport">
-				{t}Import Users by a CSV-File{/t}
-			</a>
-		</li>
-		<li>
 			<a href="index.php?module=administrator|System|User|ResetAllUserPasswords">
 				{t}Reset passwords of users to preset passwords{/t}
 			</a>
