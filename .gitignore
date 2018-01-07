@@ -28,6 +28,7 @@
 #OS-specific files we do not want#
 ##################################
 .directory
+.idea
 
 #third-party-librarys of the project,#
 #generating runtime-based files      #

@@ -32,9 +32,10 @@ td {
 			<td>{sprintf("%01.2f", ($order.mealprice - $order.soliprice))}€</td>
 		</tr>
 	{/foreach}
+		<tr><td></td><td></td><td></td><td></td><td></td></tr>
 		<tr>
 			<td><b>Summe</b></td>
-			<td></td>
+			<td>{$sum[3]} Bestellungen</td>
 			<td>{sprintf("%01.2f", $sum[0])}€</td>
 			<td>{sprintf("%01.2f", $sum[1])}€</td>
 			<td>{sprintf("%01.2f", $sum[2])}€</td>

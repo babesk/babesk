@@ -1,6 +1,6 @@
 <html>
 {block name=content}
-<h3 align=center>Essenszuschuss f&uuml;r {if $weekMode} {$ordering_date}. KW {'Y'|date}{else} {$ordering_date} {'Y'|date}{/if}</h3><br>
+<h3 align=center>Essenszuschuss f&uuml;r {if $weekMode} {$ordering_date}. KW {$year}{else} {$ordering_date} {$year}{/if}</h3><br>
 <p>Differenz zwischen normalem Preis und Soli-Preis gesamt:  <b>{sprintf("%01.2f", $sum)}€</b><p>	
 {foreach $SoliOrders as $SoliOrder name=soli}
 

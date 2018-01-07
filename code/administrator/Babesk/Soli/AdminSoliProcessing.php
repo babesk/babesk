@@ -274,10 +274,11 @@ class AdminSoliProcessing {
 	/**
 	 * Creates an PDF with the Orders of all SoliUsers in a given week or month.
 	 * @param $kw week/month number
+     * @param $year
 	 * @param $weekMode true, if filtered by week
 	 * 					false, if filtered by month
 	 */
-	function AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $kw, $weekMode) {
+	function AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $kw, $year, $weekMode) {
 		require_once PATH_ACCESS . '/UserManager.php';
 		require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
 		$userManager = new UserManager();
@@ -286,12 +287,12 @@ class AdminSoliProcessing {
 		$smarty = $dataContainer->getSmarty();
 		
 		if($weekMode){
-			$firstDay = getFirstDayOfWeek(date('Y'), $kw);
+			$firstDay = getFirstDayOfWeek($year, $kw);
 			$days = 5;
 			$title = "SoliBestellungen Kalenderwoche " . $kw;
 		}else{
-			$firstDay = mktime(0,0,0,$kw,1,date('Y'));
-			$days = cal_days_in_month(CAL_GREGORIAN, $kw, date('Y'));
+			$firstDay = mktime(0,0,0,$kw,1,$year);
+			$days = cal_days_in_month(CAL_GREGORIAN, $kw, $year);
 			$month_ger = array('Januar','Februar','März', 'April','Mai','Juni', 'Juli','August','September', 'Oktober','November','Dezember');
 			$title = "SoliBestellungen " . $month_ger[$kw-1];
 			$kw = $month_ger[$kw-1] ;
@@ -331,6 +332,7 @@ class AdminSoliProcessing {
 		$smarty->assign('weekMode', $weekMode);
 		$smarty->assign('ordering_date', $kw);
 		$smarty->assign('sum', $sum_pricediff);
+		$smarty->assign('year', $year);
 		$pdf_content = $smarty->fetch(PATH_SMARTY_TPL.'/pdf/orders_of_soliuser_per_week.pdf.tpl');
 		$pdf = new GeneralPdf($pdo);
 		$pdf->create($title, $pdf_content);
@@ -353,7 +355,7 @@ class AdminSoliProcessing {
         if ($startdate && $enddate && $uid) {
 
             $orders = array();
-            $sum_pricediff = array_fill(0,3,0);
+            $sum_pricediff = array_fill(0,4,0);
 
             try {
                 $buffer = $this->soliOrderManager->getOrdersBetMealdate($startdate, $enddate);
@@ -374,6 +376,7 @@ class AdminSoliProcessing {
                     $sum_pricediff[0] += $order['mealprice'];
                     $sum_pricediff[1] += $order['soliprice'];
                     $sum_pricediff[2] += $order['mealprice'] - $order['soliprice'];
+                    $sum_pricediff[3]++;
                 }
 
 

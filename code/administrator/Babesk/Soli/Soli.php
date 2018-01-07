@@ -84,10 +84,10 @@ class Soli extends Babesk {
 						$soliInterface->AskCopyOldOrdersToSoli();
 					break;
 				case 8: //Download SoliOrders of all Users for a specific week/month
-					if(isset($_POST['ordering_kw']))
-						$soliProcessing->AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $_POST['ordering_kw'], true);
-					elseif (isset($_POST['ordering_month']))
-						$soliProcessing->AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $_POST['ordering_month'], false);
+					if(isset($_POST['ordering_kw']) && isset($_POST['Year']))
+						$soliProcessing->AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $_POST['ordering_kw'], $_POST['Year'], true);
+					elseif (isset($_POST['ordering_month']) && isset($_POST['Year']))
+						$soliProcessing->AllSoliOrdersToPDFByWeekOrMonth($dataContainer, $_POST['ordering_month'], $_POST['Year'], false);
 					else 
 						$soliInterface->AskWeekForPdf();
 					break;
