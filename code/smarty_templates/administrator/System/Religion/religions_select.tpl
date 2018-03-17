@@ -1,12 +1,17 @@
 {extends file=$ReligionParent}{block name=content}
-<p>Bitte wählen sie aus, was sie tun möchten:</p><br>
-<form action="index.php?section=System|Religion&action=1" method="post">
-	<input type="submit" value="Konfessionen editieren">
-</form>
-<form action="index.php?section=System|Religion&action=3" method="post">
-	<input type="submit" value="Konfessionen den Benutzern zuordnen">
-</form>
-<form action="index.php?section=System|Religion&action=5" method="post">
-	<input type="submit" value="Konfessionen mit Inventarnummer(n) zuordnen">
-</form>
+<h2 class='module-header'>Religionseinstellungen</h2>
+<fieldset>
+	<legend>Aktionen</legend>
+	<ul class="submodulelinkList">
+		<li>
+			<a href="index.php?section=System|Religion&action=1">Konfessionen editieren</a>
+		</li>
+		<li>
+			<a href="index.php?section=System|Religion&action=3">Konfessionen den Benutzern zuordnen</a>
+		</li>
+		<li>
+			<a href="index.php?section=System|Religion&action=5">Konfessionen mit Inventarnummer(n) zuordnen</a>
+		</li>
+	</ul>
+</fieldset>
 {/block}

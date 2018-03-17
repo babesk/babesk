@@ -1,6 +1,6 @@
 {extends file=$ReligionParent}{block name=content}
 
-<h3 class="module-header">Religionszugehörigkeiten festsetzen</h3>
+<h2 class="module-header">Religionszugehörigkeiten festsetzen</h2>
 
 <table width=100%>
 <tr><th>{$navbar}</th></tr>
@@ -24,7 +24,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		{foreach $users as $user}
+		{foreach $users as $user}+
 		<tr>
 			<td>{$user.ID}</td>
 			<td>{$user.forename}</td>
@@ -42,7 +42,7 @@
 		{/foreach}
 	</tbody>
 </table>
-<input id="submit" class="btn btn-default" onclick="submit()" type="submit" value="Speichern" />
+<input id="submit" class="btn btn-primary" onclick="submit()" type="submit" value="Speichern" />
 </form>
 
 {/block}
