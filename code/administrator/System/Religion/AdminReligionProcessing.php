@@ -32,17 +32,18 @@ class AdminReligionProcessing {
 			$religions = $globalSettingsManager->getReligion();
 			$religions_exploded = explode("|", $religions);
 			$this->ReligionInterface->ShowReligions($religions_exploded);
-		}
-		else {
+		} else {
 			$religions="";
 			for ($i = 1; $i <= $editOrShow['relcounter']; $i++) {
 				if (!$editOrShow['rel'.$i]=="") {
 					$religions.=$editOrShow['rel'.$i]."|";
 				}
 			}
-			if(sizeof($religions)>0) $religions = substr($religions, 0,strlen($religions)-1);
+			if(sizeof($religions)>0) {
+                $religions = substr($religions, 0, strlen($religions) - 1);
+            }
 			$globalSettingsManager->setReligion($religions);
-			$this->ReligionInterface->ShowReligionsSet($religions);
+			$this->EditReligions(0);
 		}
 
 	}
@@ -68,6 +69,7 @@ class AdminReligionProcessing {
 			$nextPointer = $showPage*10-10;
 			$users = $userManager->getUsersSorted($nextPointer,$filter);
 		} catch (Exception $e) {
+			echo($e);
 			$this->logs
 					->log('ADMIN', 'MODERATE',
 							sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));

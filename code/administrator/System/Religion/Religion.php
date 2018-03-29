@@ -26,7 +26,7 @@ class Religion extends System {
 		$ReligionInterface = new AdminReligionInterface($this->relPath);
 		$ReligionProcessing = new AdminReligionProcessing($ReligionInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD']) {
+
 			$action = $_GET['action'];
 			switch ($action) {
 				case 1: //edit the confession list
@@ -48,21 +48,9 @@ class Religion extends System {
 				case 5: //edit user via cardscan
 					$ReligionProcessing->AssignConfessionWithCardscan($_POST);
 					break;
-				}
-		} elseif  (('GET' == $_SERVER['REQUEST_METHOD'])&&isset($_GET['action'])) {
-					$action = $_GET['action'];
-					switch ($action) {
-						case 3: //show the users
-					if (isset($_GET['filter'])) {
-						$ReligionProcessing->ShowUsers($_GET['filter']);
-					} else {
-						$ReligionProcessing->ShowUsers("name");
-					}
-					}
-
-		} else {
-			$ReligionInterface->ShowSelectionFunctionality();
-		}
+				default:
+                    $ReligionInterface->ShowSelectionFunctionality();
+			}
 	}
 }
 
