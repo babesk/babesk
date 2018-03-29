@@ -147,6 +147,7 @@ $(document).ready(function() {
 		var toPay = parseFloat($row.children('td.payment-to-pay').text());
 		$modal.find('.username').html(username);
 		$modal.find('.credits-before').html(toPay.toFixed(2) + '€');
+		$modal.find('input#to-pay-change-input').val(toPay.toFixed(2));
 		var $input = $modal.find('input#credits-change-input');
 		$input.val(paid.toFixed(2));
 		$input.data('user-id', userId);
@@ -159,6 +160,7 @@ $(document).ready(function() {
 		var $modal = $('#credits-change-modal');
 		var $input = $modal.find('input#credits-change-input');
 		var amount = $input.val().replace(",", ".");
+		var $topay = $modal.find('input#to-pay-change-input').val().replace(",", ".");
 		var userId = $input.data('user-id');
 
 		$.ajax({
@@ -167,7 +169,8 @@ $(document).ready(function() {
 				RecordReceipt',
 			'data': {
 				"userId": userId,
-				"amount": amount
+				"amount": amount,
+				"to-pay": $topay
 			},
 			'success': success,
 			'error': error,
@@ -201,6 +204,7 @@ $(document).ready(function() {
 				$textCont.prepend('Überschuss!');
 			}
 			$textCont.removeClass().addClass(col);
+			$row.find('td.payment-to-pay').html(parseFloat(res.toPay).toFixed(2) + ' €');
 			toastr.success('Zahlungsbetrag erfolgreich verändert.');
 			$modal.modal('hide');
 		};

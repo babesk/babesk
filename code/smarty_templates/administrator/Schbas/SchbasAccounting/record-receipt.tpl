@@ -101,12 +101,12 @@
 							</div>
 							<input type="text" id="credits-change-input" class="form-control"
 								placeholder="Guthaben eingeben..." />
-							<div class="input-group-addon">
+							<!--<div class="input-group-addon">
 								Zu zahlen: <span class="credits-before"></span>
-							</div>
+							</div>-->
 						</div>
 					</div>
-					<div class="form-group row">
+					<!--<div class="form-group row">
 						<div class="col-sm-12">
 							<label for="credits-add-input">
 								Optional: Obrigen Wert verändern
@@ -134,8 +134,20 @@
 								</button>
 							</div>
 						</div>
-						<div class="clearfix"></div>
+					</div> -->
+					<label for="to-pay-change-input">
+						Soll-Betrag verändern:
+					</label>
+					<div class="form-group-row">
+						<div class="input-group">
+							<div class="input-group-addon">
+								<span class="fa fa-eur"></span>
+							</div>
+							<input type="text" id="to-pay-change-input" class="form-control"
+								   placeholder="Soll-Betrag eingeben..." />
+						</div>
 					</div>
+					<div class="clearfix"></div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default pull-left"
@@ -227,6 +239,12 @@
 								<a id="show-missing-amount-only" class="special-filter-item"
 									data-name="showNotPayingOnly">
 									Nur Befreite
+								</a>
+							</li>
+							<li>
+								<a id="show-missing-amount-only" class="special-filter-item"
+								   data-name="showPayedTooMuch">
+									Zu viel bezahlt
 								</a>
 							</li>
 						</ul>

@@ -50,8 +50,8 @@ class RecordReceipt extends \SchbasAccounting {
 		else if(isset($_GET['pdf-title'])) {
 			$this->pdfSend();
 		}
-		else if(isset($_POST['userId'], $_POST['amount'])) {
-			$this->paidAmountChange($_POST['userId'], $_POST['amount']);
+		else if(isset($_POST['userId'], $_POST['amount'], $_POST['to-pay'])) {
+			$this->paidAmountChange($_POST['userId'], $_POST['amount'], $_POST['to-pay']);
 		}
 		else {
 			$this->displayTpl('record-receipt.tpl');
@@ -192,6 +192,9 @@ class RecordReceipt extends \SchbasAccounting {
 			else if($options['specialFilter'] == 'showNotPayingOnly') {
 				$queryBuilder->having('lc.abbreviation = \'ls\'');
 			}
+			else if($options['specialFilter'] == 'showPayedTooMuch') {
+                $queryBuilder->having('missingAmount<0');
+            }
 		}
 		if(!empty($filter) && !empty($filterForCol)) {
 			$filters = array();
@@ -229,7 +232,7 @@ class RecordReceipt extends \SchbasAccounting {
 		return $query;
 	}
 
-	private function paidAmountChange($userId, $amount) {
+	private function paidAmountChange($userId, $amount, $toPay) {
 
 		try {
 			$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
@@ -242,13 +245,14 @@ class RecordReceipt extends \SchbasAccounting {
 			$accounting = $this->_em->getRepository('DM:SchbasAccounting')
 				->findOneBy(['user' => $user, 'schoolyear' => $schoolyear]);
 			$accounting->setPayedAmount($amount);
+			$accounting->setAmountToPay($toPay);
 			$paid = $accounting->getPayedAmount();
 			$toPay = $accounting->getAmountToPay();
 			$missing = $toPay - $paid;
 			$this->_em->persist($accounting);
 			$this->_em->flush();
 			die(json_encode(array(
-				'userId' => $userId, 'paid' => $paid, 'missing' => $missing
+				'userId' => $userId, 'paid' => $paid, 'toPay' => $toPay, 'missing' => $missing
 			)));
 
 		} catch(Exception $e) {
