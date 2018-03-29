@@ -38,7 +38,7 @@
 				<span class="input-group-addon">
 					<span class="fa fa-calendar fa-fw"></span>
 				</span>
-				<select class="form-control" name='schoolyear' size='1'>
+				<select class="form-control" name='schoolyear'>
 					{foreach $schoolyears as $schoolyear}
 						<option
 							value='{$schoolyear.ID}'
@@ -58,7 +58,7 @@
 				<span class="input-group-addon">
 					<span class="fa fa-clock-o"></span>
 				</span>
-				<select class="form-control" name='classunit' size='1'>
+				<select class="form-control" name='classunit'>
 					{foreach $classunits as $classunit}
 					<option value='{$classunit.ID}'>{$classunit.translatedName}</option>
 					{/foreach}

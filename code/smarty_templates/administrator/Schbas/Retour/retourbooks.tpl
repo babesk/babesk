@@ -113,12 +113,17 @@
 		</tbody>
 	</table>
 
+
 	{*
 	{foreach $data as $retourbook}
 		{$retourbook.title}, {$retourbook.author}, {$retourbook.publisher}. Inv.-Nr.: {$retourbook.subject} {$retourbook.year_of_purchase} {$retourbook.class} {$retourbook.bundle} / {$retourbook.exemplar}<br />
 	{/foreach}
 	*}
 </div>
+	<a class="btn btn-primary pull-right"
+		 href="index.php?module=administrator|Schbas|Retour">
+		Nächster Benutzer
+	</a>
 {/block}
 
 {block name=js_include append}

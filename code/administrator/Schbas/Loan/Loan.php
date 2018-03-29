@@ -86,8 +86,20 @@ class Loan extends Schbas {
 				'alreadyLent' => $alreadyLent
 			];
 		}
-
+        $accountingQb = $this->_em->createQueryBuilder()
+            ->select('u, a, lc')
+            ->from('DM:SystemUsers', 'u')
+            ->leftJoin(
+                'u.schbasAccounting', 'a',
+                'WITH', 'a.schoolyear = :prepSchoolyear'
+            )
+            ->leftJoin('a.loanChoice', 'lc')
+            ->where('u = :user');
+        $accountingQb->setParameter('prepSchoolyear', $prepSchoolyear);
+        $accountingQb->setParameter('user', $user);
+        $userdata = $accountingQb->getQuery()->getOneOrNullResult();
 		$this->_smarty->assign('user', $user);
+        $this->_smarty->assign('userdata', $userdata);
 		$this->_smarty->assign('formSubmitted', $formSubmitted);
 		$this->_smarty->assign('loanChoice', $loanChoice);
 		$this->_smarty->assign('userPaid', $userPaid);

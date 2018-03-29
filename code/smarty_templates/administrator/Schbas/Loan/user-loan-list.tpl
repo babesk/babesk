@@ -2,7 +2,76 @@
 {block name=content}
 
 <h3 class="module-header">Ausleihliste</h3>
-
+    {if $userdata->getSchbasAccounting() && count($userdata->getSchbasAccounting())}
+        {$accounting = $userdata->getSchbasAccounting()->first()}
+        {if $accounting->getLoanChoice()}
+            {$loanChoiceName = $accounting->getLoanChoice()->getName()}
+        {/if}
+    {/if}<div class="panel panel-default">
+	<table class="table">
+		<thead>
+		<tr>
+			<th>
+				Ausleihstatus
+			</th>
+			<th>
+				Fehlend
+			</th>
+			<th>
+				Bezahlt
+			</th>
+			<th>
+				Soll
+			</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>
+                {if $accounting}
+                    {if $loanChoiceName}
+                        {$loanChoiceName}
+                    {else}
+						???
+                    {/if}
+                {else}
+					Antrag nicht erfasst
+                {/if}
+			</td>
+			<td>
+                {if $accounting}
+                    {$missingClass = ''}
+                    {$missing = $accounting->getAmountToPay() - $accounting->getPayedAmount()}
+                    {if $missing == 0}
+                        {$missingClass = 'text-success'}
+                    {else}
+                        {$missingClass = 'text-warning'}
+                    {/if}
+					<span class="{$missingClass}">
+							{$missing} €
+						</span>
+                {else}
+					---
+                {/if}
+			</td>
+			<td>
+                {if $accounting}
+                    {$accounting->getPayedAmount()} €
+                {else}
+					---
+                {/if}
+			</td>
+			<td>
+                {if $accounting}
+                    {$accounting->getAmountToPay()} €
+                {else}
+					---
+                {/if}
+			</td>
+		</tr>
+		</tbody>
+	</table>
+	</div>
 <div class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">

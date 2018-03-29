@@ -40,22 +40,15 @@ class Retour extends Schbas {
 							'err_card_id' => 'Die Karten-ID ist fehlerhaft!',
 							'err_usr_locked' =>'Der Benutzer ist gesperrt!');
 
-		if ('GET' == $_SERVER['REQUEST_METHOD'] && isset($_GET['inventarnr'])
-		) {
+		if ('GET' == $_SERVER['REQUEST_METHOD'] && isset($_GET['inventarnr'])) {
 			try {
-				$res = $this->RetourBook(
-					urldecode(trim($_GET['inventarnr'])), $_GET['uid']
-				);
+				$res = $this->RetourBook(urldecode(trim($_GET['inventarnr'])), $_GET['uid']);
 			} catch (Exception $e) {
-				$this->_logger->logO('Could not retour book',
-					['sev' => 'error', 'moreJson' => $e->getMessage()]);
+				$this->_logger->logO('Could not retour book', ['sev' => 'error', 'moreJson' => $e->getMessage()]);
 				$res = false;
 			}
 			if(!$res) {
-				die(
-					'Konnte das Buch nicht zurückgeben. Möglicherweise '.
-					'falsch eingescannt?'
-				);
+				die('Konnte das Buch nicht zurückgeben. Möglicherweise falsch eingescannt?');
 			}
 			$this->RetourTableDataAjax($_GET['card_ID']);
 		}
@@ -94,12 +87,9 @@ class Retour extends Schbas {
 		$query->setParameter('user', $user);
 		$loanbooks = $query->getResult();
 		if(!count($loanbooks)) {
-			$this->_interface->dieMsg(
-				'Der Benutzer hat keine Bücher ausgeliehen.'
-			);
+			$this->_interface->dieMsg('Der Benutzer hat keine Bücher ausgeliehen.');
 		}
-		$grade = $this->_em->getRepository('DM:SystemUsers')
-			->getActiveGradeByUser($user);
+		$grade = $this->_em->getRepository('DM:SystemUsers')->getActiveGradeByUser($user);
 		$userData = "{$user->getForename()} {$user->getName()} ";
 		if($grade) {
 			$userData .="({$grade->getGradelevel()}{$grade->getLabel()})";
@@ -122,9 +112,7 @@ class Retour extends Schbas {
 		$this->_smarty->assign('data', $loanbooks);
 		$this->_smarty->assign('fullname',$userData);
 		$this->_smarty->assign('user', $user);
-		$this->_smarty->assign(
-			'adress', ($_SERVER['HTTP_HOST']).$_SERVER['REQUEST_URI']
-		);
+		$this->_smarty->assign('adress', ($_SERVER['HTTP_HOST']).$_SERVER['REQUEST_URI']);
 		$this->displayTpl('retourbooks.tpl');
 	}
 
