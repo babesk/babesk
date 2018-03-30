@@ -2,6 +2,19 @@
 <table width=100%>
 <tr><th align='center'>{$navbar}</th></tr>
 </table>
+	<br>
+	<form action="index.php?section=System|ForeignLanguage&action=3" method="post">
+		<div class="row col-sm-12 col-md-5 col-lg-7">
+		<span class="input-group filter-container">
+				<input name="search" id="filter" type="text" class="form-control" placeholder="Suchen..." title="{t}Search (Enter to commit){/t}" autofocus />
+				<span class="input-group-btn">
+					<button type="submit" id="search-submit" class="btn btn-default">
+						<span class="fa fa-search fa-fw"></span>
+					</button>
+				</span>
+		</span>
+		</div>
+	</form>
 
 
 <form action="index.php?section=System|ForeignLanguage&action=4"

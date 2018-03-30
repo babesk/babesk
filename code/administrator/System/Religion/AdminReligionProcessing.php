@@ -93,8 +93,38 @@ class AdminReligionProcessing {
 		$this->ReligionInterface->ShowUsers($users,$religions_exploded,$navbar);
 	}
 
+    function ShowSingleUser($uid) {
+        require_once PATH_ACCESS . '/UserManager.php';
+        require_once PATH_ACCESS . '/GroupManager.php';
+        require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 
-	function SaveUsers($post_vars) {
+        $globalSettingsManager = new globalSettingsManager();
+        $userManager = new UserManager();
+        $groupManager = new GroupManager();
+
+        try {
+
+
+            $users = $userManager->getSingleUser($uid);
+        } catch (Exception $e) {
+            $this->logs
+                ->log('ADMIN', 'MODERATE',
+                    sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));
+            $this->userInterface->dieError($this->messages['error']['get_data_failed']);
+        }
+
+
+
+
+        $religions = $globalSettingsManager->getReligion();
+        $religions_exploded = explode("|", $religions);
+
+        $this->ReligionInterface->ShowUsers($users,$religions_exploded,'');
+    }
+
+
+
+    function SaveUsers($post_vars) {
 		require_once PATH_ACCESS . '/UserManager.php';
 		$userManager = new UserManager();
 		foreach($post_vars as $key => $value) {

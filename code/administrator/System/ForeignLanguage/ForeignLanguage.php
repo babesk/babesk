@@ -15,6 +15,10 @@ class ForeignLanguage extends System {
 
 		require_once 'AdminForeignLanguageInterface.php';
 		require_once 'AdminForeignLanguageProcessing.php';
+        require_once PATH_ACCESS . '/CardManager.php';
+        require_once PATH_ACCESS . '/UserManager.php';
+        $this->cardManager = new CardManager();
+        $this->userManager = new UserManager();
 
 		$ForeignLanguageInterface = new AdminForeignLanguageInterface($this->relPath);
 		$ForeignLanguageProcessing = new AdminForeignLanguageProcessing($ForeignLanguageInterface);
@@ -30,11 +34,31 @@ class ForeignLanguage extends System {
 					// $ForeignLanguageProcessing->EditForeignLanguages($_POST);
 				break;
 				case 3: //edit the users
-					if (isset($_POST['filter'])) {
-						$ForeignLanguageProcessing->ShowUsers($_POST['filter']);
-					} else {
-						$ForeignLanguageProcessing->ShowUsers("name");
-					};
+                    $userID = null;
+                    if (isset($_POST['search']) && $_POST['search'] != "") {
+                        try {
+                            $userID = $this->cardManager->getUserID($_POST['search']);
+                        } catch (Exception $e) {
+                            $userID =  $e->getMessage();
+                        }
+                        if ($userID == 'MySQL returned no data!') {
+                            try {
+                                $userID = $this->userManager->getUserID($_POST['search']);
+                            } catch (Exception $e) {
+                                $ForeignLanguageInterface->dieError("Benutzer nicht gefunden!");
+                            }
+
+                        }
+
+                        $ForeignLanguageProcessing->ShowSingleUser($userID);
+
+                        break;
+                    }
+                    if (isset($_GET['filter'])) {
+                        $ForeignLanguageProcessing->ShowUsers($_POST['filter']);
+                    } else {
+                        $ForeignLanguageProcessing->ShowUsers("name");
+                    };
 				break;
 				case 4: //save the users
 					$ForeignLanguageProcessing->SaveUsers($_POST);

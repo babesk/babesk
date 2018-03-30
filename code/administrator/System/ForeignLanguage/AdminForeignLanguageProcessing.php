@@ -92,6 +92,34 @@ class AdminForeignLanguageProcessing {
 		$this->ForeignLanguageInterface->ShowUsers($users,$foreignLanguages_exploded,$navbar);
 	}
 
+    function ShowSingleUser($uid) {
+        require_once PATH_ACCESS . '/UserManager.php';
+        require_once PATH_ACCESS . '/GroupManager.php';
+        require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+
+        $globalSettingsManager = new globalSettingsManager();
+        $userManager = new UserManager();
+        $groupManager = new GroupManager();
+
+        try {
+
+
+            $users = $userManager->getSingleUser($uid);
+        } catch (Exception $e) {
+            $this->logs
+                ->log('ADMIN', 'MODERATE',
+                    sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));
+            $this->userInterface->dieError($this->messages['error']['get_data_failed']);
+        }
+
+
+
+
+        $foreignLanguages = $globalSettingsManager->getForeignLanguages();
+        $foreignLanguages_exploded = explode("|", $foreignLanguages);
+
+        $this->ForeignLanguageInterface->ShowUsers($users,$foreignLanguages_exploded,'');
+    }
 
 	function SaveUsers($post_vars) {
 		require_once PATH_ACCESS . '/UserManager.php';

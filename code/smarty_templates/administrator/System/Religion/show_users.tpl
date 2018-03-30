@@ -5,6 +5,19 @@
 <table width=100%>
 <tr><th>{$navbar}</th></tr>
 </table>
+	<br>
+	<form action="index.php?section=System|Religion&action=3" method="post">
+	<div class="row col-sm-12 col-md-5 col-lg-7">
+		<span class="input-group filter-container">
+				<input name="search" id="filter" type="text" class="form-control" placeholder="Suchen..." title="{t}Search (Enter to commit){/t}" autofocus />
+				<span class="input-group-btn">
+					<button type="submit" id="search-submit" class="btn btn-default">
+						<span class="fa fa-search fa-fw"></span>
+					</button>
+				</span>
+		</span>
+	</div>
+	</form>
 
 <form action="index.php?section=System|Religion&action=4"
 	method="post" onsubmit="submit()">
@@ -24,7 +37,7 @@
 		</tr>
 	</thead>
 	<tbody>
-		{foreach $users as $user}+
+		{foreach $users as $user}
 		<tr>
 			<td>{$user.ID}</td>
 			<td>{$user.forename}</td>
@@ -46,3 +59,6 @@
 </form>
 
 {/block}
+<script type="text/javascript"
+		src="{$path_js}/administrator/System/Religion/show_users.js">
+</script>
