@@ -3,7 +3,7 @@
 <!-- ACTUAL HTML -->
 
 <h3 id="module-header">
-	Bitte wählen sie in dem Menü links einen Eintrag aus.
+	Bitte wählen Sie in dem Menü links einen Eintrag aus.
 </h3>
 
 {/block}

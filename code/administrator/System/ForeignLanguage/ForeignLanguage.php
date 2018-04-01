@@ -23,65 +23,53 @@ class ForeignLanguage extends System {
 		$ForeignLanguageInterface = new AdminForeignLanguageInterface($this->relPath);
 		$ForeignLanguageProcessing = new AdminForeignLanguageProcessing($ForeignLanguageInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD']) {
-			$action = $_GET['action'];
-			switch ($action) {
-				case 1: //edit the language list
-					$this->editDisplay();
+		$action = $_GET['action'];
+		switch ($action) {
+			case 1: //edit the language list
+				$this->editDisplay();
 				break;
-				case 2: //save the language list
-					$this->editUpload($_POST);
-					// $ForeignLanguageProcessing->EditForeignLanguages($_POST);
+			case 2: //save the language list
+				$this->editUpload($_POST);
+				// $ForeignLanguageProcessing->EditForeignLanguages($_POST);
 				break;
-				case 3: //edit the users
-                    $userID = null;
-                    if (isset($_POST['search']) && $_POST['search'] != "") {
-                        try {
-                            $userID = $this->cardManager->getUserID($_POST['search']);
-                        } catch (Exception $e) {
-                            $userID =  $e->getMessage();
-                        }
-                        if ($userID == 'MySQL returned no data!') {
-                            try {
-                                $userID = $this->userManager->getUserID($_POST['search']);
-                            } catch (Exception $e) {
-                                $ForeignLanguageInterface->dieError("Benutzer nicht gefunden!");
-                            }
-
-                        }
-
-                        $ForeignLanguageProcessing->ShowSingleUser($userID);
-
-                        break;
-                    }
-                    if (isset($_GET['filter'])) {
-                        $ForeignLanguageProcessing->ShowUsers($_POST['filter']);
-                    } else {
-                        $ForeignLanguageProcessing->ShowUsers("name");
-                    };
-				break;
-				case 4: //save the users
-					$ForeignLanguageProcessing->SaveUsers($_POST);
-				break;
-				case 5: //edit user via cardscan
-					$ForeignLanguageProcessing->AssignForeignLanguageWithCardscan($_POST);
-				break;
-			}
-		} elseif  (('GET' == $_SERVER['REQUEST_METHOD'])&&isset($_GET['action'])) {
-					$action = $_GET['action'];
-					switch ($action) {
-						case 3: //show the users
-					if (isset($_GET['filter'])) {
-						$ForeignLanguageProcessing->ShowUsers($_GET['filter']);
-					} else {
-						$ForeignLanguageProcessing->ShowUsers("name");
+			case 3: //edit the users
+				$userID = null;
+				if (isset($_POST['search']) && $_POST['search'] != "") {
+					try {
+						$userID = $this->cardManager->getUserID($_POST['search']);
+					} catch (Exception $e) {
+						$userID = $e->getMessage();
 					}
+					if ($userID == 'MySQL returned no data!') {
+						try {
+							$userID = $this->userManager->getUserID($_POST['search']);
+						} catch (Exception $e) {
+							$ForeignLanguageInterface->dieError("Benutzer nicht gefunden!");
+						}
+
 					}
 
+					$ForeignLanguageProcessing->ShowSingleUser($userID);
 
-		} else {
-			$ForeignLanguageInterface->ShowSelectionFunctionality();
+					break;
+				}
+				if (isset($_GET['filter'])) {
+					$ForeignLanguageProcessing->ShowUsers($_GET['filter']);
+				} else {
+					$ForeignLanguageProcessing->ShowUsers("name");
+				};
+				break;
+			case 4: //save the users
+				$ForeignLanguageProcessing->SaveUsers($_POST);
+				break;
+			case 5: //edit user via cardscan
+				$ForeignLanguageProcessing->AssignForeignLanguageWithCardscan($_POST);
+				break;
+			default:
+				$ForeignLanguageInterface->ShowSelectionFunctionality();
 		}
+
+
 	}
 
 	/////////////////////////////////////////////////////////////////////

@@ -8,9 +8,6 @@
 		<li>
 			<a href="index.php?section=Schbas|SchbasSettings&amp;action=editBankAccount">Bankverbindung</a>
 		</li>
-		<li>
-			<a href="index.php?section=Schbas|SchbasSettings&amp;action=3">Termine</a>
-		</li>
 	</ul>
 </fieldset>
 
@@ -29,21 +26,11 @@
 		<li>
 			<a href="index.php?section=Schbas|SchbasSettings&amp;action=previewInfoDocs">Vorschau der Informationsschreiben</a>
 		</li>
-		<li>
+		<!--<li>
 			<a href="index.php?section=Schbas|SchbasSettings&amp;action=setReminder">Mahnung</a>
-		</li>
+		</li>-->
 	</ul>
 </fieldset>
 
-<fieldset>
-	<legend>Systemstatus</legend>
-	<ul class="submodulelinkList">
-		<li>
-			<a href="index.php?section=Schbas|SchbasSettings&amp;action=7">
-				Rückmeldeformular aktivieren
-			</a>
-		</li>
-	</ul>
-</fieldset>
 
 {/block}

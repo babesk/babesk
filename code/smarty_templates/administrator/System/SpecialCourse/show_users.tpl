@@ -9,10 +9,9 @@
 
 <form action="index.php?section=System|SpecialCourse&action=4"
 	method="post" onsubmit="submit()">
-	<fieldset>
-<table>
+<table class="table table-striped table-hover">
 	<thead>
-		<tr bgcolor='#33CFF'>
+		<tr>
 			<th align='center'><a href="index.php?section=System|SpecialCourse&action=3&filter=ID">ID</a></th>
 			<th align='center'><a href="index.php?section=System|SpecialCourse&action=3&filter=forename">Vorname</a></th>
 			<th align='center'><a href="index.php?section=System|SpecialCourse&action=3&filter=name">Name</a></th>
@@ -27,7 +26,7 @@
 	</thead>
 	<tbody>
 		{foreach $users as $user}
-		<tr bgcolor='#FFC33'>
+		<tr>
 			<td align="center">{$user.ID}</td>
 			<td align="center">{$user.forename}</td>
 			<td align="center">{$user.name}</td>
