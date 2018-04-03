@@ -67,6 +67,9 @@ class SchbasSettings extends Schbas {
 					break;
 				case '10': $this->saveTexts();
 				break;
+				case '11':
+					$this->moveUsersToTmpClasses();
+					break;
 				case 'editCoverLetter': $this->editCoverLetter();
 				break;
 				case 'previewInfoDocs': $this->previewInfoDocs();
@@ -253,6 +256,25 @@ class SchbasSettings extends Schbas {
 		$pdf = new \Babesk\Schbas\LoanInfoPdf($this->_dataContainer);
 		$pdf->setDataByGradelevel($_POST['gradelabel']);
 		$pdf->showPdf();
+
+	}
+
+	private function moveUsersToTmpClasses(){
+		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+		require_once PATH_ACCESS . '/SchoolyearManager.php';
+		require_once PATH_ACCESS . '/AttendancesManager.php';
+		require_once PATH_ACCESS . '/GradeManager.php';
+		$globalSettings = new GlobalSettingsManager();
+		$syManager = new SchoolyearManager();
+		$attendancesManager = new AttendancesManager();
+		$activeSy = $syManager->getActiveSchoolyear();
+		$prepSy = $globalSettings->valueGet('schbasPreparationSchoolyearId');
+		$attendances = $attendancesManager->getTableData("schoolyearId = ". $activeSy['ID']);
+		foreach ($attendances as $attendance){
+			$nextLevel = TableMng::query("SELECT gradelevel FROM SystemGrades WHERE id = ".$attendance['gradeId'])[0]['gradelevel'];
+			$nextGrade = TableMng::query("SELECT * FROM SystemGrades WHERE label = 'a' AND gradelevel = ".(1+$nextLevel));
+			$attendancesManager->addEntry('schoolyearId', $prepSy, 'gradeId', $nextGrade[0]['ID'], 'userId', $attendance['userId']);
+		}
 
 	}
 }

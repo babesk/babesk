@@ -304,7 +304,7 @@ class TableManager {
 		for ($i = 1; isset($args[$i]); $i += 1) {
 			switch ($i % 2) {
 				case 0: // A value
-					//if (!is_numeric($args[$i])) {				//rausgenommen,da in Schbas die Klassenangabe bei Büchern von 08 zu 8 wurde.
+					//if (!is_numeric($args[$i])) {				//rausgenommen,da in Schbas die Klassenangabe bei Bï¿½chern von 08 zu 8 wurde.
 						$args[$i] = '"' . $args[$i] . '"';
 					//}
 					$set_str .= $args[$i] . ',';

@@ -1,6 +1,6 @@
 {extends file=$schbasSettingsParent}{block name=content}
 
-<h3 class="module-header">Schbas Einstellungsmenü</h3>
+<h3 class="module-header">Schbas Einstellungen</h3>
 
 <fieldset>
 	<legend>Grundeinstellungen</legend>
@@ -31,6 +31,15 @@
 		</li>-->
 	</ul>
 </fieldset>
+
+	<fieldset>
+		<legend>Erweiterte Einstellungen</legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=Schbas|SchbasSettings&amp;action=11">Schüler hochsetzen (Text ändern)!!!!</a>
+			</li>
+		</ul>
+	</fieldset>
 
 
 {/block}
