@@ -73,6 +73,11 @@ class AdminSchbasSettingsInterface extends AdminInterface{
 		$this->smarty->assign('allSchbasMessage', $allSchbasMessages);
 		$this->smarty->display($this->tplFilePath . 'showReminderSettings.tpl');
 	}
+
+	public function showMoveConfirm($sy){
+	    $this->smarty->assign('sy', $sy);
+	    $this->smarty->display($this->tplFilePath . 'moveUserConfirm.tpl');
+    }
 	
 	/**
 	 * The Path to the Smarty-Parent-Templatefile

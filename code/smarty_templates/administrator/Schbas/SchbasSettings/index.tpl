@@ -36,10 +36,13 @@
 		<legend>Erweiterte Einstellungen</legend>
 		<ul class="submodulelinkList">
 			<li>
-				<a href="index.php?section=Schbas|SchbasSettings&amp;action=11">Schüler hochsetzen (Text ändern)!!!!</a>
+				<a href="index.php?section=Schbas|SchbasSettings&amp;action=11" class="modal-trigger">Schüler temporär in das kommende Schuljahr versetzen</a>
 			</li>
 		</ul>
 	</fieldset>
 
 
 {/block}
+
+
+

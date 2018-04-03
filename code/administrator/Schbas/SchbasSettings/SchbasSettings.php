@@ -27,9 +27,9 @@ class SchbasSettings extends Schbas {
 
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 
-		if (!isset($_GET['action']))
-			$SchbasSettingsInterface->InitialMenu();
-		else {
+		if (!isset($_GET['action'])) {
+            $SchbasSettingsInterface->InitialMenu();
+        }else {
 			switch ($_GET['action']){
 				case 'editBankAccount':
 					$this->editBankAccount();
@@ -68,7 +68,17 @@ class SchbasSettings extends Schbas {
 				case '10': $this->saveTexts();
 				break;
 				case '11':
+                    require_once PATH_ACCESS . '/SchoolyearManager.php';
+                    $syManager = new SchoolyearManager();
+                    require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+                    $globalSettings = new GlobalSettingsManager();
+                    $prepSy = $globalSettings->valueGet('schbasPreparationSchoolyearId');
+                    $prepSyName = $syManager->getEntryValue($prepSy, 'label');
+                    $SchbasSettingsInterface->showMoveConfirm($prepSyName);
+					break;
+				case '12':
 					$this->moveUsersToTmpClasses();
+					$SchbasSettingsInterface->InitialMenu();
 					break;
 				case 'editCoverLetter': $this->editCoverLetter();
 				break;
@@ -260,6 +270,8 @@ class SchbasSettings extends Schbas {
 	}
 
 	private function moveUsersToTmpClasses(){
+        require_once 'AdminSchbasSettingsInterface.php';
+        $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 		require_once PATH_ACCESS . '/SchoolyearManager.php';
 		require_once PATH_ACCESS . '/AttendancesManager.php';
@@ -270,10 +282,25 @@ class SchbasSettings extends Schbas {
 		$activeSy = $syManager->getActiveSchoolyear();
 		$prepSy = $globalSettings->valueGet('schbasPreparationSchoolyearId');
 		$attendances = $attendancesManager->getTableData("schoolyearId = ". $activeSy['ID']);
+		$errArr = [];
+        $err = "";
 		foreach ($attendances as $attendance){
-			$nextLevel = TableMng::query("SELECT gradelevel FROM SystemGrades WHERE id = ".$attendance['gradeId'])[0]['gradelevel'];
-			$nextGrade = TableMng::query("SELECT * FROM SystemGrades WHERE label = 'a' AND gradelevel = ".(1+$nextLevel));
-			$attendancesManager->addEntry('schoolyearId', $prepSy, 'gradeId', $nextGrade[0]['ID'], 'userId', $attendance['userId']);
+			$nextLevel = TableMng::query("SELECT gradelevel, label FROM SystemGrades WHERE id = ".$attendance['gradeId']);
+			$nextGrade = TableMng::query("SELECT * FROM SystemGrades WHERE label = 'a' AND gradelevel = ".(1+$nextLevel[0]['gradelevel']));
+			if(isset($nextGrade[0]) && !isset(TableMng::query("SELECT * FROM SystemAttendances WHERE userId = ".$attendance['userId']." AND schoolyearId = ".$prepSy)[0])) {
+                $attendancesManager->addEntry('schoolyearId', $prepSy, 'gradeId', $nextGrade[0]['ID'], 'userId', $attendance['userId']);
+            }elseif (isset($nextGrade[0])){
+				$err .= "Der Nutzer ".$attendance['userId']." ist bereits im neuen Schuljahr eingetragen <br>";
+			}else{
+                $errArr[] = $nextLevel[0]['gradelevel'].$nextLevel[0]['label'];
+			}
+		}
+		$errArr = array_unique($errArr);
+		foreach ($errArr as $e){
+			$err .= "Für die Klasse \"".$e."\" wurde kein Nachfolger gefunden<br>";
+		}
+		if($err != ""){
+			$SchbasSettingsInterface->dieMsg($err);
 		}
 
 	}
