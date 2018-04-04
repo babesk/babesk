@@ -61,7 +61,7 @@ class Religion extends System {
                         break;
                     }
                     if (isset($_GET['filter'])) {
-                        $ReligionProcessing->ShowUsers($_POST['filter']);
+                        $ReligionProcessing->ShowUsers($_GET['filter']);
                     } else {
                         $ReligionProcessing->ShowUsers("name");
                     };
