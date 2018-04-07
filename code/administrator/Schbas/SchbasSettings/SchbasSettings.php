@@ -80,6 +80,12 @@ class SchbasSettings extends Schbas {
 					$this->moveUsersToTmpClasses();
 					$SchbasSettingsInterface->InitialMenu();
 					break;
+				case '13':
+					$this->showEditCourses();
+					break;
+				case '14':
+					$this->saveCourses();
+					break;
 				case 'editCoverLetter': $this->editCoverLetter();
 				break;
 				case 'previewInfoDocs': $this->previewInfoDocs();
@@ -304,6 +310,26 @@ class SchbasSettings extends Schbas {
 		}
 
 	}
+
+	function showEditCourses($saved = 0){
+        require_once 'AdminSchbasSettingsInterface.php';
+        $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
+        $grades = TableMng::query("SELECT gradelevel FROM SystemGrades GROUP BY gradelevel");
+		$subjects = TableMng::query("SELECT * FROM SystemSchoolSubjects");
+		$coreSubjects = TableMng::query("SELECT gradelevel, subject_id FROM SchbasCoreSubjects");
+        $SchbasSettingsInterface->showEditCourses($grades, $subjects, $coreSubjects, $saved);
+	}
+
+	function saveCourses(){
+        require_once 'AdminSchbasSettingsInterface.php';
+        $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
+        TableMng::query("DELETE FROM SchbasCoreSubjects");
+        foreach ($_POST as $key=>$value){
+			list($gradelevel, $subject_id) = explode("%", $key);
+			TableMng::query(sprintf("INSERT INTO SchbasCoreSubjects (gradelevel, subject_id) VALUES (%s,%s)", $gradelevel, $subject_id));
+		}
+		$this->showEditCourses(1);
+    }
 }
 
 ?>

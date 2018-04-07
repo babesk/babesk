@@ -38,6 +38,9 @@
 			<li>
 				<a href="index.php?section=Schbas|SchbasSettings&amp;action=11" class="modal-trigger">Schüler temporär in das kommende Schuljahr versetzen</a>
 			</li>
+			<li>
+				<a href="index.php?section=Schbas|SchbasSettings&amp;action=13">Wahlkurse bearbeiten</a>
+			</li>
 		</ul>
 	</fieldset>
 
