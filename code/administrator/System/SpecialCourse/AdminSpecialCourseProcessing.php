@@ -88,7 +88,8 @@ class AdminSpecialCourseProcessing {
 		$specialCourses = $globalSettingsManager->getSpecialCourses();
 		$specialCourses_exploded = explode("|", $specialCourses);
 		$navbar = navBar($showPage, 'SystemUsers', 'System', 'SpecialCourse', '3',$filter);
-		$this->SpecialCourseInterface->ShowUsers($users,$specialCourses_exploded,$navbar);
+		$gradelevel = TableMng::query(sprintf("SELECT gradelevel FROM SystemGrades GROUP BY gradelevel"));
+		$this->SpecialCourseInterface->ShowUsers($users,$gradelevel,$navbar);
 	}
 
 	//////////////////////////////////////////////////
@@ -114,13 +115,15 @@ class AdminSpecialCourseProcessing {
 			$this->userInterface->dieError($this->messages['error']['get_data_failed']);
 		}
 
-
+		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active = 1")[0]['ID'];
+		$gradelevel = TableMng::query(sprintf("SELECT * FROM SystemAttendances a JOIN SystemGrades g ON a.gradeId=g.ID WHERE schoolyearId=%s AND userId=%s",$schoolyear, $uid))[0]['gradelevel'];
+        $nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel));
 
 
 		$specialCourses = $globalSettingsManager->getSpecialCourses();
 		$specialCourses_exploded = explode("|", $specialCourses);
 
-		$this->SpecialCourseInterface->ShowUsers($users,$specialCourses_exploded,'');
+		dieJson(json_encode(array('user' => $users, 'subjects' => $nonCoreSubjects)));
 	}
 
 
@@ -129,14 +132,33 @@ class AdminSpecialCourseProcessing {
 	function SaveUsers($post_vars) {
 		require_once PATH_ACCESS . '/UserManager.php';
 		$userManager = new UserManager();
+		$courses = array();
 		foreach($post_vars as $key => $value) {
 			try {
-				$userManager->SetSpecialCourse($key, $value);
+				list($uid,$abbr) = explode('|', $key);
+				if(!isset($courses[$uid])) {
+                    $courses[$uid]=array();
+				}
+                $courses[$uid][]=$abbr;
 			} catch (Exception $e) {
 				$this->userInterface->dieError($this->messages['error']['change'] . $e->getMessage());
 			}
 		}
-		$this->SpecialCourseInterface->ShowUsersSuccess();
+		foreach ($courses as $user => $course){
+            $userManager->SetSpecialCourse($user, $course);
+		}
+		$this->ShowUsers('name');
+	}
+
+	function showUserByGradelevelAjax($gradelevel){
+		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active=1")[0]['ID'];
+		//var_dump($schoolyear);
+
+		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s", $gradelevel, $schoolyear));
+
+		$nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel));
+
+		dieJson(json_encode(array('user' => $user, 'subjects' => $nonCoreSubjects)));
 	}
 
 

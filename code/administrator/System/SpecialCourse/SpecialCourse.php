@@ -41,15 +41,15 @@ class SpecialCourse extends System {
 			case 3: //edit the users
 
 				$userID = null;
-				if (isset ($_POST['user_search'])) {
+				if (isset ($_POST['user'])) {
 					try {
-						$userID = $this->cardManager->getUserID($_POST['user_search']);
+						$userID = $this->cardManager->getUserID($_POST['user']);
 					} catch (Exception $e) {
 						$userID =  $e->getMessage();
 					}
 					if ($userID == 'MySQL returned no data!') {
 						try {
-							$userID = $this->userManager->getUserID($_POST['user_search']);
+							$userID = $this->userManager->getUserID($_POST['user']);
 						} catch (Exception $e) {
 							$SpecialCourseInterface->dieError("Benutzer nicht gefunden!");
 						}
@@ -68,6 +68,9 @@ class SpecialCourse extends System {
 			break;
 			case 4: //save the users
 				$SpecialCourseProcessing->SaveUsers($_POST);
+				break;
+			case 5:
+				$SpecialCourseProcessing->ShowUserByGradelevelAjax($_POST['gradelevel']);
 				break;
 			default:
                 $SpecialCourseInterface->ShowSelectionFunctionality();

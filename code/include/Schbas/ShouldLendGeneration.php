@@ -52,10 +52,10 @@ class ShouldLendGeneration {
 		}
 
 		$this->generateInit();
-		$entries = [];
 		foreach($this->_users as $user) {
 			$gradelevel = $this->gradelevelGet($user);
 			if(!$gradelevel) { continue; }
+
 			$subjects = $this->_loanHelper->userSubjectsCalc(
 				$user, $gradelevel
 			);
@@ -67,11 +67,12 @@ class ShouldLendGeneration {
 				$bookSubject = $book->getSubject();
 				if(!$bookSubject) { continue; }
 				$bookSubjectAbbreviation = $bookSubject->getAbbreviation();
+
 				// Book is for other gradelevels than the user is in
 				if(!in_array($book->getClass(), $classes)) { continue; }
-				if($this->isBookFiltered(
-					$bookSubjectAbbreviation, $subjects, $gradelevel)
-				) {
+
+                if(in_array($bookSubject, $subjects)) {
+				//if($this->isBookFiltered($bookSubjectAbbreviation, $subjects, $gradelevel)) {
 					$this->entryAdd($user, $book);
 				}
 			}

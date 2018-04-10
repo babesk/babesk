@@ -367,19 +367,15 @@ class Loan {
 	 *                            strings
 	 */
 	public function userSubjectsCalc($user, $gradelevel) {
-
-		$userSubjects = array_merge(
+        $coreSubjects = TableMng::query("SELECT subject_id FROM SchbasCoreSubjects WHERE gradelevel = ".$gradelevel);
+        $userSubjects = array_merge(
 			explode('|', $user->getReligion()),
-			explode('|', $user->getForeignLanguage())
+			explode('|', $user->getForeignLanguage()),
+			explode('|', $user->getSpecialCourse()),
+			$coreSubjects
 		);
-		$trigger = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('special_course_trigger');
-		if($trigger->getValue() <= $gradelevel) {
-			$userSubjects = array_merge(
-				$userSubjects,
-				explode('|', $user->getSpecialCourse())
-			);
-		}
+
+
 		return $userSubjects;
 	}
 
