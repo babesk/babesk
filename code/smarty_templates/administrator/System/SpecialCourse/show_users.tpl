@@ -62,6 +62,6 @@
 
 <script type="text/javascript" src="{$path_js}/custom-base.js"></script>
 
-	<script type="text/javascript" src="{$path_js}/administrator/System/SpecialCourse/show_users.js"></script>
+<script type="text/javascript" src="{$path_js}/administrator/System/SpecialCourse/show_users.js"></script>
 
 {/block}

@@ -137,10 +137,10 @@ class AdminSpecialCourseProcessing {
 		$this->ShowUsers('name');
 	}
 
-	function showUserByGradelevelAjax($gradelevel){
+	function showUserByGradelevelAjax($gradelevel, $filter){
 		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active=1")[0]['ID'];
 
-		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s", $gradelevel, $schoolyear));
+		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s ORDER BY %s", $gradelevel, $schoolyear, $filter));
 
 		$nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel));
 

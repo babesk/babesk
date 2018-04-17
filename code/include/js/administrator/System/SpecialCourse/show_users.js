@@ -10,16 +10,17 @@ $(document).ready(function() {
         removeActiveFromFilters();
         if(!isActive) {
             $item.parent('li').addClass('active');
-            specialFilter = $item.data('name');
+            gradelevel = $item.data('name');
         }
         else {
-            specialFilter = false;
+            gradelevel = false;
         }
         activePage = 1;
         $.postJSON(
             'index.php?section=System|SpecialCourse&action=5',
             {
-                'gradelevel': specialFilter
+                'gradelevel': gradelevel,
+                'filter': 'name'
             },
             function (res, textStatus, jqXHR) {
                 json = JSON.parse(res);
@@ -28,6 +29,7 @@ $(document).ready(function() {
             })
     })
     $('.dropdown-item').trigger('click');
+
 
     $('#search_btn').on('click', function (event) {
         user = $('#user_search').val();
@@ -50,7 +52,7 @@ $(document).ready(function() {
                 'subjects':subjects
             });
         $('#user-table-body').html(html);
-        subjectList = '<th align="center"><a href="index.php?section=System|SpecialCourse&action=3&filter=forename">Vorname</a></th><th align="center"><a href="index.php?section=System|SpecialCourse&action=3&filter=name">Name</a></th>'
+        subjectList = '<th align="center"><a class="column" data-name="forename">Vorname</a></th><th align="center"><a class="column" data-name="name">Name</a></th>'
         subjects.forEach(function (subject) {
             subjectList=subjectList+"<th>"+subject.abbreviation+"</th>";
         });
@@ -63,5 +65,24 @@ $(document).ready(function() {
                 }
             })
         })
+
+        $('.column').on('click', function (event) {
+            grade = $('li.active > a.dropdown-item').data('name');
+            column = $(event.target).data('name');
+
+            $.postJSON(
+                'index.php?section=System|SpecialCourse&action=5',
+                {
+                    'gradelevel': grade,
+                    'filter': column
+                },
+                function (res, textStatus, jqXHR) {
+                    json = JSON.parse(res);
+                    dataFill(json.user, json.subjects)
+
+                })
+        })
     }
+
+
 })
