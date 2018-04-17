@@ -95,7 +95,7 @@
 
             })
         })
-		$('.dropdown-item').trigger('click');
+		$('.dropdown-item').first().trigger('click');
 
         $('#search_btn').on('click', function (event) {
             user = $('#user_search').val();

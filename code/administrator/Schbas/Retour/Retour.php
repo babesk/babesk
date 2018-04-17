@@ -136,8 +136,6 @@ class Retour extends Schbas {
 			}
 			$grade = $this->_em->getRepository('DM:SystemUsers')
 				->getActiveGradeByUser($user);
-			$userData = "{$user->getForename()} {$user->getName()} " .
-				"({$grade->getGradelevel()}{$grade->getLabel()})";
 
 		} catch (Exception $e) {
 			$this->_logger->logO('Error in ajax of Schbas Retour',
@@ -152,7 +150,6 @@ class Retour extends Schbas {
 			'adress', ($_SERVER['HTTP_HOST']).$_SERVER['REQUEST_URI']
 		);
 		$this->_smarty->assign('data', $loanbooks);
-		$this->_smarty->assign('fullname',$userData);
 		$this->displayTpl('retourbooksAjax.tpl');
 	}
 

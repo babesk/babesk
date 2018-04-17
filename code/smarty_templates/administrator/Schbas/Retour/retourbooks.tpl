@@ -171,7 +171,7 @@ function ajaxFunction(){
 	var barcode = document.getElementById('barcode').value;
 	var queryString = "inventarnr=" + encodeURIComponent(barcode) + "&card_ID={$cardid}&uid={$uid}&ajax=1";
 
-	ajaxRequest.open("GET", "http://{$adress}" + queryString, true);
+	ajaxRequest.open("GET", "https://{$adress}" + queryString, true);
 
 	ajaxRequest.send(null);
 }

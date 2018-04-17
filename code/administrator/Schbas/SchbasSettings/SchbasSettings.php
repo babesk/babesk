@@ -292,7 +292,7 @@ class SchbasSettings extends Schbas {
         $err = "";
 		foreach ($attendances as $attendance){
 			$nextLevel = TableMng::query("SELECT gradelevel, label FROM SystemGrades WHERE id = ".$attendance['gradeId']);
-			$nextGrade = TableMng::query("SELECT * FROM SystemGrades WHERE label = 'a' AND gradelevel = ".(1+$nextLevel[0]['gradelevel']));
+			$nextGrade = TableMng::query("SELECT * FROM SystemGrades WHERE gradelevel = ".(1+$nextLevel[0]['gradelevel']));
 			if(isset($nextGrade[0]) && !isset(TableMng::query("SELECT * FROM SystemAttendances WHERE userId = ".$attendance['userId']." AND schoolyearId = ".$prepSy)[0])) {
                 $attendancesManager->addEntry('schoolyearId', $prepSy, 'gradeId', $nextGrade[0]['ID'], 'userId', $attendance['userId']);
             }elseif (isset($nextGrade[0])){

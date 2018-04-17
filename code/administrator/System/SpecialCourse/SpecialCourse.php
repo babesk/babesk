@@ -51,7 +51,7 @@ class SpecialCourse extends System {
 						try {
 							$userID = $this->userManager->getUserID($_POST['user']);
 						} catch (Exception $e) {
-							$SpecialCourseInterface->dieError("Benutzer nicht gefunden!");
+							dieJson(json_encode(array('user' => [], 'subjects' => [])));
 						}
 
 					}
