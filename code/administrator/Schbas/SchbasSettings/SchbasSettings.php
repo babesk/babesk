@@ -3,27 +3,25 @@
 require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_ADMIN . '/Schbas/Schbas.php';
 require_once PATH_INCLUDE . '/Schbas/LoanInfoPdf.php';
+require_once 'AdminSchbasSettingsInterface.php';
+require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+require_once PATH_ACCESS . '/SchoolyearManager.php';
+require_once PATH_ACCESS . '/AttendancesManager.php';
+require_once PATH_ACCESS . '/GradeManager.php';
 
 class SchbasSettings extends Schbas {
 
-	////////////////////////////////////////////////////////////////////////////////
-	//Attributes
 
-	////////////////////////////////////////////////////////////////////////////////
-	//Constructor
 	public function __construct($name, $display_name, $path) {
 		parent::__construct($name, $display_name, $path);
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
-	//Methods
 	public function execute($dataContainer) {
 
 		defined('_AEXEC') or die('Access denied');
 		parent::entryPoint($dataContainer);
 		parent::moduleTemplatePathSet();
 
-		require_once 'AdminSchbasSettingsInterface.php';
 
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 
@@ -42,35 +40,34 @@ class SchbasSettings extends Schbas {
 					break;
 				case '5':
 					$this->updateFee();
-				$SchbasSettingsInterface->LoanSettings($SchbasSettingsProcessing->getLoanSettings(),true);
+					$SchbasSettingsInterface->LoanSettings($SchbasSettingsProcessing->getLoanSettings(),true);
 					break;
 				case '6':
-				$claim_date = $_POST['claim_Year']."-". $_POST['claim_Month']."-". $_POST['claim_Day'];
-				$transfer_date = $_POST['transfer_Year']."-". $_POST['transfer_Month']."-". $_POST['transfer_Day'];
-				TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $claim_date,"schbasDeadlineClaim"));
-				TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $transfer_date,"schbasDeadlineTransfer"));
+					$claim_date = $_POST['claim_Year']."-". $_POST['claim_Month']."-". $_POST['claim_Day'];
+					$transfer_date = $_POST['transfer_Year']."-". $_POST['transfer_Month']."-". $_POST['transfer_Day'];
+					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $claim_date,"schbasDeadlineClaim"));
+					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $transfer_date,"schbasDeadlineTransfer"));
 					break;
 				case '7':
 					$claimEnabled = TableMng::query(sprintf("SELECT value FROM SystemGlobalSettings WHERE name='isSchbasClaimEnabled'"));
-				$SchbasSettingsInterface->enableFormConfirm($claimEnabled[0]['value']);
+					$SchbasSettingsInterface->enableFormConfirm($claimEnabled[0]['value']);
 					break;
 				case '8':
 					$SchbasSettingsInterface->TextSettings();
 					break;
 				case '9':
 					if (isset($_POST['enable'])){
-					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", 1, 'isSchbasClaimEnabled'));
-				}else{
-					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", 0, 'isSchbasClaimEnabled'));
-				}
-				$SchbasSettingsInterface->enableFormConfirmFin();
+						TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", 1, 'isSchbasClaimEnabled'));
+					}else{
+						TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", 0, 'isSchbasClaimEnabled'));
+					}
+					$SchbasSettingsInterface->enableFormConfirmFin();
 					break;
-				case '10': $this->saveTexts();
-				break;
+				case '10':
+					$this->saveTexts();
+					break;
 				case '11':
-                    require_once PATH_ACCESS . '/SchoolyearManager.php';
                     $syManager = new SchoolyearManager();
-                    require_once PATH_ACCESS . '/GlobalSettingsManager.php';
                     $globalSettings = new GlobalSettingsManager();
                     $prepSy = $globalSettings->valueGet('schbasPreparationSchoolyearId');
                     $prepSyName = $syManager->getEntryValue($prepSy, 'label');
@@ -86,17 +83,20 @@ class SchbasSettings extends Schbas {
 				case '14':
 					$this->saveCourses();
 					break;
-				case 'editCoverLetter': $this->editCoverLetter();
-				break;
-				case 'previewInfoDocs': $this->previewInfoDocs();
-				break;
-				case 'setReminder': if (isset($_POST['templateID']) && isset($_POST['authorID'])){
-					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $_POST['templateID'], 'schbasReminderMessageID'));
-					TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $_POST['authorID'], 'schbasReminderAuthorID'));
-					$SchbasSettingsInterface->enableFormConfirmFin();break;
-				} else $this->setReminder();
-				break;
-
+				case 'editCoverLetter':
+					$this->editCoverLetter();
+					break;
+				case 'previewInfoDocs':
+					$this->previewInfoDocs();
+					break;
+				case 'setReminder':
+					if (isset($_POST['templateID']) && isset($_POST['authorID'])){
+						TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $_POST['templateID'], 'schbasReminderMessageID'));
+						TableMng::query(sprintf("UPDATE SystemGlobalSettings SET value = '%s' WHERE name = '%s'", $_POST['authorID'], 'schbasReminderAuthorID'));
+						$SchbasSettingsInterface->enableFormConfirmFin();break;
+					} else
+						$this->setReminder();
+					break;
 				case 'fetchTextsAjax':
 					$this->fetchTextsAjax();
 					break;
@@ -175,7 +175,6 @@ class SchbasSettings extends Schbas {
 
 	protected function editBankAccount () {
 
-		require_once 'AdminSchbasSettingsInterface.php';
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 
 		if (isset($_POST['owner']) && isset($_POST['number']) && isset($_POST['blz']) && isset($_POST['institute'])) {
@@ -197,7 +196,6 @@ class SchbasSettings extends Schbas {
 	 * sets the schbas message template for the payment reminder
 	 */
 	protected function setReminder() {
-		require_once 'AdminSchbasSettingsInterface.php';
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 
 		$activeReminderID = TableMng::query('SELECT value FROM SystemGlobalSettings WHERE name="schbasReminderMessageID"');
@@ -231,7 +229,6 @@ class SchbasSettings extends Schbas {
 
 	protected function editCoverLetter () {
 
-		require_once 'AdminSchbasSettingsInterface.php';
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 
 		if (isset($_POST['messagetitle']) && isset($_POST['messagetext'])) {
@@ -257,7 +254,6 @@ class SchbasSettings extends Schbas {
 	}
 
 	protected function previewInfoDocs () {
-		require_once 'AdminSchbasSettingsInterface.php';
 		$SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
 		if (isset($_POST['gradelabel'])) {
 			$this->showPdf();
@@ -276,12 +272,7 @@ class SchbasSettings extends Schbas {
 	}
 
 	private function moveUsersToTmpClasses(){
-        require_once 'AdminSchbasSettingsInterface.php';
         $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
-		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
-		require_once PATH_ACCESS . '/SchoolyearManager.php';
-		require_once PATH_ACCESS . '/AttendancesManager.php';
-		require_once PATH_ACCESS . '/GradeManager.php';
 		$globalSettings = new GlobalSettingsManager();
 		$syManager = new SchoolyearManager();
 		$attendancesManager = new AttendancesManager();
@@ -312,7 +303,6 @@ class SchbasSettings extends Schbas {
 	}
 
 	function showEditCourses($saved = 0){
-        require_once 'AdminSchbasSettingsInterface.php';
         $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
         $grades = TableMng::query("SELECT gradelevel FROM SystemGrades GROUP BY gradelevel");
 		$subjects = TableMng::query("SELECT * FROM SystemSchoolSubjects");
@@ -321,7 +311,6 @@ class SchbasSettings extends Schbas {
 	}
 
 	function saveCourses(){
-        require_once 'AdminSchbasSettingsInterface.php';
         $SchbasSettingsInterface = new AdminSchbasSettingsInterface($this->relPath);
         TableMng::query("DELETE FROM SchbasCoreSubjects");
         foreach ($_POST as $key=>$value){

@@ -1,4 +1,8 @@
 <?php
+require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+require_once PATH_ACCESS . '/UserManager.php';
+require_once PATH_ACCESS . '/GroupManager.php';
+
 class AdminSpecialCourseProcessing {
 	function __construct($SpecialCourseInterface) {
 
@@ -22,8 +26,6 @@ class AdminSpecialCourseProcessing {
 	}
 
 	function EditSpecialCourses($editOrShow) {
-
-		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 
 		$globalSettingsManager = new globalSettingsManager();
 
@@ -53,9 +55,6 @@ class AdminSpecialCourseProcessing {
 	//--------------------Show Users--------------------
 	//////////////////////////////////////////////////
 	function ShowUsers($filter) {
-		require_once PATH_ACCESS . '/UserManager.php';
-		require_once PATH_ACCESS . '/GroupManager.php';
-		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 
 		$globalSettingsManager = new globalSettingsManager();
 		$userManager = new UserManager();
@@ -71,7 +70,7 @@ class AdminSpecialCourseProcessing {
 			$this->logs
 					->log('ADMIN', 'MODERATE',
 							sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));
-			$this->userInterface->dieError($this->messages['error']['get_data_failed']);
+			$this->SpecialCourseInterface->dieError($this->messages['error']['get_data_failed']);
 		}
 
 		foreach ($users as &$user) {
@@ -95,42 +94,30 @@ class AdminSpecialCourseProcessing {
 	//////////////////////////////////////////////////
 	//--------------------Show single user------------
 	//////////////////////////////////////////////////
-	function ShowSingleUser($uid) {
-		require_once PATH_ACCESS . '/UserManager.php';
-		require_once PATH_ACCESS . '/GroupManager.php';
-		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
+    /**
+     * @param $uid
+     */
+    function ShowSingleUser($uid) {
 
-		$globalSettingsManager = new globalSettingsManager();
 		$userManager = new UserManager();
-		$groupManager = new GroupManager();
 
+		$users = [];
 		try {
-
-
 			$users = $userManager->getSingleUser($uid);
 		} catch (Exception $e) {
-			$this->logs
-			->log('ADMIN', 'MODERATE',
-					sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));
-			$this->userInterface->dieError($this->messages['error']['get_data_failed']);
+			$this->logs->log('ADMIN', 'MODERATE', sprintf('Error while getting Data from MySQL:%s in %s', $e->getMessage(), __METHOD__));
+			$this->SpecialCourseInterface->dieError($this->messages['error']['get_data_failed']);
 		}
 
 		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active = 1")[0]['ID'];
 		$gradelevel = TableMng::query(sprintf("SELECT * FROM SystemAttendances a JOIN SystemGrades g ON a.gradeId=g.ID WHERE schoolyearId=%s AND userId=%s",$schoolyear, $uid))[0]['gradelevel'];
         $nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel));
 
-
-		$specialCourses = $globalSettingsManager->getSpecialCourses();
-		$specialCourses_exploded = explode("|", $specialCourses);
-
 		dieJson(json_encode(array('user' => $users, 'subjects' => $nonCoreSubjects)));
 	}
 
 
-
-
 	function SaveUsers($post_vars) {
-		require_once PATH_ACCESS . '/UserManager.php';
 		$userManager = new UserManager();
 		$courses = array();
 		foreach($post_vars as $key => $value) {
@@ -141,7 +128,7 @@ class AdminSpecialCourseProcessing {
 				}
                 $courses[$uid][]=$abbr;
 			} catch (Exception $e) {
-				$this->userInterface->dieError($this->messages['error']['change'] . $e->getMessage());
+				$this->SpecialCourseInterface->dieError($this->messages['error']['change'] . $e->getMessage());
 			}
 		}
 		foreach ($courses as $user => $course){
@@ -150,11 +137,10 @@ class AdminSpecialCourseProcessing {
 		$this->ShowUsers('name');
 	}
 
-	function showUserByGradelevelAjax($gradelevel){
+	function showUserByGradelevelAjax($gradelevel, $filter){
 		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active=1")[0]['ID'];
-		//var_dump($schoolyear);
 
-		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s", $gradelevel, $schoolyear));
+		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s ORDER BY %s", $gradelevel, $schoolyear, $filter));
 
 		$nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel));
 
@@ -162,10 +148,7 @@ class AdminSpecialCourseProcessing {
 	}
 
 
-
-
 	var $messages = array();
-	private $userInterface;
 
 }
 

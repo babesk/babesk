@@ -36,9 +36,7 @@ class ShowBooklist extends Booklist {
 	protected function ajaxBooklist() {
 
 		$query = $this->booklistQueryGet();
-		$paginator = new \Doctrine\ORM\Tools\Pagination\Paginator(
-			$query, $fetchJoinCollection = true
-		);
+		$paginator = new \Doctrine\ORM\Tools\Pagination\Paginator($query, $fetchJoinCollection = true);
 		$books = $this->bookArrayPopulate($paginator);
 		$pagecount = $this->pagecountGet($paginator);
 		die(json_encode(array(
