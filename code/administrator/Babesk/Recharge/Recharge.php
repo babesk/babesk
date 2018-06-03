@@ -517,11 +517,13 @@ class Recharge extends Babesk {
 		if(isset($_POST['id'])){
 			$maxRechargeAmount = $this->getMaxRechargeAmountOfUser($_POST['id']);
 			$maxRechargeAmount = sprintf('%01.2f', $maxRechargeAmount);
+
+			$credit = TableMng::query("SELECT credit FROM SystemUsers WHERE ID =".$_POST['id'])[0]['credit'];
 			
 			$isSoliRecharge = $this->userHasValidSoliCoupon(
 					$_POST['id'], date('Y-m-d')
 					);
-			echo json_encode(['maxRecharge' => $maxRechargeAmount, 'soli' => $isSoliRecharge]);
+			echo json_encode(['credit' => $credit ,'maxRecharge' => $maxRechargeAmount, 'soli' => $isSoliRecharge]);
 		}elseif(isset($_POST['amount']) && isset($_POST['uid'])){
 			$this->rechargeUsercredits($_POST['amount'], $_POST['uid'], true);
 		}else{
@@ -533,13 +535,16 @@ class Recharge extends Babesk {
 					$row['forename'] = $user->getForename();
 					$row['name'] = $user->getName();
 					$row['priceGroup'] = $user->getPriceGroup()->getName();
-					$attendances = $user->getAttendances()[0];
-					if($attendances != null){
-						$grade = $user->getAttendances()[0]->getGrade();
-						if($grade != null)
-						$row['grade'] = $grade->getGradelevel() . $grade->getLabel();
+					$attendance = TableMng::query("SELECT concat(gradelevel, g.label) Klasse
+															FROM SystemGrades g
+															JOIN SystemAttendances a ON g.ID=a.gradeId
+															JOIN SystemSchoolyears y ON a.schoolyearId = y.ID
+															WHERE y.active = 1 AND a.userId =".$row['ID']);
+
+                    if(!isset($attendance[0])){
+                        $row['grade'] = "Keiner Klasse zugeordnet";
 					}else{
-						$row['grade'] = "Keiner Klasse zugeordnet";
+                    	$row['grade'] = $attendance[0]['Klasse'];
 					}
 					$usersArr[] = $row;
 				}catch (Exception $e){

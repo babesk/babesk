@@ -13,7 +13,7 @@ $(document).ready(function() {
 		    	}else{
 		    		$('#soli').html("Der Benutzer hat <b>kein</b> gültiges Teilhabepaket");
 		    	}
-		    	$('#maxRecharge').html("Der Benutzer kann maximal noch <b>"+rec.maxRecharge+"&euro;</b> aufladen!");
+		    	$('#maxRecharge').html("Der Benutzer hat ein Guthaben von <b>"+rec.credit+"&euro;</b> und kann maximal noch <b>"+rec.maxRecharge+"&euro;</b> aufladen!");
 		        return;
 		      },
 		      error: function(jqXHR, textStatus, errorThrown) {
