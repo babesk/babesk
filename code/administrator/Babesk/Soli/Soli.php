@@ -38,7 +38,7 @@ class Soli extends Babesk {
 			$action = $_GET['action'];
 			switch ($action) {
 				case 1: //add coupon
-					if (isset($_POST['UID']) && isset($_POST['StartDateYear']))
+					if (isset($_POST['UID']) && isset($_POST['startDate']))
 						$soliProcessing->AddCoupon(
 								date('Y-m-d', strtotime($_POST['startDate'])),
 								date('Y-m-d', strtotime($_POST['endDate'])),

@@ -367,14 +367,13 @@ class Loan {
 	 *                            strings
 	 */
 	public function userSubjectsCalc($user, $gradelevel) {
-        $coreSubjects = TableMng::query("SELECT subject_id FROM SchbasCoreSubjects WHERE gradelevel = ".$gradelevel);
+        $coreSubjects = \TableMng::query("SELECT abbreviation FROM SchbasCoreSubjects c JOIN SystemSchoolSubjects s ON c.subject_id = s.ID WHERE gradelevel = ".$gradelevel);
         $userSubjects = array_merge(
 			explode('|', $user->getReligion()),
 			explode('|', $user->getForeignLanguage()),
 			explode('|', $user->getSpecialCourse()),
-			$coreSubjects
+			array_column($coreSubjects, "abbreviation")
 		);
-
 
 		return $userSubjects;
 	}

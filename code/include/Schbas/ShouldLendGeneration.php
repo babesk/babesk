@@ -54,7 +54,7 @@ class ShouldLendGeneration {
 		$this->generateInit();
 		foreach($this->_users as $user) {
 			$gradelevel = $this->gradelevelGet($user);
-			if(!$gradelevel) { continue; }
+            if(!$gradelevel) { continue; }
 
 			$subjects = $this->_loanHelper->userSubjectsCalc(
 				$user, $gradelevel
@@ -70,8 +70,7 @@ class ShouldLendGeneration {
 
 				// Book is for other gradelevels than the user is in
 				if(!in_array($book->getClass(), $classes)) { continue; }
-
-                if(in_array($bookSubject, $subjects)) {
+                if(in_array($bookSubjectAbbreviation, $subjects)) {
 				//if($this->isBookFiltered($bookSubjectAbbreviation, $subjects, $gradelevel)) {
 					$this->entryAdd($user, $book);
 				}
@@ -132,7 +131,7 @@ class ShouldLendGeneration {
 				\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true
 			);
 			$this->_users = $userQuery->getResult();
-		}
+        }
 		catch (\Doctrine\ORM\Query\QueryException $e) {
 			$this->_logger->logO('Could not fetch the users',
 				['sev' => 'error', 'moreJson' => $e->getMessage()]);
