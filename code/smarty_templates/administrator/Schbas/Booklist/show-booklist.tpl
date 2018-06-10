@@ -14,10 +14,10 @@
 		<td><%= bundle %></td>
 		<td><%= highestExemplarNumber %></td>
 		<td><%= exemplarsInStock %></td>
-		<td><%= exemplarsLent %></td>
+		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsLentByGrade%>><%= exemplarsLent %></a></td>
 		<td><%= exemplarsNeeded %></td>
 		<td><%= exemplarsToBuy %></td>
-		<td><%= exemplarsSelfpayed %></td>
+		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsSelfpayedByGrade%>><%= exemplarsSelfpayed %></a></td>
 		<td>
 		<a class="btn btn-info btn-xs" href="index.php?section=Schbas|Booklist&action=2&ID=<%= id %>" title="Bucheinstellungen">
 				<span class="fa fa-cog"></span>
@@ -43,9 +43,9 @@
 
 <div class="alert alert-info alert-dismissable">
 	<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-	<strong>Benötigte Bücher</strong>
-	Die Anzahl der benötigten Bücher für das nächste Schuljahr kann inkorrekt sein. Um ein korrektes Ergebnis zu erhalten, müssen alle Bücher, die wieder verliehen werden können, als nicht verliehen gespeichert sein. Weiterhin müssen alle Selbstzahler korrekt eingetraten sein.
-	Die Zahlen gelten für das Schbas-Vorbereitungsschuljahr, momentan also für
+	<strong>Benötigte Bücher</strong><br>
+	Die Anzahl der benötigten Bücher basiert auf den im Dashboard erzeugten Zuordnungen.<br>
+	Die Zahlen gelten daher für das Schbas-Vorbereitungsschuljahr, momentan also für
 	<span class="label label-info">
 		{$preparationSchoolyear->getLabel()}
 	</span>

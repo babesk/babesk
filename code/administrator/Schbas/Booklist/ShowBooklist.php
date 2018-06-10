@@ -206,16 +206,24 @@ class ShowBooklist extends Booklist {
 	protected function bookExemplarsLentGet($paginator) {
 
 		$booksLent = array();
-		$query = $this->_em->createQuery(
-			'SELECT COUNT(l) FROM DM:SchbasBook b
-				INNER JOIN b.exemplars e
-				INNER JOIN e.lending l
-				WHERE b.id = :id
-		');
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())
-				->getSingleScalarResult();
-			$booksLent[$book->getId()]['exemplarsLent'] = (int)$res;
+            $query = TableMng::query("SELECT gradelevel, COUNT(1) cnt
+		                            FROM SchbasLending l 
+		                            JOIN SchbasInventory i ON l.inventory_id = i.id
+		                            JOIN SystemAttendances a ON l.user_id = a.userId
+		                            JOIN SystemGrades g ON a.gradeId = g.ID
+		                            JOIN SystemSchoolyears s ON a.schoolyearId = s.ID 
+		                            WHERE s.active = 1 AND i.book_id = ".$book->getId()
+                                    ." GROUP BY gradelevel");
+            $sum = 0;
+            $tooltip = "'";
+            foreach ($query as $grade){
+                $sum += $grade['cnt'];
+                $tooltip = "".$tooltip."Jahrgang ".$grade['gradelevel'].": ".$grade['cnt']."<br>";
+            }
+            $tooltip .= "'";
+			$booksLent[$book->getId()]['exemplarsLent'] = $sum;
+			$booksLent[$book->getId()]['exemplarsLentByGrade'] = $tooltip;
 		}
 
 		return $booksLent;
@@ -238,8 +246,8 @@ class ShowBooklist extends Booklist {
 				WHERE b.id = :id
 		');
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())->getResult();
-			$booksInventory[$book->getId()]['allExemplars'] = $res[0][1];
+		    $query = TableMng::query("SELECT COUNT(1) cnt FROM SchbasInventory WHERE book_id = ".$book->getId());
+			$booksInventory[$book->getId()]['allExemplars'] = $query[0]['cnt'];
 		}
 
 		return $booksInventory;
@@ -271,7 +279,6 @@ class ShowBooklist extends Booklist {
 	 * The amount needs to be calculated by two methods; The senior grades
 	 * have an additional pool of books they need to lend, called
 	 * 'special_course'
-	 * @todo   It doesnt consider if the user already has the book
 	 * @param  Paginator $paginator doctrines paginator containing the books
 	 * @return array                book-ids as the key with the values being
 	 *                              the amount of book-exemplars needed
@@ -282,11 +289,13 @@ class ShowBooklist extends Booklist {
 	protected function bookExemplarsNeededGet($paginator) {
 
 		$loan = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$trigger = $this->specialCourseTriggerGet();
 		$booksNeeded = array();
 		foreach($paginator as $book) {
-			$count = $loan->amountOfInventoryAssignedToUsersGet($book);
-			$booksNeeded[$book->getId()]['exemplarsNeeded'] = $count;
+		    $query = TableMng::query("SELECT COUNT(1) cnt
+		                                    FROM SchbasUsersShouldLendBooks s
+		                                    JOIN SystemSchoolyears y ON s.schoolyearID=y.ID
+		                                    WHERE y.active = 1 AND s.bookId = ".$book->getId());
+			$booksNeeded[$book->getId()]['exemplarsNeeded'] = $query[0]['cnt'];
 		}
 		return $booksNeeded;
 	}
@@ -307,60 +316,24 @@ class ShowBooklist extends Booklist {
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
 		$booksSelfpayed = [];
 		foreach($paginator as $book) {
-			$query = $this->_em->createQuery(
-				'SELECT COUNT(u) FROM DM:SchbasBook b
-				INNER JOIN b.selfpayingBookEntities sb
-				INNER JOIN sb.user u
-				INNER JOIN u.attendances a WITH a.schoolyear = :schoolyear
-				WHERE b = :book
-			');
-			$query->setParameter('schoolyear', $prepSchoolyear);
-			$query->setParameter('book', $book);
-			$count = $query->getSingleScalarResult();
-			$booksSelfpayed[$book->getId()]['exemplarsSelfpayed'] = $count;
+			$query = TableMng::query('SELECT gradelevel, COUNT(1) cnt 
+                                    FROM SchbasSelfpayer p
+                                    JOIN SystemAttendances a ON p.UID = a.userId
+		                            JOIN SystemGrades g ON a.gradeId = g.ID
+		                            JOIN SystemSchoolyears s ON a.schoolyearId = s.ID
+				                    WHERE s.active = 1 AND BID = '.$book->getId());
+            $sum = 0;
+            $tooltip = "'";
+            foreach ($query as $grade){
+                $sum += $grade['cnt'];
+                $tooltip = "".$tooltip."Jahrgang ".$grade['gradelevel'].": ".$grade['cnt']."<br>";
+            }
+            $tooltip .= "'";
+
+			$booksSelfpayed[$book->getId()]['exemplarsSelfpayed'] = $sum;
+            $booksSelfpayed[$book->getId()]['exemplarsSelfpayedByGrade'] = $tooltip;
 		}
 		return $booksSelfpayed;
-	}
-
-	/**
-	 * Checks if the subject is listed in a subject-group like religion
-	 * @param  string $subject         The abbreviation for a subject like 'EN'
-	 * @param  bool   $isSpecialCourse If the special_courses list should be
-	 *                                 considered, too
-	 * @return bool                    True if the subject is listed, false if
-	 *                                 not
-	 */
-	protected function bookSubjectIsListedCheck($subject, $isSpecialCourse) {
-
-		if(empty($this->_allReligions) &&
-			empty($this->_allForeignLanguages) &&
-			empty($this->_allSpecialCourses)
-		) {
-			$this->bookSubjectIsListedCacheFill();
-		}
-
-		return (in_array($subject, $this->_allReligions) ||
-			in_array($subject, $this->_allForeignLanguages) ||
-			(
-				$isSpecialCourse &&
-				in_array($subject, $this->_allSpecialCourses)
-			)
-		);
-	}
-
-	/**
-	 * Caches the lists defining which subject is assigned to which group
-	 */
-	protected function bookSubjectIsListedCacheFill() {
-
-		$globalSettings = $this->_em
-			->getRepository('DM:SystemGlobalSettings');
-		$rel = $globalSettings->findOneByName('religion')->getValue();
-		$this->_allReligions = explode('|', $rel);
-		$lan = $globalSettings->findOneByName('foreign_language')->getValue();
-		$this->_allForeignLanguages = explode('|', $lan);
-		$course = $globalSettings->findOneByName('special_course')->getValue();
-		$this->_allSpecialCourses = explode('|', $course);
 	}
 
 	/**
@@ -375,58 +348,12 @@ class ShowBooklist extends Booklist {
 
 		$toBuy = array();
 		foreach ($bookData as $bookId => $data) {
-			$res = ( - $data['exemplarsInStock'] + $data['exemplarsNeeded'] );
+			$res = ( - $data['exemplarsInStock'] - $data['exemplarsLent'] + $data['exemplarsNeeded']);
 			$toBuy[$bookId]['exemplarsToBuy'] = ($res > 0) ? $res : 0 ;
 		}
 		return $toBuy;
 	}
 
-	/**
-	 * Fetches the value from the db defining the begin of specialCourses
-	 * @return int    The value
-	 */
-	protected function specialCourseTriggerGet() {
-
-		$trigger = $this->_em
-			->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('special_course_trigger');
-
-		if(empty($trigger)) {
-			$this->_logger->log(
-				'no "special_course_trigger" defined in SystemGlobalSettings',
-				'Notice', Null);
-			throw new MySQLException('Could not fetch special_course_trigger');
-		}
-		else {
-			return (int)$trigger->getValue();
-		}
-	}
-
-	/**
-	 * Splits the given gradelevels in lower and higher-same as $trigger
-	 * @param  int    $trigger     The trigger with which to split the arrays
-	 * @param  int    $gradelevels The gradelevels as an array
-	 * @return array               An array containing the lowerGrades-Array as
-	 *                             well as the upperGrades-Array
-	 */
-	protected function gradelevelsSplitByTrigger($trigger, $gradelevels) {
-
-		$lowerGrades = array();
-		$upperGrades = array();
-		if(!$gradelevels) {
-			return array(0, 0);
-		}
-		foreach($gradelevels as $gl) {
-			if($gl < $trigger) {
-				$lowerGrades[] = $gl;
-			}
-			else {
-				$upperGrades[] = $gl;
-			}
-		}
-
-		return array($lowerGrades, $upperGrades);
-	}
 
 	/*-----  End of Additional Bookdata to fetch  ------*/
 

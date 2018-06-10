@@ -1,6 +1,8 @@
 $(document).ready(function() {
 
-	var activePage = 1;
+    $('[data-toggle="tooltip"]').tooltip();
+
+    var activePage = 1;
 	var amountPages = 0;
 
 	$('[title]').tooltip();
