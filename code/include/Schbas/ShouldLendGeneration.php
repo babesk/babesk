@@ -64,6 +64,7 @@ class ShouldLendGeneration {
 			);
 			if(!$classes) { continue; }
 			foreach($this->_books as $book) {
+                $this->entryAdd($user, $book);
 				$bookSubject = $book->getSubject();
 				if(!$bookSubject) { continue; }
 				$bookSubjectAbbreviation = $bookSubject->getAbbreviation();
