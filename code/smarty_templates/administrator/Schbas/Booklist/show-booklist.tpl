@@ -12,12 +12,12 @@
 		<td><%= isbn %></td>
 		<td><%= price %></td>
 		<td><%= bundle %></td>
-		<td><%= highestExemplarNumber %></td>
+		<td><a data-toggle="tooltip" data-html="true" title=<%= usersInSystemByGrade%>><%= usersInSystem %></a></td>
 		<td><%= exemplarsInStock %></td>
 		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsLentByGrade%>><%= exemplarsLent %></a></td>
+		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsSelfpayedByGrade%>><%= exemplarsSelfpayed %></a></td>
 		<td><%= exemplarsNeeded %></td>
 		<td><%= exemplarsToBuy %></td>
-		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsSelfpayedByGrade%>><%= exemplarsSelfpayed %></a></td>
 		<td>
 		<a class="btn btn-info btn-xs" href="index.php?section=Schbas|Booklist&action=2&ID=<%= id %>" title="Bucheinstellungen">
 				<span class="fa fa-cog"></span>
@@ -92,12 +92,12 @@
 				<th>ISBN</th>
 				<th>Preis</th>
 				<th>Bundle</th>
-				<th>letzte Inv-Nummer</th>
+				<th>Nutzer im System</th>
 				<th>Auf Lager</th>
 				<th>Verliehen</th>
+				<th>Selbstzahler</th>
 				<th>Benötigt</th>
 				<th>Fehlend</th>
-				<th>Selbstzahler</th>
 				<th>Optionen</th>
 			</tr>
 		</thead>

@@ -55,15 +55,15 @@ class ShowBooklist extends Booklist {
 			->from('Babesk\ORM\SchbasBook', 'b')
 			->leftJoin('b.subject', 's');
 		if(isset($_POST['filterFor']) && !isBlank($_POST['filterFor'])) {
-			$query->where('b.title LIKE :filterVar')
-			->orWhere('b.author LIKE :filterVar')
-			->orWhere('b.class LIKE :filterVar')
-			->orWhere('b.bundle LIKE :filterVar')
-			->orWhere('b.price LIKE :filterVar')
-			->orWhere('b.isbn LIKE :filterVar')
-			->orWhere('b.publisher LIKE :filterVar')
-			->orWhere('s.name LIKE :filterVar')
-			->orWhere('s.abbreviation LIKE :filterVar')
+			$query->where('s.abbreviation LIKE :filterVar')//'b.title LIKE :filterVar')
+			//->orWhere('b.author LIKE :filterVar')
+			//->orWhere('b.class LIKE :filterVar')
+			//->orWhere('b.bundle LIKE :filterVar')
+			//->orWhere('b.price LIKE :filterVar')
+			//->orWhere('b.isbn LIKE :filterVar')
+			//->orWhere('b.publisher LIKE :filterVar')
+			//->orWhere('s.name LIKE :filterVar')
+			//->orWhere('s.abbreviation LIKE :filterVar')
 			->setParameter('filterVar', '%' . $_POST['filterFor'] . '%');
 		}
 		$query->setFirstResult($_POST['pagenumber'] * $_POST['booksPerPage'])
@@ -137,7 +137,7 @@ class ShowBooklist extends Booklist {
 	protected function booksInventoryDataGet($paginator) {
 
 		try {
-			$booksData = $this->booksHighestInventoryNumberGet($paginator);
+			$booksData = $this->booksUsersInSystemGet($paginator);
 			$booksData = $this->bookArrayMerge(
 				$booksData, $this->bookExemplarsLentGet($paginator)
 			);
@@ -174,23 +174,49 @@ class ShowBooklist extends Booklist {
 	 *                                  'highestExemplarNumber' => '<count>'
 	 *                              ]
 	 */
-	protected function booksHighestInventoryNumberGet($paginator) {
-
+	protected function booksUsersInSystemGet($paginator) {
+        require_once PATH_INCLUDE . '/Schbas/Loan.php';
+        $loan = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$invNums = array();
-		$query = $this->_em->createQuery(
-			'SELECT MAX(i.exemplar) FROM DM:SchbasInventory i
-				JOIN i.book b
-				WHERE b.id = :id
-		');
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())
-				->getSingleScalarResult();
-			if(!empty($res)) {
-				$invNums[$book->getId()]['highestExemplarNumber'] = (int) $res;
-			}
-			else {
-				$invNums[$book->getId()]['highestExemplarNumber'] = 0;
-			}
+		    $grades = $loan->isbnIdent2Gradelevel($book->getClass());
+
+		    $query = TableMng::query("SELECT gradelevel, count(*) cnt
+		                                    FROM SystemUsers s
+		                                    JOIN SystemAttendances a ON s.id=a.userId
+		                                    JOIN SystemSchoolyears y ON a.schoolyearId = y.ID
+		                                    JOIN SystemGrades g ON a.gradeId = g.id
+		                                    WHERE y.active = 1
+		                                    GROUP BY gradelevel");
+            $sum = 0;
+            $tooltip = "'";
+            foreach ($query as $grade) {
+                $coreSub = TableMng::query("SELECT abbreviation
+                                            FROM SchbasCoreSubjects c
+                                            JOIN SystemSchoolSubjects s ON c.subject_id = s.ID
+                                            WHERE gradelevel = ".$grade['gradelevel']);
+                if (in_array($grade['gradelevel']+1, $grades)) {
+                    if (in_array($book->getSubject()->getAbbreviation(), array_column($coreSub, 'abbreviation'))){
+                        $sum += $grade['cnt'];
+                        $tooltip = "" . $tooltip . "Jahrgang " . $grade['gradelevel'] . ": " . $grade['cnt'] . "<br>";
+                    }else{
+                        $users = TableMng::query("SELECT gradelevel, count(*) cnt
+		                                    FROM SystemUsers s
+		                                    JOIN SystemAttendances a ON s.id=a.userId
+		                                    JOIN SystemSchoolyears y ON a.schoolyearId = y.ID
+		                                    JOIN SystemGrades g ON a.gradeId = g.id
+		                                    WHERE y.active = 1
+		                                    AND u.special_courses LIKE ".$book->getSubject()->getAbbreviation()."
+		                                    GROUP BY gradelevel");
+                        $sum += $users['cnt'];
+                        $tooltip = "" . $tooltip . "Jahrgang " . $grade['gradelevel'] . ": " . $users['cnt'] . "<br>";
+
+                    }
+                }
+            }
+            $tooltip .= "'";
+            $invNums[$book->getId()]['usersInSystem'] = $sum;
+            $invNums[$book->getId()]['usersInSystemByGrade'] = $tooltip;
 		}
 		return $invNums;
 	}
@@ -204,9 +230,11 @@ class ShowBooklist extends Booklist {
 	 *                              ]
 	 */
 	protected function bookExemplarsLentGet($paginator) {
-
+        require_once PATH_INCLUDE . '/Schbas/Loan.php';
+        $loan = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$booksLent = array();
 		foreach($paginator as $book) {
+            $grades = $loan->isbnIdent2Gradelevel($book->getClass());
             $query = TableMng::query("SELECT gradelevel, COUNT(1) cnt
 		                            FROM SchbasLending l 
 		                            JOIN SchbasInventory i ON l.inventory_id = i.id
@@ -216,13 +244,18 @@ class ShowBooklist extends Booklist {
 		                            WHERE s.active = 1 AND i.book_id = ".$book->getId()
                                     ." GROUP BY gradelevel");
             $sum = 0;
+            $notReturning = 0;
             $tooltip = "'";
             foreach ($query as $grade){
+                if(in_array($grade['gradelevel']+1, $grades)){
+                    $notReturning += $grade['cnt'];
+                }
                 $sum += $grade['cnt'];
                 $tooltip = "".$tooltip."Jahrgang ".$grade['gradelevel'].": ".$grade['cnt']."<br>";
             }
             $tooltip .= "'";
 			$booksLent[$book->getId()]['exemplarsLent'] = $sum;
+			$booksLent[$book->getId()]['exemplarsLentNotReturning'] = $notReturning;
 			$booksLent[$book->getId()]['exemplarsLentByGrade'] = $tooltip;
 		}
 
@@ -348,8 +381,11 @@ class ShowBooklist extends Booklist {
 
 		$toBuy = array();
 		foreach ($bookData as $bookId => $data) {
-			$res = ( - $data['exemplarsInStock'] - $data['exemplarsLent'] + $data['exemplarsNeeded']);
-			$toBuy[$bookId]['exemplarsToBuy'] = ($res > 0) ? $res : 0 ;
+			$res = ($data['exemplarsNeeded']
+                    - $data['exemplarsSelfpayed']
+                    - $data['exemplarsInStock']
+                    - $data['exemplarsLentNotReturning']);
+			$toBuy[$bookId]['exemplarsToBuy'] = ($res > 0) ? "<span style='color:red'>".$res."</span>" : 0 ;
 		}
 		return $toBuy;
 	}
