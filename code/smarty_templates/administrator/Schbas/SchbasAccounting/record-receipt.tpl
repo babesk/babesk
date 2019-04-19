@@ -5,6 +5,7 @@
 	<thead>
 		<tr>
 			<th>Kartennummer</th>
+			<th>ID</th>
 			<th>Vorname</th>
 			<th><a id="name-table-head">Nachname</a></th>
 			<th>Benutzername</th>
@@ -20,6 +21,7 @@
 		<% for(var i = 0; i < users.length; i++) { %>
 			<tr data-user-id="<%= users[i].id %>" tabindex="1">
 				<td class="cardnumber"> <%= users[i].cardnumber %> </td>
+				<td class="id"><%= users[i].id %></td>
 				<td class="forename"> <%= users[i].forename %> </td>
 				<td class="name"> <%= users[i].name %> </td>
 				<td class="username"> <%= users[i].username %> </td>

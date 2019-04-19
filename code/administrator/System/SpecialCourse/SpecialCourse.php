@@ -70,7 +70,7 @@ class SpecialCourse extends System {
 				$SpecialCourseProcessing->SaveUsers($_POST);
 				break;
 			case 5:
-				$SpecialCourseProcessing->ShowUserByGradelevelAjax($_POST['gradelevel'], $_POST['filter']);
+				$SpecialCourseProcessing->ShowUserByGradelevelAjax($_POST['gradelevel'], $_POST['filter'], $_POST['activePage']);
 				break;
 			default:
                 $SpecialCourseInterface->ShowSelectionFunctionality();

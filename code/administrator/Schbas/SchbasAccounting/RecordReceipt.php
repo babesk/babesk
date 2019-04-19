@@ -111,9 +111,7 @@ class RecordReceipt extends \SchbasAccounting {
 	 *                             'pagecount' => <pagecount>
 	 *                         ]
 	 */
-	private function userdataFetch(
-		$filter, $filterForCol, $sortColumn, $pagenum, array $options = []
-	) {
+	private function userdataFetch($filter, $filterForCol, $sortColumn, $pagenum, array $options = []) {
 
 		$query = $this->userdataQueryCreate(
 			$filter, $filterForCol, $sortColumn, $pagenum, $options
@@ -154,9 +152,7 @@ class RecordReceipt extends \SchbasAccounting {
 	 * @param  string $pagenum The number of page requested
 	 * @return Query           A doctrine query object for fetching the users
 	 */
-	private function userdataQueryCreate(
-		$filter, $filterForCol, $sortColumn, $pagenum, array $options = []
-	) {
+	private function userdataQueryCreate($filter, $filterForCol, $sortColumn, $pagenum, array $options = []) {
 
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
@@ -211,10 +207,10 @@ class RecordReceipt extends \SchbasAccounting {
 			$queryBuilder->andWhere($str);
 			$queryBuilder->setParameter('filter', "%${filter}%");
 		}
-		$this->_logger->log($sortColumn);
 		if(!empty($sortColumn)) {
 			if($sortColumn == 'grade') {
-				$queryBuilder->orderBy('activeGrade');
+				$queryBuilder
+                    ->orderBy('activeGrade','ASC');
 			}
 			else if($sortColumn == 'name') {
 				$queryBuilder->orderBy('u.name');

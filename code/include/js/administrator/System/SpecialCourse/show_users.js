@@ -1,4 +1,25 @@
 $(document).ready(function() {
+
+    activePage = 1;
+    gradelevel = 5;
+    amountPages = 1;
+
+    $('#page-select').on('click', 'a', function(ev) {
+        $this = $(this);
+        if($this.hasClass('first-page')) {
+            var page = 1;
+        }
+        else if($this.hasClass('last-page')) {
+            console.log(amountPages);
+            var page = amountPages;
+        }
+        else {
+            var page = $(this).text();
+        }
+        activePage = page;
+        dataFetch(page);
+    });
+
     $('.dropdown-item').on('click',function (event) {
         function removeActiveFromFilters() {
             $items = $('.dropdown-menu li.active');
@@ -16,20 +37,25 @@ $(document).ready(function() {
             gradelevel = false;
         }
         activePage = 1;
+        dataFetch();
+
+    })
+    $('.dropdown-item').first().trigger('click');
+
+    function dataFetch() {
         $.postJSON(
             'index.php?section=System|SpecialCourse&action=5',
             {
                 'gradelevel': gradelevel,
-                'filter': 'name'
+                'filter': 'name',
+                'activePage': activePage
             },
             function (res, textStatus, jqXHR) {
                 json = JSON.parse(res);
-                dataFill(json.user, json.subjects)
+                dataFill(json.user, json.subjects, json.pagecount)
 
             })
-    })
-    $('.dropdown-item').first().trigger('click');
-
+    }
 
     $('#search_btn').on('click', function (event) {
         user = $('#user_search').val();
@@ -40,12 +66,13 @@ $(document).ready(function() {
             },
             function (res, textStatus, jqXHR) {
                 json = JSON.parse(res);
-                dataFill(json.user, json.subjects);
+                dataFill(json.user, json.subjects, json.pagecount);
             }
         )
     })
 
-    function dataFill(users, subjects) {
+    function dataFill(users, subjects, pagecount) {
+        pageSelectorUpdate(pagecount);
         var html = microTmpl($('#user-table-template').html(),
             {
                 'users':users,
@@ -82,6 +109,46 @@ $(document).ready(function() {
 
                 })
         })
+    }
+
+    function pageSelectorUpdate(pagecount) {
+        amountPages = pagecount;
+        console.log(amountPages);
+
+        var amountSelectorsDisplayed = 9;
+        var startPage = activePage - Math.floor(amountSelectorsDisplayed / 2);
+        if(startPage < 1) {
+            startPage = 1;
+        }
+        if(activePage == 1) {
+            $pager= $(
+                '<li class="disabled"><a class="first-page">&laquo;</a></li>'
+            );
+            $('#relative-pager-prev').addClass('disabled');
+        }
+        else {
+            $pager= $('<li><a href="#" class="first-page">&laquo;</a></li>');
+            $('#relative-pager-prev').removeClass('disabled');
+        }
+        for(var i = startPage; i <= pagecount && i < startPage + amountSelectorsDisplayed; i++) {
+            if(i == activePage) {
+                $pager.append('<li class="active"><a href="#">' + i + '</a></li>');
+            }
+            else {
+                $pager.append('<li><a href="#">' + i + '</a></li>');
+            }
+        }
+        if(activePage == pagecount) {
+            $pager.append(
+                '<li class="disabled"><a href="#" class="last-page">&raquo;</a></li>'
+            );
+            $('#relative-pager-next').addClass('disabled');
+        }
+        else {
+            $pager.append('<li><a href="#" class="last-page">&raquo;</a></li>');
+            $('#relative-pager-next').removeClass('disabled');
+        }
+        $('#page-select').html($pager.outerHtml());
     }
 
 

@@ -21,6 +21,11 @@
 		</ul>
 	</div>
 
+	<div class="col-sm-12 col-md-6 text-center">
+		<ul id="page-select" class="pagination">
+		</ul>
+	</div>
+
 	<br>
 
 	<div class="row col-sm-12 col-md-5 col-lg-7">
