@@ -3,11 +3,11 @@
 	<fieldset>
 		<legend>Aktionen</legend>
 		<ul class="submodulelinkList">
-			<li>
+			<!--<li>
 				<a href="index.php?section=System|SpecialCourse&action=1">Oberstufenkurse editieren</a>
-			</li>
+			</li>-->
 			<li>
-				<a href="index.php?section=System|SpecialCourse&action=3">Oberstufenkurse den Benutzern zuordnen</a>
+				<a href="index.php?section=System|SpecialCourse&action=3">Wahlkurse den Benutzern zuordnen</a>
 			</li>
 		</ul>
 	</fieldset>

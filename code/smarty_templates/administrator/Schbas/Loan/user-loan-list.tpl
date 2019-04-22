@@ -96,7 +96,7 @@
 				{if $loanChoice == 'ls'}
 					<li class="list-group-item list-group-item-warning">
 						<span class="fa fa-info-circle pull-left"></span>
-						Der Benutzer ist Selbsteinkäufer!
+						Der Benutzer ist befreit!
 					</li>
 				{else if $loanChoice == 'nl'}
 					<li class="list-group-item list-group-item-warning">
