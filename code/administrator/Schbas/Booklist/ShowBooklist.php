@@ -54,16 +54,17 @@ class ShowBooklist extends Booklist {
 			->select(array('b, s'))
 			->from('Babesk\ORM\SchbasBook', 'b')
 			->leftJoin('b.subject', 's')
-            ->orderBy('s.name','ASC');
+            ->orderBy('s.name','ASC')
+            ->orderBy('b.class', 'ASC');
 		if(isset($_POST['filterFor']) && !isBlank($_POST['filterFor'])) {
-			$query->where('b.title LIKE :filterVar')
-			->orWhere('b.author LIKE :filterVar')
-			->orWhere('b.class LIKE :filterVar')
-			->orWhere('b.bundle LIKE :filterVar')
-			->orWhere('b.price LIKE :filterVar')
-			->orWhere('b.isbn LIKE :filterVar')
-			->orWhere('b.publisher LIKE :filterVar')
-			->orWhere('s.name LIKE :filterVar')
+			$query//->where('b.title LIKE :filterVar')
+			//->orWhere('b.author LIKE :filterVar')
+			//->orWhere('b.class LIKE :filterVar')
+			//->orWhere('b.bundle LIKE :filterVar')
+			//->orWhere('b.price LIKE :filterVar')
+			//->orWhere('b.isbn LIKE :filterVar')
+			//->orWhere('b.publisher LIKE :filterVar')
+			//->orWhere('s.name LIKE :filterVar')
 			->orWhere('s.abbreviation LIKE :filterVar')
 			->setParameter('filterVar', '%' . $_POST['filterFor'] . '%');
 		}

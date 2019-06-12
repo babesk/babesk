@@ -111,7 +111,7 @@ class AdminSpecialCourseProcessing {
 
 		$schoolyear = TableMng::query("SELECT * FROM SystemSchoolyears WHERE active = 1")[0]['ID'];
 		$gradelevel = TableMng::query(sprintf("SELECT * FROM SystemAttendances a JOIN SystemGrades g ON a.gradeId=g.ID WHERE schoolyearId=%s AND userId=%s",$schoolyear, $uid))[0]['gradelevel'];
-        $nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) OR NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel, $gradelevel+1));
+        $nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) OR NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) ORDER BY s.sort", $gradelevel, $gradelevel+1));
 
 		dieJson(json_encode(array('user' => $users, 'subjects' => $nonCoreSubjects)));
 	}
@@ -142,7 +142,7 @@ class AdminSpecialCourseProcessing {
 
 		$user = TableMng::query(sprintf("SELECT u.ID, u.forename, u.name, u.special_course FROM SystemUsers u JOIN SystemAttendances a ON u.ID=a.userId JOIN SystemGrades g ON a.gradeID=g.ID WHERE g.gradelevel = %s AND a.schoolyearId=%s ORDER BY %s", $gradelevel, $schoolyear, $filter));
 
-		$nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) OR NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s)", $gradelevel, $gradelevel+1));
+		$nonCoreSubjects = TableMng::query(sprintf("SELECT * FROM SystemSchoolSubjects s WHERE NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) OR NOT EXISTS(SELECT * FROM SchbasCoreSubjects c WHERE c.subject_id=s.ID AND c.gradelevel=%s) ORDER BY s.sort", $gradelevel, $gradelevel+1));
 
 		$pagecount = floor(sizeof($user)/10)+1;
 		$user = array_slice($user, ($activePage-1)*10, 10);

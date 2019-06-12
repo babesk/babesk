@@ -98,6 +98,8 @@ class Loan extends Schbas {
         $accountingQb->setParameter('prepSchoolyear', $prepSchoolyear);
         $accountingQb->setParameter('user', $user);
         $userdata = $accountingQb->getQuery()->getOneOrNullResult();
+        $grade = $this->_em->getRepository('DM:SystemUsers')->getActiveGradeByUser($user);
+        $this->_smarty->assign('grade', $grade);
 		$this->_smarty->assign('user', $user);
         $this->_smarty->assign('userdata', $userdata);
 		$this->_smarty->assign('formSubmitted', $formSubmitted);

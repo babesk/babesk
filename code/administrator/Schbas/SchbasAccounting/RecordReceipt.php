@@ -52,7 +52,9 @@ class RecordReceipt extends \SchbasAccounting {
 		}
 		else if(isset($_POST['userId'], $_POST['amount'], $_POST['to-pay'])) {
 			$this->paidAmountChange($_POST['userId'], $_POST['amount'], $_POST['to-pay']);
-		}
+		}else if(isset($_POST['userId'], $_POST['returned'])){
+		    $this->formReturnedChange($_POST['userId'], $_POST['returned']);
+        }
 		else {
 			$this->displayTpl('record-receipt.tpl');
 		}
@@ -122,19 +124,23 @@ class RecordReceipt extends \SchbasAccounting {
 		$users = array();
 		if(count($paginator)) {
 			foreach($paginator as $page) {
-				$user = $page[0];
-				//Doctrines array-hydration treats foreign keys different
-				$user['cardnumber'] = $page['cardnumber'];
-				$user['payedAmount'] = (isset($page['payedAmount'])) ?
-					$page['payedAmount'] : 0.00;
-				$user['amountToPay'] = (isset($page['amountToPay'])) ?
-					$page['amountToPay'] : 0.00;
-				$user['missingAmount'] = (isset($page['missingAmount'])) ?
-					$page['missingAmount'] : 0.00;
-				$user['loanChoice'] = $page['loanChoice'];
-				$user['loanChoiceAbbreviation'] =
-					$page['loanChoiceAbbreviation'];
-				$user['activeGrade'] = $page['activeGrade'];
+                $user = $page[0];
+                //Doctrines array-hydration treats foreign keys different
+                $user['cardnumber'] = $page['cardnumber'];
+                $user['payedAmount'] = (isset($page['payedAmount'])) ?
+                    $page['payedAmount'] : 0.00;
+                $user['amountToPay'] = (isset($page['amountToPay'])) ?
+                    $page['amountToPay'] : 0.00;
+                $user['missingAmount'] = (isset($page['missingAmount'])) ?
+                    $page['missingAmount'] : 0.00;
+                $user['loanChoice'] = $page['loanChoice'];
+                $user['loanChoiceAbbreviation'] =
+                    $page['loanChoiceAbbreviation'];
+                $user['activeGrade'] = $page['activeGrade'];
+                if (isset($page['accID'])){
+                    $user['formReturned'] = \TableMng::query(sprintf("SELECT formReturned FROM SchbasAccounting WHERE id = %s", $page['accID']))[0]['formReturned'];
+                    $user['accID'] = $page['accID'];
+                }
 				$users[] = $user;
 			}
 			$pagecount = ceil((int) count($paginator) / $this->_usersPerPage);
@@ -159,7 +165,7 @@ class RecordReceipt extends \SchbasAccounting {
 		$queryBuilder = $this->_em->createQueryBuilder()
 			->select(
 				'partial u.{id, forename, name, username}, c.cardnumber, ' .
-				'a.payedAmount, a.amountToPay, lc.name AS loanChoice, ' .
+				'a.payedAmount, a.amountToPay, a.id AS accID, lc.name AS loanChoice, ' .
 				'lc.abbreviation AS loanChoiceAbbreviation, ' .
 				'lc.id AS loanChoiceId, ' .
 				'a.amountToPay - a.payedAmount AS missingAmount, ' .
@@ -258,6 +264,14 @@ class RecordReceipt extends \SchbasAccounting {
 			http_response_code(500);
 		}
 	}
+
+	private function formReturnedChange($userId, $returned){
+        $loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
+        $schoolyear = \TableMng::query("SELECT value FROM SystemGlobalSettings WHERE name = 'schbasPreparationSchoolyearId'")[0]['value'];
+        \TableMng::query(sprintf("UPDATE SchbasAccounting SET formReturned = %s WHERE userId = %s AND schoolyearId= %s ", $returned, $userId, $schoolyear));
+
+        die(json_encode("Erfolgreich"));
+    }
 
 	/**
 	 * Sends a pdf with an overview over the fetched users to the client

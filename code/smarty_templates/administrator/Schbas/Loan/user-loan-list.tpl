@@ -75,7 +75,7 @@
 <div class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">
-			Ausleihliste für: {$user->getForename()} {$user->getName()}
+			Ausleihliste für: {$user->getForename()} {$user->getName()} ({$grade->getGradelevel()}{$grade->getLabel()})
 		</h3>
 	</div>
 	<ul class="list-group checklist">
@@ -96,7 +96,7 @@
 				{if $loanChoice == 'ls'}
 					<li class="list-group-item list-group-item-warning">
 						<span class="fa fa-info-circle pull-left"></span>
-						Der Benutzer ist Selbsteinkäufer!
+						Der Benutzer ist befreit!
 					</li>
 				{else if $loanChoice == 'nl'}
 					<li class="list-group-item list-group-item-warning">

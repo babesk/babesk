@@ -95,20 +95,21 @@
 		</thead>
 		<tbody>
 			{foreach $data as $retourbook}
-				{$exemplar = $retourbook->getExemplars()->first()}
-			<tr>
-				<td>{$retourbook->getTitle()}</td>
-				<td>{$retourbook->getAuthor()}</td>
-				<td>{$retourbook->getPublisher()}</td>
-				<td>
-					{$retourbook->getSubject()->getAbbreviation()}
-					{$exemplar->getYearOfPurchase()}
-					{$retourbook->getClass()}
-					{$retourbook->getBundle()}
-					/
-					{$exemplar->getExemplar()}
-				</td>
-			</tr>
+				{foreach $retourbook->getExemplars() as $exemplar}
+					<tr>
+						<td>{$retourbook->getTitle()}</td>
+						<td>{$retourbook->getAuthor()}</td>
+						<td>{$retourbook->getPublisher()}</td>
+						<td>
+							{$retourbook->getSubject()->getAbbreviation()}
+							{$exemplar->getYearOfPurchase()}
+							{$retourbook->getClass()}
+							{$retourbook->getBundle()}
+							/
+							{$exemplar->getExemplar()}
+						</td>
+					</tr>
+				{/foreach}
 			{/foreach}
 		</tbody>
 	</table>
