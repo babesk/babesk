@@ -84,15 +84,17 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 		$this->usersToChangeCheckGrades();
 
 		try {
-			$queryJoints = 'INSERT INTO SystemAttendances (userId, gradeId, schoolyearId) 
-                              SELECT su.origUserId, g.ID,
-					            (SELECT value FROM SystemGlobalSettings
-						        WHERE name =
-							    "userUpdateWithSchoolyearChangeNewSchoolyearId"
-					            ) AS schoolyear
-				              FROM UserUpdateTempSolvedUsers su
-					          LEFT JOIN SystemGrades g ON g.gradelevel = su.gradelevel AND g.label = su.gradelabel
-					          WHERE su.origUserId <> 0
+			$queryJoints = 'INSERT INTO SystemAttendances (
+					userId, gradeId, schoolyearId
+				) SELECT su.origUserId, g.ID,
+					(SELECT value FROM SystemGlobalSettings
+						WHERE name =
+							"userUpdateWithSchoolyearChangeNewSchoolyearId"
+					) AS schoolyear
+				FROM UserUpdateTempSolvedUsers su
+					LEFT JOIN SystemGrades g ON g.gradelevel = su.gradelevel AND
+						g.label = su.gradelabel
+					WHERE su.origUserId <> 0
 			';
 			//Update user-entries if data is given
 			$queryUsers = 'UPDATE SystemUsers u
@@ -187,7 +189,7 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 					(forename, name, username, password, email, telephone,
 						last_login, locked, GID, credit, soli, birthday,
 						religion, foreign_language, special_course)
-				VALUES (?, ?, IFNULL(?, CONCAT(forename, ".", name)), ?,
+				VALUES (?, ?, IFNULL(?, CONCAT(forename, ".", name)), "",
 					IFNULL(?, ""), IFNULL(?, ""), "", 0, 0, 0, 0, ?,
 					IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""))'
 			);
@@ -212,7 +214,6 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 				$user = $this->userNewGradeCheckAndAdd($user);
 				$stmtu->execute(array(
 					$user['forename'], $user['name'], $user['newUsername'],
-					hash_password(date("d.m.Y",strtotime($user['birthday']))),
 					$user['newEmail'], $user['newTelephone'],
 					$user['birthday'], $user['religion'],
 					$user['foreign_language'], $user['special_course']
