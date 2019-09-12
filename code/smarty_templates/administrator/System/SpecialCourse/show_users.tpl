@@ -4,7 +4,7 @@
 	<% for(var i = 0; i < users.length; i++) { %>
 		<tr>
 			<td align="center"><%= users[i].forename %></td>
-			<td align="center"><%= users[i].name %></td>
+			<td align="center"><%= users[i].name %><input type="hidden" name="<%=users[i].ID%>|"></td>
                 <% for(var j=0; j<subjects.length;j++) { %>
 			<td><input type="checkbox" name="<%=users[i].ID%>|<%=subjects[j].abbreviation%>"/></td>
                 <% } %>

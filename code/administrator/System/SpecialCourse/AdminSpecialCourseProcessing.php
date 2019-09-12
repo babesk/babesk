@@ -126,7 +126,8 @@ class AdminSpecialCourseProcessing {
 				if(!isset($courses[$uid])) {
                     $courses[$uid]=array();
 				}
-                $courses[$uid][]=$abbr;
+				if($abbr != "")
+                	$courses[$uid][]=$abbr;
 			} catch (Exception $e) {
 				$this->SpecialCourseInterface->dieError($this->messages['error']['change'] . $e->getMessage());
 			}

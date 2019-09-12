@@ -53,9 +53,7 @@ class ShowBooklist extends Booklist {
 		$query = $this->_em->createQueryBuilder()
 			->select(array('b, s'))
 			->from('Babesk\ORM\SchbasBook', 'b')
-			->leftJoin('b.subject', 's')
-            ->orderBy('s.name','ASC')
-            ->orderBy('b.class', 'ASC');
+			->leftJoin('b.subject', 's');
 		if(isset($_POST['filterFor']) && !isBlank($_POST['filterFor'])) {
 			$query//->where('b.title LIKE :filterVar')
 			//->orWhere('b.author LIKE :filterVar')
