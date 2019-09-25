@@ -52,7 +52,7 @@ class AdminPriceclassProcessing {
 
 		$highest_pc_ID = $this->pcManager->getHighestPriceclassID();
 
-		if (isset($_POST['name'], $_POST['n_price'])) {
+		if (isset($_POST['name'], $_POST['n_price'], $_POST['n_orders'])) {
 			try {
 				$groups = $groupManager->getTableData();
 			} catch (Exception $e) {
@@ -60,6 +60,7 @@ class AdminPriceclassProcessing {
 			}
 			$pc_name = $_POST['name'];
 			$normal_price = $_POST['n_price'];
+            $normal_orders = $_POST['n_orders'];
 			if (!preg_match('/\A^[0-9]{1,2}((,|\.)[0-9]{2})?\z/', $normal_price)) {
 				$this->pcInterface->dieError($this->msg['err_inp_nprice']);
 			}
@@ -71,9 +72,13 @@ class AdminPriceclassProcessing {
 				else if (!preg_match('/\A^[0-9]{0,2}((,|\.)[0-9]{2})?\z/', $price)) {
 					$this->pcInterface->dieError($this->msg['err_input_price']);
 				}
+                $orders = $_POST['group_orders' . $group['ID']];
+                if (!$orders || trim($orders) == '') {
+                    $orders = $normal_orders;
+                }
 				$price = str_replace(',', '.', $price); //Comma bad for MySQL
 				try { //add the group
-					$this->pcManager->addPriceClass($pc_name, $group['ID'], $price, $highest_pc_ID + 1);
+					$this->pcManager->addPriceClass($pc_name, $group['ID'], $price, $highest_pc_ID + 1, $orders);
 				} catch (Exception $e) {
 					$this->pcInterface->dieError(sprintf($this->msg['err_add_priceclass_for_group'] . $e->getMessage()),
 						$group['name']);
@@ -112,25 +117,21 @@ class AdminPriceclassProcessing {
 	 */
 	function ChangePriceclass ($priceclass_id) {
 
-		if (isset($_GET['where'], $_POST['ID'], $_POST['name'], $_POST['price'], $_POST['group_id'])) {
+		if (isset($_GET['where'], $_POST['ID'], $_POST['price'], $_POST['orders'])) {
 
 			$pc_old_ID = $_GET['where'];
-			$pc_ID = $_POST['ID'];
-			$pc_name = $_POST['name'];
 			$pc_price = $_POST['price'];
-			$pc_GID = $_POST['group_id'];
+			$max_orders = $_POST['orders'];
 
 			$pc_price = str_replace(',', '.', $pc_price);
 
 			if (!preg_match('/\A^[0-9]{0,2}((,|\.)[0-9]{2})?\z/', $pc_price))
 				$this->pcInterface->dieError($this->msg['err_inp_price']);
-			else if (!preg_match('/\A^[0-9]{1,5}\z/', $pc_ID))
-				$this->pcInterface->dieError($this->msg['err_inp_id']);
 			else if (!preg_match('/\A^[0-9]{1,5}\z/', $pc_old_ID))
 				$this->pcInterface->dieError($this->msg['err_get']);
 
 			try {
-				$this->pcManager->changePriceClass($pc_old_ID, $pc_name, $pc_GID, $pc_price, $pc_ID);
+				$this->pcManager->changePriceClass($pc_old_ID, $pc_price, $max_orders);
 			} catch (Exception $e) {
 				$this->pcInterface->dieError($this->msg['err_change_priceclass'] . $e->getMessage());
 			}

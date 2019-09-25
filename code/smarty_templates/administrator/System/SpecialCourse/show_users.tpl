@@ -16,7 +16,16 @@
 		<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Jahrgang <span class="caret"></span> </button>
 		<ul class="dropdown-menu">
             {foreach $gradelevel as $grade}
-				<li><a data-name="{$grade.gradelevel}" class="dropdown-item">{$grade.gradelevel}</a></li>
+				<li><a data-name="{$grade.gradelevel}" class="dropdown-item grade">{$grade.gradelevel}</a></li>
+            {/foreach}
+		</ul>
+	</div>
+
+	<div class="dropdown">
+		<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Schuljahr<span class="caret"></span> </button>
+		<ul class="dropdown-menu">
+            {foreach $schoolyears as $schoolyear}
+				<li><a data-name="{$schoolyear.id}" class="dropdown-item year">{$schoolyear.label}</a></li>
             {/foreach}
 		</ul>
 	</div>

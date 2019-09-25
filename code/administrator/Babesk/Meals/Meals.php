@@ -60,6 +60,8 @@ class Meals extends Babesk {
 				case 8:
 					$mealProcessing->DuplicateMeal($_POST['name'], $_POST['description'], $_POST['pcID'], $_POST['date'], $_POST['max_orders']);
 					break;
+				case 9:
+					$mealProcessing->PrintOrders();
 			}
 		} else {
 

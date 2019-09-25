@@ -1,0 +1,1 @@
+ALTER TABLE `babeskpriceclasses` ADD `orders_per_user` INT NOT NULL AFTER `soliprice`;

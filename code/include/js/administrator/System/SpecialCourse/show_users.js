@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $('.dropdown-item').on('click',function (event) {
+    $('.dropdown-item.grade').on('click',function (event) {
         function removeActiveFromFilters() {
             $items = $('.dropdown-menu li.active');
             $items.removeClass('active');
@@ -28,7 +28,11 @@ $(document).ready(function() {
 
             })
     })
+<<<<<<< Updated upstream
     $('.dropdown-item').first().trigger('click');
+=======
+    $('.dropdown-item.grade').trigger('click');
+>>>>>>> Stashed changes
 
 
     $('#search_btn').on('click', function (event) {
@@ -67,7 +71,7 @@ $(document).ready(function() {
         })
 
         $('.column').on('click', function (event) {
-            grade = $('li.active > a.dropdown-item').data('name');
+            grade = $('li.active > a.dropdown-item.grade').data('name');
             column = $(event.target).data('name');
 
             $.postJSON(

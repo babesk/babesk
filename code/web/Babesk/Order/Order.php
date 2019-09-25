@@ -178,8 +178,7 @@ class Order extends Babesk {
 
 		if($this->userAlreadyHasOrderedWithPriceclassAtDateCheck()) {
 			$this->_interface->dieMessage(
-				'Du kannst an einem Tag nicht mehrere Mahlzeiten der ' .
-				'gleichen Preisklasse bestellen.'
+				'Sie haben bereits die maximale Anzahl an Bestellungen für dieses Gericht erreicht.'
 			);
 		}
 
@@ -272,7 +271,7 @@ class Order extends Babesk {
 	protected function mealGet($mealId, $userId) {
 
 		try {
-			$meal = TableMng::query("SELECT pc.price AS price, pc.soliPrice AS soliPrice, m.*
+			$meal = TableMng::query("SELECT pc.price AS price, pc.soliPrice AS soliPrice, u.GID AS groupID, m.*
 				FROM BabeskMeals m
 				JOIN SystemUsers u ON u.ID = $userId
 				JOIN BabeskPriceClasses pc
@@ -517,7 +516,18 @@ class Order extends Babesk {
 			'priceClass' => $this->_meal['price_class']
 		));
 		$count = $stmt->fetch(PDO::FETCH_COLUMN);
-		return $count > 0;
+
+        $stmt_orders = $this->_pdo->prepare(
+            'SELECT orders_per_user FROM BabeskPriceClasses pc
+				WHERE pc_ID = :priceClass
+					AND GID = :groupID
+		');
+        $stmt_orders->execute(array(
+            'priceClass' => $this->_meal['price_class'],
+			'groupID' => $this->_meal['groupID']
+        ));
+        $max_orders = $stmt_orders->fetch(PDO::FETCH_COLUMN);
+		return $count >= $max_orders;
 	}
 
 	////////////////////////////////////////////////////////////////////////

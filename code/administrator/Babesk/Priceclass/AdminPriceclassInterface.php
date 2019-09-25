@@ -18,6 +18,7 @@ class AdminPriceclassInterface extends AdminInterface {
 		$this->smarty->assign('ID', $priceclass['ID']);
 		$this->smarty->assign('name', $priceclass['name']);
 		$this->smarty->assign('price', $priceclass['price']);
+		$this->smarty->assign('max_orders', $priceclass['orders_per_user']);
 		$this->smarty->assign('groups', $groups);
 		$this->smarty->assign('current_group_name', $current_group_name);
 		$this->smarty->display($this->tplFilePath . 'change_priceclass.tpl');

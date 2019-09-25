@@ -40,8 +40,8 @@ class PriceClassManager extends TableManager {
 		return $priceData['price'];
 	}
 
-	function changePriceClass ($old_ID, $name, $GID, $price, $ID) {
-		TableManager::alterEntry($old_ID, 'name', $name, 'GID', $GID, 'price', $price, 'ID', $ID);
+	function changePriceClass ($old_ID, $price, $maxOrders) {
+		TableManager::alterEntry($old_ID, 'price', $price, 'orders_per_user', $maxOrders);
 	}
 
 	/**
@@ -78,13 +78,13 @@ class PriceClassManager extends TableManager {
 	 * @param price The price
 	 * @param ID The ID of the price class, this one is optional (else MySQL will autoincrement)
 	 */
-	function addPriceClass ($name, $GID, $price, $pc_ID, $ID = '') {
+	function addPriceClass ($name, $GID, $price, $pc_ID, $maxOrders, $ID = '') {
 		try {
 			if (!$ID) { //nothing for ID given
-				TableManager::addEntry('name', $name, 'GID', $GID, 'price', $price, 'pc_ID', $pc_ID);
+				TableManager::addEntry('name', $name, 'GID', $GID, 'price', $price, 'pc_ID', $pc_ID, 'orders_per_user', $maxOrders);
 			}
 			else {
-				TableManager::addEntry('name', $name, 'GID', $GID, 'price', $price, 'pc_ID', $pc_ID, 'ID', $ID);
+				TableManager::addEntry('name', $name, 'GID', $GID, 'price', $price, 'pc_ID', $pc_ID, 'ID', $ID, 'orders_per_user', $maxOrders);
 			}
 		} catch (Exception $e) {
 			echo ERR_ADD_PRICECLASS;

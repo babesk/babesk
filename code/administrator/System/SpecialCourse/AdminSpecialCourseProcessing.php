@@ -88,7 +88,8 @@ class AdminSpecialCourseProcessing {
 		$specialCourses_exploded = explode("|", $specialCourses);
 		$navbar = navBar($showPage, 'SystemUsers', 'System', 'SpecialCourse', '3',$filter);
 		$gradelevel = TableMng::query(sprintf("SELECT gradelevel FROM SystemGrades GROUP BY gradelevel"));
-		$this->SpecialCourseInterface->ShowUsers($users,$gradelevel,$navbar);
+		$years = TableMng::query(sprintf("SELECT * FROM Systemschoolyears"));
+		$this->SpecialCourseInterface->ShowUsers($users,$gradelevel,$years,$navbar);
 	}
 
 	//////////////////////////////////////////////////

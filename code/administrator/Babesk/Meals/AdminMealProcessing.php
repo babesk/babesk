@@ -446,6 +446,28 @@ class AdminMealProcessing {
 		$this->mealInterface->DuplicateMeal($pc_ids, $pc_names, $name, $description, $pc_ID, $max_orders, $date);
 	}
 
+    function PrintOrders() {
+
+        if ($_POST['ordering_day'] > 31 or $_POST['ordering_month'] > 12 or $_POST['ordering_year'] < 2000 or $_POST
+            ['ordering_year'] > 3000) {
+            $this->mealInterface->dieError($this->msg['err_inp_date']);
+        }
+        $date = $_POST['ordering_year'] . '-' . $_POST['ordering_month'] . '-' . $_POST['ordering_day'];
+        $rechargesToPrint = $this->rechargesFetchBetween(
+            date('Y-m-d H:i:s', $start), date('Y-m-d H:i:s', $end));
+        $table = $this->rechargesAsHtmlTable($rechargesToPrint);
+        $sum = $this->rechargesSum($rechargesToPrint);
+        $table .= '<p></p><p></p><b>' . _g('Sum:') . ' ' . $sum . '</b>';
+
+        $title = "Bestellungen für den " . date('d.m.Y', $date);
+        $html = "<p align='center'><h2>{$title}</h2></p><br />" . $table;
+
+        require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
+        $pdf = new GeneralPdf($this->_pdo);
+        $pdf->create($title, $html);
+        $pdf->output();
+    }
+
 	/**
 	 * Handles the MySQL-table meals
 	 * @var MealManager
