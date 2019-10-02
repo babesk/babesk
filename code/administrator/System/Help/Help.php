@@ -28,7 +28,7 @@ class Help extends System {
 		$helpInterface = new AdminHelpInterface($this->relPath);
 		$helpProcessing = new AdminHelpProcessing($helpInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD']) {
+		if (isset($_GET['action'])) {
 			try {
 				switch ($_GET['action']) {
 					case 1:

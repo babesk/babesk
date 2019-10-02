@@ -31,7 +31,7 @@ class Groups extends System {
 		$groupInterface = new AdminGroupInterface($this->relPath);
 		$groupProcessing = new AdminGroupProcessing($groupInterface);
 
-		if ('POST' == $_SERVER['REQUEST_METHOD']) {
+		if (isset($_GET['action'])) {
 
 			$action = $_GET['action'];
 			switch ($action) {

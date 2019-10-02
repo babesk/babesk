@@ -6,6 +6,6 @@
 <form action='index.php?section=System|Help&action=2'
 	method="post">
 	<textarea class="ckeditor" name="helptext">{$helptext}</textarea>
-	<input id="submit" onclick="submit()" type="submit" value="Submit" />
+	<input id="submit" onclick="submit()" type="submit" value="Speichern" />
 </form>
 {/block}

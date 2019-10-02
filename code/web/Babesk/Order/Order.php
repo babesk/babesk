@@ -182,17 +182,6 @@ class Order extends Babesk {
 			);
 		}
 
-		if(($max = $this->maxCountOfOrdersPerDayPerUserGet()) !== false) {
-
-			$ordersCurrentCount = $this->orderCountOfDayByUserGet(
-				$_SESSION['uid'],
-				$this->_meal['date']);
-
-			if($ordersCurrentCount + 1 > $max) {
-				return false;
-			}
-		}
-
 		return (time() <= $orderEnd);
 	}
 

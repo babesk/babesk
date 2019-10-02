@@ -2,6 +2,8 @@
 
 <h3 class="module-header">Benutzerhomepage-Einstellungen</h3>
 
+	<fieldset>
+		<legend><b>Einstellungen für den Benutzerlogin</b></legend>
 <ul class="submodulelinkList">
 	<li>
 		<a href="index.php?section=System|WebHomepageSettings&amp;action=redirect">
@@ -19,5 +21,6 @@
 		</a>
 	</li>
 </ul>
+	</fieldset>
 
 {/block}

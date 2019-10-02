@@ -15,7 +15,7 @@
 			{$infotexts.menu_text2}
 		</textarea>
 	</fieldset>
-	<br> <input id="submit" onclick="submit()" type="submit" value="Submit" />
+	<br> <input id="submit" onclick="submit()" type="submit" value="Speichern" />
 </form>
 
 {/block}

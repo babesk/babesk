@@ -70,6 +70,14 @@ class AdminMealInterface extends AdminInterface {
 		$this->smarty->assign('amount', $amount);
 		$this->smarty->display($this->tplFilePath . 'maxOrderAmount.tpl');
 	}
+
+	public function showOrdersPDF($num_orders, $sorted_orders, $date){
+        $this->smarty->assign('num_orders', $num_orders);
+        $this->smarty->assign('orders', $sorted_orders);
+        $this->smarty->assign('ordering_date', $date);
+        $pdf_content = $this->smarty->fetch(PATH_SMARTY_TPL.'/pdf/show_orders.pdf.tpl');
+        return $pdf_content;
+	}
 }
 
 ?>

@@ -24,9 +24,6 @@
 				<a href="index.php?module=administrator|Babesk|Meals|EditMenuInfotexts">Infotexte</a>
 			</li>
 			<li>
-				<a href="index.php?module=administrator|Babesk|Meals|MaxOrderAmount">Maximale Anzahl an Bestellungen</a>
-			</li>
-			<li>
 				<a href="index.php?section=Babesk|Meals&action=4">Alte Mahlzeiten löschen</a>
 			</li>
 		</ul>

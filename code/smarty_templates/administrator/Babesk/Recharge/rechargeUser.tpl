@@ -4,7 +4,7 @@
 <h4>Name:</h4>
 	<select name="UID" id="user-select">
 	{foreach $users as $user}
-		<option value='{$user.ID}'> {$user.forename} {$user.name} ({$user.priceGroup}), {$user.grade}</option>
+		<option value='{$user.ID}'> {$user.forename} {$user.name} ({$user.priceGroup}) {$user.grade}</option>
 	{/foreach}
 	</select><br><br>
 	

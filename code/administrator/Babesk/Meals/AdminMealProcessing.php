@@ -223,139 +223,136 @@ class AdminMealProcessing {
 		require_once PATH_ACCESS . '/GroupManager.php';
 		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 
-		if (!isset($_POST['ordering_day']) or !isset($_POST['ordering_month']) or !isset($_POST['ordering_year'])) {
+		//Show the Orders
+		$user_manager = new UserManager();
+		$groupManager = new GroupManager();
 
-			//Select the date of the orders that should be displayed
-			$today = array(
-				'day'	 => date('d'),
-				'month'	 => date('m'),
-				'year'	 => date('Y'), );
+		$mysql_orders = array();
+		$order = array();
+
+		if(isset($_POST['date']) ) {
+
+
+            $date = $_POST['date'];
+            $date = strtotime($date);
+            $date = date('Y-m-d', $date);
+            try {
+                $orders = $this->orderManager->getAllOrdersAt($date);
+
+            } catch (MySQLVoidDataException $e) {
+                $this->mealInterface->dieError($this->msg['err_no_orders']);
+            } catch (MySQLConnectionException $e) {
+                $this->mealInterface->dieError($e->getMessage());
+            }
+
+            if (!count($orders))
+                $this->mealInterface->dieError($this->msg['err_no_orders']);
+
+            foreach ($orders as & $order) {
+                if (!count($meal_data = $this->mealManager->getEntryData($order['MID'], 'name')) or !count($user_data =
+                        $user_manager->getEntryData($order['UID'], 'name', 'forename', 'GID'))) {
+                    $this->mealInterface->dieError($this->msg['err_order_database']);
+                } else {
+
+                    $order['meal_name'] = $meal_data['name'];
+                    $order['user_name'] = $user_data['forename'] . ' ' . $user_data['name'];
+
+                    if (!$order['fetched'])
+                        $order['is_fetched'] = $this->msg['order_not_fetched'];
+                    else
+                        $order['is_fetched'] = $this->msg['order_fetched'];
+                }
+            }
+
+            //--------------------
+            //Count all Orders
+            $num_orders = array();
+            $mealIdArray = $this->mealManager->GetMealIdsAtDate($date);
+            $counter = 0;
+            foreach ($mealIdArray as $mealIdEntry) {
+
+                $groups = array(); //to show how many from different groups ordered something
+                $sp_orders = $this->orderManager->getAllOrdersOfMealAtDate($mealIdEntry['MID'], $date);
+                $num_orders[$counter]['MID'] = $mealIdEntry['MID'];
+                $num_orders[$counter]['name'] = $this->mealManager->GetMealName(($mealIdEntry['MID']));
+                $num_orders[$counter]['number'] = count($sp_orders);
+                //--------------------
+                //Get specific Usergroups for Interface
+                foreach ($sp_orders as $sp_order) {
+
+                    $user = $user_manager->getEntryData($sp_order['UID'], 'GID');
+                    $sql_group = $groupManager->getEntryData($user['GID'], 'name');
+                    $group_name = $sql_group['name'];
+                    if (count($groups)) {
+                        $is_new_group = true;
+                        foreach ($groups as & $group) {
+                            if (isset($group['name']) && $group['name'] == $group_name) {
+                                $group['counter'] += 1;
+                                $is_new_group = false;
+                                continue;
+                            }
+                        }
+                        if ($is_new_group) {
+                            $group_arr = array('name' => $group_name, 'counter' => 1);
+                            $groups[] = $group_arr;
+                        }
+                    } else {
+                        //no group defined yet
+                        $group_arr = array('name' => $group_name, 'counter' => 1);
+                        $groups[] = $group_arr;
+                    }
+                }
+                //--------------------
+
+                $num_orders[$counter]['user_groups'] = $groups;
+                $counter++;
+            }
+
+
+            /**
+             * Sort the Orders
+             */
+            foreach ($orders as &$order) {
+                $meals[$order['meal_name']][] = $order;
+            }
+
+            //sorting by usernames
+            foreach ($meals as $meal) {
+                foreach ($meal as $order) {
+                    $temp[] = $order['user_name'];
+                }
+                sort($temp);
+
+                foreach ($temp as $temp_name) {
+                    foreach ($meal as & $order) {
+                        if ($order['user_name'] == $temp_name) {
+                            $sorted_orders[] = $order;
+                            $order = NULL; //to avoid bugs with multiple orders from one user
+                            break;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Show Orders
+             */
+            if (isset($num_orders[0]) && $counter) {
+                if (isset($_POST['show']))
+                    $this->mealInterface->ShowOrders($num_orders, $sorted_orders, formatDate($date));
+				elseif (isset($_POST['pdf']))
+                    $this->PrintOrders($num_orders, $sorted_orders, formatDate($date));
+                else
+                    $this->mealInterface->Menu();
+            } else {
+                $this->mealInterface->dieError(sprintf($this->msg['err_no_orders_at_date'], formatDateTime($date)));
+            }
+        }else{
+            $today = array(
+                'day'	 => date('d'),
+                'month'	 => date('m'),
+                'year'	 => date('Y'), );
 			$this->mealInterface->ShowOrdersSelectDate($today);
-		}
-		else {
-
-			//Show the Orders
-			$user_manager = new UserManager();
-			$groupManager = new GroupManager();
-
-			$mysql_orders = array();
-			$order = array();
-
-			if ($_POST['ordering_day'] > 31 or $_POST['ordering_month'] > 12 or $_POST['ordering_year'] < 2000 or $_POST
-				['ordering_year'] > 3000) {
-				$this->mealInterface->dieError($this->msg['err_inp_date']);
-			}
-			$date = $_POST['ordering_year'] . '-' . $_POST['ordering_month'] . '-' . $_POST['ordering_day'];
-			try {
-				$orders = $this->orderManager->getAllOrdersAt($date);
-
-			} catch (MySQLVoidDataException $e) {
-				$this->mealInterface->dieError($this->msg['err_no_orders']);
-			}
-			catch (MySQLConnectionException $e) {
-				$this->mealInterface->dieError($e->getMessage());
-			}
-
-			if (!count($orders))
-				$this->mealInterface->dieError($this->msg['err_no_orders']);
-
-			foreach ($orders as & $order) {
-				if (!count($meal_data = $this->mealManager->getEntryData($order['MID'], 'name')) or !count($user_data =
-					$user_manager->getEntryData($order['UID'], 'name', 'forename', 'GID'))) {
-					$this->mealInterface->dieError($this->msg['err_order_database']);
-				}
-				else {
-
-					$order['meal_name'] = $meal_data['name'];
-					$order['user_name'] = $user_data['forename'] . ' ' . $user_data['name'];
-
-					if (!$order['fetched'])
-						$order['is_fetched'] = $this->msg['order_not_fetched'];
-					else
-						$order['is_fetched'] = $this->msg['order_fetched'];
-				}
-			}
-
-			//--------------------
-			//Count all Orders
-			$num_orders = array();
-			$mealIdArray = $this->mealManager->GetMealIdsAtDate($date);
-			$counter = 0;
-			foreach ($mealIdArray as $mealIdEntry) {
-
-				$groups = array(); //to show how many from different groups ordered something
-				$sp_orders = $this->orderManager->getAllOrdersOfMealAtDate($mealIdEntry['MID'], $date);
-				$num_orders[$counter]['MID'] = $mealIdEntry['MID'];
-				$num_orders[$counter]['name'] = $this->mealManager->GetMealName(($mealIdEntry['MID']));
-				$num_orders[$counter]['number'] = count($sp_orders);
-				//--------------------
-				//Get specific Usergroups for Interface
-				foreach ($sp_orders as $sp_order) {
-
-					$user = $user_manager->getEntryData($sp_order['UID'], 'GID');
-					$sql_group = $groupManager->getEntryData($user['GID'], 'name');
-					$group_name = $sql_group['name'];
-					if (count($groups)) {
-						$is_new_group = true;
-						foreach ($groups as & $group) {
-							if (isset($group['name']) && $group['name'] == $group_name) {
-								$group['counter'] += 1;
-								$is_new_group = false;
-								continue;
-							}
-						}
-						if ($is_new_group) {
-							$group_arr = array('name' => $group_name, 'counter' => 1);
-							$groups[] = $group_arr;
-						}
-					}
-					else {
-						//no group defined yet
-						$group_arr = array('name' => $group_name, 'counter' => 1);
-						$groups[] = $group_arr;
-					}
-				}
-				//--------------------
-
-				$num_orders[$counter]['user_groups'] = $groups;
-				$counter++;
-			}
-
-
-			/**
-			 * Sort the Orders
-			 */
-			foreach ($orders as &$order) {
-				$meals[$order['meal_name']][] = $order;
-			}
-
-			//sorting by usernames
-			foreach ($meals as $meal) {
-				foreach ($meal as $order) {
-					$temp[] = $order['user_name'];
-				}
-				sort($temp);
-
-				foreach ($temp as $temp_name) {
-					foreach ($meal as & $order) {
-						if ($order['user_name'] == $temp_name) {
-							$sorted_orders[] = $order;
-							$order = NULL; //to avoid bugs with multiple orders from one user
-							break;
-						}
-					}
-				}
-			}
-
-			/**
-			 * Show Orders
-			 */
-			if (isset($num_orders[0]) && $counter) {
-				$this->mealInterface->ShowOrders($num_orders, $sorted_orders, formatDate($date));
-			}
-			else {
-				$this->mealInterface->dieError(sprintf($this->msg['err_no_orders_at_date'], formatDateTime($date)));
-			}
 		}
 	}
 
@@ -446,25 +443,12 @@ class AdminMealProcessing {
 		$this->mealInterface->DuplicateMeal($pc_ids, $pc_names, $name, $description, $pc_ID, $max_orders, $date);
 	}
 
-    function PrintOrders() {
-
-        if ($_POST['ordering_day'] > 31 or $_POST['ordering_month'] > 12 or $_POST['ordering_year'] < 2000 or $_POST
-            ['ordering_year'] > 3000) {
-            $this->mealInterface->dieError($this->msg['err_inp_date']);
-        }
-        $date = $_POST['ordering_year'] . '-' . $_POST['ordering_month'] . '-' . $_POST['ordering_day'];
-        $rechargesToPrint = $this->rechargesFetchBetween(
-            date('Y-m-d H:i:s', $start), date('Y-m-d H:i:s', $end));
-        $table = $this->rechargesAsHtmlTable($rechargesToPrint);
-        $sum = $this->rechargesSum($rechargesToPrint);
-        $table .= '<p></p><p></p><b>' . _g('Sum:') . ' ' . $sum . '</b>';
-
-        $title = "Bestellungen für den " . date('d.m.Y', $date);
-        $html = "<p align='center'><h2>{$title}</h2></p><br />" . $table;
-
+    function PrintOrders($num_orders, $sorted_orders, $date) {
         require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
+        $pdf_content = $this->mealInterface->ShowOrdersPDF($num_orders, $sorted_orders, $date);
+        $title = "Bestellungen am ".$date;
         $pdf = new GeneralPdf($this->_pdo);
-        $pdf->create($title, $html);
+        $pdf->create($title, $pdf_content);
         $pdf->output();
     }
 

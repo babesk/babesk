@@ -75,7 +75,7 @@
 		{block name="program_title"}
 			<div class="container">
 				<h2 class="program_title">
-					BaBeSK LeG Uelzen
+					BaBeSK
 				</h2>
 			</div>
 		{/block}
@@ -251,9 +251,9 @@
 					<div class="contact col-sm-4 col-xs-12">
 						<div class="footer-heading">{t}Contact:{/t}</div>
 						<p>+++</p>
-						<p>Lessing-Gymnasium Uelzen</p>
-						<p>Ilmenauufer 49</p>
-						<p>29525 Uelzen</p>
+						<p>Bauck GmbH</p>
+						<p>Duhenweitz 4</p>
+						<p>29571 Rosche</p>
 						<p>+++</p>
 					</div>
 					<div class="col-sm-4 col-xs-12 right-col">

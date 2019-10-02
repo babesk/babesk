@@ -933,10 +933,10 @@ class User extends System {
 			}
 			else {
 				$this->_logger->log('Error fetching global setting foreign_language',
-					'Notice', Null, json_encode(array('msg' => $e->getMessage())));
+					'Notice', Null);
 				$this->_interface->dieAjax(
-					'error',
-					'Ein Fehler ist beim Abrufen aller Fremdsprachen aufgetreten'
+					'success',
+					array()
 				);
 			}
 		}

@@ -1,10 +1,14 @@
 {extends file=$base_path}{block name=content}
-<h2>Wählen sie aus, was sie ausführen möchten</h2>
 
-<form action='index.php?section=System|Help&action=1' method="post">
-	<input type='submit' value='Hilfetext anzeigen'>
-</form>
-<form action='index.php?section=System|Help&action=2' method="post">
-	<input type='submit' value='Hilfetext bearbeiten'>
-</form>
+	<fieldset>
+		<legend><b>Hilfetexte</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=System|Help&action=1">Hilfetext anzeigen</a>
+			</li>
+			<li>
+				<a href="index.php?section=System|Help&action=2">Hilfetext bearbeiten</a>
+			</li>
+		</ul>
+	</fieldset>
 {/block}

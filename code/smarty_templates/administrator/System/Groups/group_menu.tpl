@@ -1,10 +1,15 @@
 {extends file=$groupsParent}{block name=content}
 
-<form align="center" action='index.php?section=System|Groups&action=1' method='post'>
-	<input type='submit' value='Erstellen einer neuen Gruppe' />
-</form><br>
-<form align="center" action='index.php?section=System|Groups&action=2' method='post'>
-	<input type='submit' value='Die Gruppen anzeigen und bearbeiten' />
-</form><br>
+	<fieldset>
+		<legend><b>Preisgruppen</b></legend>
+		<ul class="submodulelinkList">
+			<li>
+				<a href="index.php?section=System|Groups&action=1">Neue Gruppe erstellen</a>
+			</li>
+			<li>
+				<a href="index.php?section=System|Groups&action=2">Preisgruppen bearbeiten</a>
+			</li>
+		</ul>
+	</fieldset>
 
 {/block}

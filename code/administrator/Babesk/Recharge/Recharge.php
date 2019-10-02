@@ -542,7 +542,7 @@ class Recharge extends Babesk {
 															WHERE y.active = 1 AND a.userId =".$row['ID']);
 
                     if(!isset($attendance[0])){
-                        $row['grade'] = "Keiner Klasse zugeordnet";
+                        $row['grade'] = "";
 					}else{
                     	$row['grade'] = $attendance[0]['Klasse'];
 					}
