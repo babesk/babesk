@@ -20,7 +20,7 @@ class CardManager extends TableManager {
 		 * @todo rename this function. this valids the cardnumber not the cardid
 		 */
 
-		if(!preg_match('/\A[0-9a-zA-Z]{10}\z/',$card_ID)){
+		if(!preg_match('/\A[0-9a-zA-Z]{4,10}\z/',$card_ID)){
 			return false;
 		}
 		return true;

@@ -517,7 +517,7 @@ class Change extends \User
 			'sql_escape',
 			'PreisgruppenId'),
 		'cardnumber' => array(
-			'exact_len,10',
+			'min_len,4|max_len,10',
 			'sql_escape',
 			'Kartennummer'),
 		'credits' => array(

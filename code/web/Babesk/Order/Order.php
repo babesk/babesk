@@ -182,6 +182,12 @@ class Order extends Babesk {
 			);
 		}
 
+		if($this->maxOrdersOfMealCheck()){
+            $this->_interface->dieMessage(
+                'Es sind keine weiteren Bestellungen für dieses Gericht möglich.'
+            );
+		}
+
 		return (time() <= $orderEnd);
 	}
 
@@ -517,6 +523,27 @@ class Order extends Babesk {
         ));
         $max_orders = $stmt_orders->fetch(PDO::FETCH_COLUMN);
 		return $count >= $max_orders;
+	}
+
+	protected function maxOrdersOfMealCheck(){
+        $stmt = $this->_pdo->prepare(
+            'SELECT COUNT(*) FROM BabeskOrders o
+				INNER JOIN BabeskMeals m ON m.ID = o.MID
+				WHERE m.ID = :mealID
+		');
+        $stmt->execute(array(
+            'mealID' => $this->_meal['ID']
+        ));
+        $count = $stmt->fetch(PDO::FETCH_COLUMN);
+        $stmt_orders = $this->_pdo->prepare(
+            'SELECT max_orders FROM BabeskMeals m
+				WHERE ID = :mealID
+		');
+        $stmt_orders->execute(array(
+            'mealID' => $this->_meal['ID']
+        ));
+        $max_orders = $stmt_orders->fetch(PDO::FETCH_COLUMN);
+        return $count >= $max_orders;
 	}
 
 	////////////////////////////////////////////////////////////////////////

@@ -188,7 +188,6 @@ $(document).ready(function() {
 		/*==========  Upload  ==========*/
 
 		function upload() {
-
 			$('#form-submit').button('loading');
 			var groups = [];
 			$('#usergroups .group-identifier.active').each(function (i, el) {
@@ -252,11 +251,14 @@ $(document).ready(function() {
 						toastr['error']('Konnte die Serverantwort nicht lesen');
 						$('#form-submit').button('error');
 					}
+
 				},
 				error: function(data) {
 					toastr['error']('Nope!');
 					$('#form-submit').button('error');
+
 				}
+
 			});
 		};
 	}

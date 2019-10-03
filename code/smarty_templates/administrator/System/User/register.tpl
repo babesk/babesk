@@ -213,7 +213,7 @@
 			<div class="col-xs-12 col-md-6 form-group">
 				<div class="input-group">
 					<span class="input-group-addon"><span class="fa fa-calendar fa-fw"></span></span>
-					<input name="birthday" id="birthday" class="form-control" type="text" placeholder="{t}Birthday{/t}" data-provide="datepicker" data-date-format="dd.mm.yyyy" data-date-language="de" date required />
+					<input name="birthday" id="birthday" class="form-control" type="text" placeholder="{t}Birthday{/t}" data-provide="datepicker" data-date-format="dd.mm.yyyy" data-date-language="de" date />
 				</div>
 			</div>
 		</div>
@@ -279,7 +279,7 @@
 			<div class="col-xs-12 col-md-6 form-group">
 				<div class="input-group">
 					<span class="input-group-addon"><span class="fa fa-credit-card"></span></span>
-					<input id="cardnumber" name="cardnumber" class="form-control" type="text" placeholder="{t}Cardnumber{/t}" maxlength="10" minlength="10"/>
+					<input id="cardnumber" name="cardnumber" class="form-control" type="text" placeholder="{t}Cardnumber{/t}" maxlength="10"/>
 				</div>
 			</div>
 			<div class="col-xs-12 col-md-6 form-group">
@@ -324,10 +324,10 @@
 	</fieldset>
 	<input type="submit" id="form-submit" value="{t}Submit{/t}"
 		class="btn btn-primary" data-loading-text="Lade..."
-		data-complete-text="Fertig!" data-error-text="Fehler" />
+		data-complete-text="Erfolgreich hinzugefügt!" data-error-text="Fehler" />
 	<a class="btn btn-default pull-right"
 	href="index.php?module=administrator|System|User">
-		{t}Cancel{/t}
+		Zurück
 	</a>
 </form>
 {/block}

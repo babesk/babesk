@@ -268,20 +268,20 @@ class Recharge extends Babesk {
 
 		try {
 			$stmt = $this->_pdo->prepare('INSERT INTO BabeskUsercreditsRecharges
-				(userId, rechargingUserId, rechargeAmount, datetime, isSoli)
+				(userId, rechargingUserId, rechargeAmount, datetime, soli, isSoli)
 				VALUES (:userId, :rechargingUserId, :rechargeAmount,
-					:datetime, :isSoli
+					:datetime, :soli, :isSoli
 				)');
 			$stmt->execute(array(
 				'userId' => $userId,
 				'rechargingUserId' => $_SESSION['UID'],
 				'rechargeAmount' => $amount,
 				'datetime' => date( 'Y-m-d H:i:s'),
+				'soli' => ($isSoli) ? 1 : 0,
 				'isSoli' => ($isSoli) ? 1 : 0
 			));
 
 		} catch (PDOException $e) {
-
 			$this->_interface->dieError(_g('Could not track the Recharge!'));
 		}
 	}
