@@ -56,6 +56,18 @@ class OrderManager extends TableManager {
 		return $orders;
 	}
 
+    function getAllOrdersBetween ($date_start, $date_end) {
+        try {
+            $result = TableManager::getTableData('date >= "' . $date_start . '" AND date <= "' . $date_end . '"  ORDER BY date');
+        } catch (MySQLVoidDataException $e) {
+            throw new MySQLVoidDataException($e->getMessage());
+        }
+        catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+        return $result;
+    }
+
 	/**
 	 *Returns all Orders for given User which are between the given dates
 	 */
@@ -148,6 +160,10 @@ class OrderManager extends TableManager {
 	function getAllOrdersOfMealAtDate ($ID, $date) {
 		return parent::getTableData(sprintf('MID = "%s" AND date = "' . $date . '" ORDER BY date', $ID, $date));
 	}
+
+    function getAllOrdersOfMealBetweenDates ($ID, $date, $date_end) {
+        return parent::getTableData(sprintf('MID = "%s" AND date >= "' . $date . '" AND date <= "' . $date_end . '"  ORDER BY date', $ID, $date));
+    }
 }
 
 ?>

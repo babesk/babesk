@@ -13,19 +13,27 @@ function switchInfo(divName) {
 {/literal}
 
 	<form action="index.php?section=Babesk|Meals&amp;action=3" method="post">
-		<!--<label>Tag:<input type="text" name="ordering_day" maxlength="2" size="2" value={$today.day} /></label>
-	<label>Monat:<input type="text" name="ordering_month" maxlength="2" value={$today.month} size="2" /></label>
-	<label>Jahr:<input type="text" name="ordering_year" maxlength="4" value={$today.year} size="4" /></label><br>-->
-		<div class="form-group">
-			<label for="meal-date">Tag der Ausgabe</label>
-			<input id="meal-date" name="date" class="datepicker form-control"
-				   data-date-format="dd.mm.yyyy" size="10" />
+	<div class="form-group container">
+		<label>Zeitraum der Ausgabe</label>
+		<div class="row">
+			<div class="col-sm-auto">
+				<input id="meal-date" name="date" class="datepicker"
+					   data-date-format="dd.mm.yyyy" value="{$ordering_date}" size="10" />
+			</div>
+			<div class="col-sm-auto">
+			<b>bis</b>
+			</div>
+			<div class="col-sm-auto">
+				<input id="meal-date" name="date-end" class="datepicker"
+					   data-date-format="dd.mm.yyyy" value={$end_date} size="10" />
+			</div>
 		</div>
-		<input type="submit" name="show" value="Anzeigen" />
-		<input type="submit" name="pdf" value="PDF erzeugen" />
+	</div>
+	<input type="submit" name="show" value="Anzeigen" />
+	<input type="submit" name="pdf" value="PDF erzeugen" />
 	</form>
 
-<h3>Anzahl der Bestellungen f&uuml;r den {$ordering_date}</h3>
+<h3>Anzahl der Bestellungen f&uuml;r den Zeitraum: {$ordering_date} bis {$end_date}</h3>
 
 	{foreach $num_orders as $num_order} <h4>{$num_order.name} hat {$num_order.number} Bestellungen:</h4>
 		{foreach $num_order.user_groups as $group}
@@ -43,6 +51,7 @@ function switchInfo(divName) {
 	<table style="text-align: center; width: 100%">
 		<thead>
 			<tr bgcolor="#aadd33">
+				<th>Datum</th>
 				<th>Men&uuml;</th>
 				<th>Person</th>
 				<th>Status</th>
@@ -52,6 +61,7 @@ function switchInfo(divName) {
 		<tbody>
 			{foreach $orders as $order}
 			<tr bgcolor="#e7e7e7">
+				<td>{$order.date}</td>
 				<td>{$order.meal_name}</td>
 				<td>{$order.user_name}</td>
 				<td style="text-align: center;">{$order.is_fetched}</td>

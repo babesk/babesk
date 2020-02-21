@@ -236,8 +236,12 @@ class AdminMealProcessing {
             $date = $_POST['date'];
             $date = strtotime($date);
             $date = date('Y-m-d', $date);
+
+            $date_end = $_POST['date-end'];
+            $date_end = strtotime($date_end);
+            $date_end = date('Y-m-d', $date_end);
             try {
-                $orders = $this->orderManager->getAllOrdersAt($date);
+                $orders = $this->orderManager->getAllOrdersBetween($date, $date_end);
 
             } catch (MySQLVoidDataException $e) {
                 $this->mealInterface->dieError($this->msg['err_no_orders']);
@@ -256,6 +260,7 @@ class AdminMealProcessing {
 
                     $order['meal_name'] = $meal_data['name'];
                     $order['user_name'] = $user_data['forename'] . ' ' . $user_data['name'];
+                    $order['date'] = formatDate($order['date']);
 
                     if (!$order['fetched'])
                         $order['is_fetched'] = $this->msg['order_not_fetched'];
@@ -267,14 +272,14 @@ class AdminMealProcessing {
             //--------------------
             //Count all Orders
             $num_orders = array();
-            $mealIdArray = $this->mealManager->GetMealIdsAtDate($date);
+            $mealIdArray = $this->mealManager->get_meals_between_two_dates($date, $date_end);
             $counter = 0;
             foreach ($mealIdArray as $mealIdEntry) {
 
                 $groups = array(); //to show how many from different groups ordered something
-                $sp_orders = $this->orderManager->getAllOrdersOfMealAtDate($mealIdEntry['MID'], $date);
-                $num_orders[$counter]['MID'] = $mealIdEntry['MID'];
-                $num_orders[$counter]['name'] = $this->mealManager->GetMealName(($mealIdEntry['MID']));
+                $sp_orders = $this->orderManager->getAllOrdersOfMealBetweenDates($mealIdEntry['ID'], $date, $date_end);
+                $num_orders[$counter]['MID'] = $mealIdEntry['ID'];
+                $num_orders[$counter]['name'] = $this->mealManager->GetMealName(($mealIdEntry['ID']));
                 $num_orders[$counter]['number'] = count($sp_orders);
                 //--------------------
                 //Get specific Usergroups for Interface
@@ -339,9 +344,9 @@ class AdminMealProcessing {
              */
             if (isset($num_orders[0]) && $counter) {
                 if (isset($_POST['show']))
-                    $this->mealInterface->ShowOrders($num_orders, $sorted_orders, formatDate($date));
+                    $this->mealInterface->ShowOrders($num_orders, $sorted_orders, formatDate($date), formatDate($date_end));
 				elseif (isset($_POST['pdf']))
-                    $this->PrintOrders($num_orders, $sorted_orders, formatDate($date));
+                    $this->PrintOrders($num_orders, $sorted_orders, formatDate($date), formatDate($date_end));
                 else
                     $this->mealInterface->Menu();
             } else {
@@ -443,10 +448,10 @@ class AdminMealProcessing {
 		$this->mealInterface->DuplicateMeal($pc_ids, $pc_names, $name, $description, $pc_ID, $max_orders, $date);
 	}
 
-    function PrintOrders($num_orders, $sorted_orders, $date) {
+    function PrintOrders($num_orders, $sorted_orders, $date, $end_date) {
         require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
-        $pdf_content = $this->mealInterface->ShowOrdersPDF($num_orders, $sorted_orders, $date);
-        $title = "Bestellungen am ".$date;
+        $pdf_content = $this->mealInterface->ShowOrdersPDF($num_orders, $sorted_orders, $date, $end_date);
+        $title = "Bestellungen zwischen ".$date." und ".$end_date;
         $pdf = new GeneralPdf($this->_pdo);
         $pdf->create($title, $pdf_content);
         $pdf->output();

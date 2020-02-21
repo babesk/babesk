@@ -23,10 +23,11 @@ class AdminMealInterface extends AdminInterface {
 		$this->smarty->display($this->tplFilePath . 'show_meals.tpl');
 	}
 
-	public function ShowOrders ($num_orders, $orders, $ordering_date) {
+	public function ShowOrders ($num_orders, $orders, $ordering_date, $end_date) {
 		$this->smarty->assign('num_orders', $num_orders);
 		$this->smarty->assign('orders', $orders);
 		$this->smarty->assign('ordering_date', $ordering_date);
+		$this->smarty->assign('end_date', $end_date);
 		$this->smarty->display($this->tplFilePath . 'show_orders.tpl');
 	}
 
@@ -71,10 +72,11 @@ class AdminMealInterface extends AdminInterface {
 		$this->smarty->display($this->tplFilePath . 'maxOrderAmount.tpl');
 	}
 
-	public function showOrdersPDF($num_orders, $sorted_orders, $date){
+	public function showOrdersPDF($num_orders, $sorted_orders, $date, $end_date){
         $this->smarty->assign('num_orders', $num_orders);
         $this->smarty->assign('orders', $sorted_orders);
         $this->smarty->assign('ordering_date', $date);
+        $this->smarty->assign('end_date', $end_date);
         $pdf_content = $this->smarty->fetch(PATH_SMARTY_TPL.'/pdf/show_orders.pdf.tpl');
         return $pdf_content;
 	}

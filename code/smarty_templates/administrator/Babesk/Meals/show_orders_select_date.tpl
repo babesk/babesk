@@ -1,17 +1,24 @@
 {extends file=$mealParent}{block name=content}
 
 <form action="index.php?section=Babesk|Meals&amp;action=3" method="post">
-	<!--<label>Tag:<input type="text" name="ordering_day" maxlength="2" size="2" value={$today.day} /></label>
-	<label>Monat:<input type="text" name="ordering_month" maxlength="2" value={$today.month} size="2" /></label>
-	<label>Jahr:<input type="text" name="ordering_year" maxlength="4" value={$today.year} size="4" /></label><br>-->
-	<div class="form-group">
-		<label for="meal-date">Tag der Ausgabe</label>
-		<input id="meal-date" name="date" class="datepicker form-control"
-			   data-date-format="dd.mm.yyyy" size="10" />
+	<div class="form-group container">
+		<label>Zeitraum der Ausgabe</label>
+		<div class="row">
+			<div class="col-sm-auto">
+				<input id="meal-date" name="date" class="datepicker"
+					   data-date-format="dd.mm.yyyy" size="10" />
+			</div>
+			<div class="col-sm-auto">
+			<b>bis</b>
+			</div>
+			<div class="col-sm-auto">
+				<input id="meal-date" name="date-end" class="datepicker"
+					   data-date-format="dd.mm.yyyy" size="10" />
+			</div>
+		</div>
 	</div>
 	<input type="submit" name="show" value="Anzeigen" />
 	<input type="submit" name="pdf" value="PDF erzeugen" />
-</form>
 
 {/block}
 
