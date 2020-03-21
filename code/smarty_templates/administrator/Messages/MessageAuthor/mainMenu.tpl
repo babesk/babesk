@@ -1,31 +1,30 @@
 {extends file=$inh_path}
 {block name='content'}
 
-{if $authorGroup}
-<p>
-	Die Autorengruppe ist: <b>{$authorGroup.name}</b>
-</p>
-{else}
-<p>
-	Es wurde bisher keine Gruppe für Nachrichtenautoren zugewiesen.
-</p>
-{/if}
+	<div class="row">
+		<div class="col-md-6">
+			{if $authorGroup}
+				Lehrergruppe:
+				{$authorGroup.name}
+			{else}
+				Keine Autorengruppe definiert!
+			{/if}
+			<a id="select-host-group-button" href="#" class="btn btn-default btn-xs">
+				ändern
+			</a>
+		</div>
+	</div>
 
-<form action="index.php?section=Messages|MessageAuthor&amp;action=changeAuthorGroup" method="POST">
-<fieldset class="blockyField">
-	<legend>
-		Autorengruppe ändern:
-	</legend>
-	<label>Die neue Gruppe:
-		<select name="group">
-		{foreach $groups as $group}
-			<option value="{$group.ID}">
-				{$group.name}
-			</option>
-		{/foreach}
-		</select>
-	</label>
-	<input type="submit" value="Gruppe ändern" />
-</fieldset>
-</form>
+	<div type="hidden" id="groups" data-groups={$groups} />
+
+{/block}
+
+{block name=style_include append}
+	<link rel="stylesheet" href="{$path_css}/bootstrap-switch.min.css" type="text/css" />
+{/block}
+
+{block name=js_include append}
+	<script type="text/javascript" src="{$path_js}/vendor/bootstrap-switch.min.js"></script>
+	<script type="text/javascript" src="{$path_js}/vendor/bootbox.min.js"></script>
+	<script type="text/javascript" src="{$path_js}/administrator/Messages/MessageAuthor/main-menu.js"></script>
 {/block}

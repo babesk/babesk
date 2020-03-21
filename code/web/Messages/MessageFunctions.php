@@ -30,9 +30,9 @@ class MessageFunctions {
 		$escMessageId = $db->real_escape_string($messageId);
 		$escUserId = $db->real_escape_string($userId);
 		$query = sprintf("SELECT COUNT(*) AS count
-			FROM MessageReceivers
+			FROM MessageReceivers r JOIN MessageMessages m ON m.ID = r.messageId
 			WHERE %s = userId AND %s = messageId
-			AND SYSDATE() BETWEEN valid_from AND valid_to",
+			AND SYSDATE() BETWEEN validFrom AND validTo",
 			$escUserId, $escMessageId);
 		$isReceiving = TableMng::query($query);
 		return (bool) $isReceiving[0]['count'];

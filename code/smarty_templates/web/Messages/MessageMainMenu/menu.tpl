@@ -20,7 +20,7 @@
 	{foreach $receivedMsg as $message}
 	<tr>
 		<td>
-			{if $message.GID eq $schbasID}<img src="../smarty/templates/web/images/schbas.png" title="Schulbuchausleihe-Nachricht">{/if}{$message.title}
+			{if $message.GID eq $schbasID}<img src="../include/res/images/schbas.png" title="Schulbuchausleihe-Nachricht">{/if}{$message.title}
 		</td>
 		<td>
 			{if $message.return == 'noReturn'}
@@ -36,7 +36,7 @@
 				Hinweis: Post kann nicht am BaBeSK-Terminal <br>ge&ouml;ffnet werden!
 			{else}
 			<a href="index.php?section=Messages|MessageMainMenu&action=showMessage&ID={$message.ID}">
-				<img src="../smarty/templates/web/images/page_white_acrobat.png">
+				<img src="../include/res/images/page_white_acrobat.png">
 			</a>
 			{/if}
 		</td>
@@ -82,7 +82,7 @@
 				Hinweis: Post kann nicht am BaBeSK-Terminal <br>ge&ouml;ffnet werden!
 			{else}
 			<a href="index.php?section=Messages|MessageMainMenu&amp;action=showMessage&amp;ID={$message.ID}">
-				<img src="../smarty/templates/web/images/page_white_acrobat.png">
+				<img src="../include/res/images/page_white_acrobat.png">
 			</a>
 			{/if}
 			<a href="index.php?section=Messages|MessageMainMenu&amp;action=deleteMessage&amp;ID={$message.ID}">

@@ -82,7 +82,8 @@ fieldset {
 	</fieldset>
 	<input id="submit" onclick="submit()" type="submit" value="Absenden" />
 </form>
-
+{/block}
+{block name=js_include append}
 <script type="text/JavaScript" src="{$path_js}/web/Messages/searchUser.js"></script>
 <script type="text/JavaScript" src="{$path_js}/web/Messages/MessageAdmin/newMessageBinds.js"></script>
 {/block}

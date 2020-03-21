@@ -77,7 +77,6 @@ class MessageMainMenu extends Messages {
 			if(!count($contractGID)) {
 				throw new Exception('Es wurde noch keiner Gruppe erlaubt, Nachrichten zu editieren!');
 			}
-
 			$this->_isEditor = $this->searchInMultiDimArray($contractGID[0]['value'],$userGID);
 		} catch (MySQLVoidDataException $e) {
 			echo 'Konnte die Gruppe nicht überprüfen!';
@@ -101,7 +100,7 @@ class MessageMainMenu extends Messages {
 				{
 					if(in_array($search, $values))
 					{
-						return $key;
+						return true;
 					}
 				}
 				return false;
@@ -196,10 +195,30 @@ class MessageMainMenu extends Messages {
 	private function showMessage() {
 		$db = TableMng::getDb();
 		$messageId = $db->real_escape_string($_GET['ID']);
-		if(($isManager = MessageFunctions::checkIsManagerOf($messageId,
-			$_SESSION['uid']))
-			|| (MessageFunctions::checkHasReceived($messageId,
-				$_SESSION['uid']))) {
+		if($isManager = MessageFunctions::checkIsManagerOf($messageId, $_SESSION['uid'])){
+			$msgText = $msgTitle = $forename = $name = $grade = $msgRecId = $msgReturn = '';
+			$query = "SELECT m.title, m.text
+				      FROM MessageMessages m
+				      WHERE m.ID = ?";
+			$stmt = $db->prepare($query);
+			if($stmt) {
+				$stmt->bind_param('s', $messageId);
+				$stmt->bind_result($msgTitle, $msgText);
+
+				$stmt->execute();
+				while($stmt->fetch()) {
+					// User got multiple messages of the same kind, select only
+					// the last one
+				}
+
+				$this->createPdf($msgTitle, $msgText, "", "","","");
+            }
+            else {
+                $this->_interface->DieError('Konnte die Nachrichtendaten nicht
+					abrufen');
+            }
+		}
+		else if(MessageFunctions::checkHasReceived($messageId, $_SESSION['uid'])) {
 
 			$msgText = $msgTitle = $forename = $name = $grade = $msgRecId = $msgReturn = '';
 			$query = "SELECT m.title, m.text, mr.read, mr.ID, mr.return,
@@ -214,7 +233,7 @@ class MessageMainMenu extends Messages {
 				WHERE u.ID = ?";
 			$stmt = $db->prepare($query);
 			if($stmt) {
-				$stmt->bind_param('ii', $messageId, $_SESSION['uid']);
+				$stmt->bind_param('ss', $messageId, $_SESSION['uid']);
 				$stmt->bind_result($msgTitle, $msgText, $isRead, $msgRecId, $msgReturn,
 					$forename, $name, $grade);
 

@@ -54,7 +54,7 @@ class MessageAuthor extends Messages {
 			$authorGroup = $this->authorGroupSearchInGroups($authorGroupId,
 				$groups);
 
-			$this->_interface->mainMenu($groups, $authorGroup);
+			$this->_interface->mainMenu(json_encode($groups), $authorGroup);
 
 		}
 		else {
@@ -76,7 +76,7 @@ class MessageAuthor extends Messages {
 		$data = array();
 
 		try {
-			$data = TableMng::query('SELECT `ID`, `name` FROM MessageGroups;');
+			$data = TableMng::query('SELECT `ID`, `name` FROM SystemGroups;');
 
 		} catch (MySQLVoidDataException $e) {
 			return array();
@@ -147,9 +147,9 @@ class MessageAuthor extends Messages {
 			}
 		}
 		else {
-			$this->_interface->dieError('Bitte wählen sie eine Gruppe aus!');
+			$this->_interface->dieError('Bitte wählen Sie eine Gruppe aus!');
 		}
-		$this->_interface->dieMsg('Die Gruppe wurde erfolgreich geändert.');
+		$this->mainMenu();
 	}
 
 	/**
@@ -165,10 +165,10 @@ class MessageAuthor extends Messages {
 		try {
 			$data = TableMng::query(sprintf(
 				'SELECT COUNT(*) AS count
-				FROM Groups WHERE `ID` = "%s"', $id));
+				FROM SystemGroups WHERE `ID` = "%s"', $id));
 
 		} catch (Exception $e) {
-			$this->_interface->dieError('Konnte nicht überprüfen ob die Gruppe existiert');
+			$this->_interface->dieError('Konnte nicht überprüfen ob die Gruppe existiert'.$e);
 		}
 
 		return $data[0]['count'];

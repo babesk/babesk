@@ -1,9 +1,9 @@
 {extends file=$inh_path}{block name=content}
 
-{literal}
-<script type="text/javascript" src="{$path_js}/vendor/ckeditor/ckeditor.js"></script>
-<style type="text/css">
 
+<script type="text/javascript" src="{$path_js}/vendor/ckeditor/ckeditor.js"></script>
+{literal}
+<style type="text/css">
 .barcodeInput {
 	float: right;
 }
@@ -80,7 +80,7 @@
 			</a>
 			{if $shouldReturn}
 			<a id="{$receiver->id}" class="toReturned" href="">
-				<img src="../smarty/templates/web/images/fileAdd.png"
+				<img src="../include/res/images/fileAdd.png"
 					title="Den Benutzer als 'hat zurückgegeben' eintragen" />
 			</a>
 			{/if}
@@ -140,73 +140,73 @@
 		Nur der Ersteller der Nachricht kann die Manager-Rechte verteilen und einsehen und die Nachricht löschen.
 	</p>
 {/if}
-
+{/block}
+{block name=js_include append}
 <script type="text/JavaScript" src="{$path_js}/web/Messages/searchUser.js"></script>
+
 
 {literal}
 <script type="text/JavaScript">
-
-var _messageId = {/literal}{$messageData.ID}{literal};
-
-$('#receiverSearch').on('keypress', function(event) {
-	searchUser('receiverSearch', 'receiverSearchOutput',
-		'receiverSelectButton');
-});
-
-$(document).on('click', '.receiverSelectButton', function(event) {
-	var meId = $(this).attr('id').replace('receiverSelectButtonId', '');
-	addReceiver(meId, {/literal}{$messageData.ID}{literal});
-});
-
-$('#managerSearch').on('keypress', function(event) {
-	searchUser('managerSearch', 'managerSearchOutput', 'managerSelectButton');
-});
-
-$(document).on('click', '.managerSelectButton', function(event) {
-	var meId = $(this).attr('id').replace('managerSelectButtonId', '');
-	addManager(meId, {/literal}{$messageData.ID}{literal});
-});
-
-$('#deleteMessage').on('click', function(event) {
-	if(confirm('Wollen sie diese Nachricht wirklich löschen?')) {
-		deleteMessage({/literal}{$messageData.ID}{literal});
-	}
-})
-
-$('.removeReceiver').on('click', function(event) {
-	event.preventDefault();
-	if(confirm('Wollen sie diesen Benutzer wirklich von der Nachrichtensendung entfernen?')) {
-		removeReceiver(_messageId, $(this).attr('id'));
-	}
-});
-
-$('.removeManager').on('click', function(event) {
-	event.preventDefault();
-	if(confirm('Wollen sie diesen Manager wirklich von der Nachrichten entfernen?')) {
-		removeManager(_messageId, $(this).attr('id'));
-	}
-});
-
-$('#showBarcodeInput').on('click', function(event) {
-	$('#showBarcodeInput').hide();
-	$('#barcodeInputWrap').show();
-	$('#barcodeInput').focus();
-});
-
-$('#barcodeInput').on('keyup', function(event) {
-	if(event.keyCode == 13) {
-		sendUserReturnedBarcode($(this).val());
-	}
-});
-
-$('.toReturned').on('click', function(event) {
-	event.preventDefault();
-	sendUserReturnedButton($(this).attr('id'));
-});
-
+    var _messageId = {/literal}{$messageData.ID}{literal};
 
 $(document).ready(function() {
 
+
+    $('#receiverSearch').on('keypress', function(event) {
+        searchUser('receiverSearch', 'receiverSearchOutput',
+            'receiverSelectButton');
+    });
+
+    $(document).on('click', '.receiverSelectButton', function(event) {
+        var meId = $(this).attr('id').replace('receiverSelectButtonId', '');
+        addReceiver(meId, {/literal}{$messageData.ID}{literal});
+    });
+
+    $('#managerSearch').on('keypress', function(event) {
+        searchUser('managerSearch', 'managerSearchOutput', 'managerSelectButton');
+    });
+
+    $(document).on('click', '.managerSelectButton', function(event) {
+        var meId = $(this).attr('id').replace('managerSelectButtonId', '');
+        addManager(meId, {/literal}{$messageData.ID}{literal});
+    });
+
+    $('#deleteMessage').on('click', function(event) {
+        if(confirm('Wollen sie diese Nachricht wirklich löschen?')) {
+            deleteMessage({/literal}{$messageData.ID}{literal});
+        }
+    })
+
+    $('.removeReceiver').on('click', function(event) {
+        event.preventDefault();
+        if(confirm('Wollen sie diesen Benutzer wirklich von der Nachrichtensendung entfernen?')) {
+            removeReceiver(_messageId, $(this).attr('id'));
+        }
+    });
+
+    $('.removeManager').on('click', function(event) {
+        event.preventDefault();
+        if(confirm('Wollen sie diesen Manager wirklich von der Nachrichten entfernen?')) {
+            removeManager(_messageId, $(this).attr('id'));
+        }
+    });
+
+    $('#showBarcodeInput').on('click', function(event) {
+        $('#showBarcodeInput').hide();
+        $('#barcodeInputWrap').show();
+        $('#barcodeInput').focus();
+    });
+
+    $('#barcodeInput').on('keyup', function(event) {
+        if(event.keyCode == 13) {
+            sendUserReturnedBarcode($(this).val());
+        }
+    });
+
+    $('.toReturned').on('click', function(event) {
+        event.preventDefault();
+        sendUserReturnedButton($(this).attr('id'));
+    });
 	/*Set up the use of nice-looking fade-functions for the popup*/
 	$('.popup.messageText').show();
 	$('.popup.messageText').fadeOut(0);
