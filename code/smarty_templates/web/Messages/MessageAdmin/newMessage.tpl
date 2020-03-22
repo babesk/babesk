@@ -42,13 +42,13 @@ fieldset {
 		<small>
 			dadurch werden Funktionen für diese Nachricht benutzt, die eine Übersicht erlauben, um zu sehen welche Schüler (noch nicht) abgegeben haben.
 		</small><br />
-		<label>
+		<!--<label>
 			Eine Email versenden?
 			<input type="checkbox" name="shouldEmail">
 		</label><br />
 		<small>
 			Wenn bestätigt, wird eine Notiz-Email an alle Empfänger dieser Nachricht versendet, die eine Email angegeben haben.
-		</small><br />
+		</small><br /> -->
 	</fieldset>
 	<fieldset>
 		<legend>Gültigkeitsbereich</legend>

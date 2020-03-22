@@ -8,9 +8,9 @@
 <form action="index.php?section=Messages|MessageTemplate&amp;action=addTemplate" method="POST">
 	<fieldset class="blockyField">
 		<legend>Vorlagendaten</legend>
-		<label>Titel:<input type="text" name="templateTitle" value=""></label><br /><br />
+		<label>Betreff:<input type="text" name="templateTitle" value=""></label><br /><br />
 		<label>Text:<textarea class="ckeditor" name="templateText"></textarea></label>
 	</fieldset>
-	<input type="submit" value="Vorlage hinzufügen" />
+	<input type="submit" class="btn btn-success" value="Vorlage hinzufügen" />
 </form>
 {/block}

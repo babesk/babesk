@@ -2,7 +2,7 @@
 {block name=content}
 
 {if count($templates)}
-	<table class="dataTable">
+	<table class="table">
 		<tr>
 			<th>ID</th>
 			<th>Titel</th>

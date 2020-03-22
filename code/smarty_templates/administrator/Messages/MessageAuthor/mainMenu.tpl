@@ -4,7 +4,7 @@
 	<div class="row">
 		<div class="col-md-6">
 			{if $authorGroup}
-				Lehrergruppe:
+				Autorengruppe:
 				{$authorGroup.name}
 			{else}
 				Keine Autorengruppe definiert!

@@ -13,7 +13,7 @@
 	{foreach $creatorsWithMessages as $creator}
 		<fieldset class="blockyField">
 			<legend><h4>Ersteller: ID "{$creator->id}"; Name "{$creator->name}"</h4></legend>
-			<table class="dataTable">
+			<table class="table">
 				<tr>
 					<th>ID</th>
 					<th>Titel</th>
@@ -27,8 +27,8 @@
 					<td>{$message.ID}</td>
 					<td>{$message.title}</td>
 					<td>{$message.receiverCount}</td>
-					<td>{$message.validFrom}</td>
-					<td>{$message.validTo}</td>
+					<td>{$message.validFrom|date_format:"%e.%m.%Y"}</td>
+					<td>{$message.validTo|date_format:"%e.%m.%Y"}</td>
 					<td>
 						<a href="index.php?section=Messages|MessageAdmin&amp;action=deleteMessage&amp;id={$message.ID}">
 							<img src="../include/res/images/delete.png" alt="löschen">

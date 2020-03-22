@@ -21,7 +21,7 @@
 
 <table class="table">
 	<tr>
-		<th>Titel</th>
+		<th>Betreff</th>
 		<td>{if $message.GID eq $schbasID}<img src="../smarty/templates/web/images/schbas.png" title="Schulbuchausleihe-Nachricht">{/if}{$messageData.title}</td>
 	</tr>
 	<tr>
@@ -46,7 +46,6 @@
 </h4>
 <table class="table">
 	<tr>
-		<th>ID</th>
 		<th>Vorname</th>
 		<th>Nachname</th>
 		<th>gelesen</th>
@@ -55,7 +54,6 @@
 	</tr>
 	{foreach $receivers as $receiver}
 	<tr>
-		<td>{$receiver->id}</td>
 		<td>{$receiver->forename}</td>
 		<td>{$receiver->name}</td>
 		<td>
@@ -89,7 +87,7 @@
 	{/foreach}
 </table>
 
-<input id="receiverSearch" type="text" value="neuer Empfänger..." />
+<input id="receiverSearch" type="text" placeholder="neuer Empfänger..." />
 
 {if $shouldReturn}
 	<button id="showBarcodeInput" class="barcodeInput">
@@ -112,14 +110,12 @@
 	</h4>
 	<table class="table">
 		<tr>
-			<th>ID</th>
 			<th>Vorname</th>
 			<th>Nachname</th>
 			<th>Aktion</th>
 		</tr>
 		{foreach $managers as $manager}
 		<tr>
-			<td>{$manager->id}</td>
 			<td>{$manager->forename}</td>
 			<td>{$manager->name}</td>
 			<td>
@@ -130,7 +126,7 @@
 		</tr>
 		{/foreach}
 	</table>
-	<input id="managerSearch" type="text" value="neuer Manager..." /><br />
+	<input id="managerSearch" type="text" placeholder="neuer Manager..." /><br />
 	<span id="managerSearchOutput">
 	</span><br /><br />
 	<input id="deleteMessage" class="btn btn-danger" type="button" value="Nachricht löschen" />
