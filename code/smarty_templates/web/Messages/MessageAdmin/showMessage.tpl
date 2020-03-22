@@ -19,7 +19,7 @@
 	<textarea class="ckeditor" id="messagetext">{$messageData.text}</textarea>
 </div>
 
-<table class="dataTable">
+<table class="table">
 	<tr>
 		<th>Titel</th>
 		<td>{if $message.GID eq $schbasID}<img src="../smarty/templates/web/images/schbas.png" title="Schulbuchausleihe-Nachricht">{/if}{$messageData.title}</td>
@@ -44,7 +44,7 @@
 <h4>
 	Empfänger der Nachricht:
 </h4>
-<table class="dataTable">
+<table class="table">
 	<tr>
 		<th>ID</th>
 		<th>Vorname</th>
@@ -110,7 +110,7 @@
 	<h4>
 		Manager der Nachricht:
 	</h4>
-	<table class="dataTable">
+	<table class="table">
 		<tr>
 			<th>ID</th>
 			<th>Vorname</th>
@@ -133,7 +133,7 @@
 	<input id="managerSearch" type="text" value="neuer Manager..." /><br />
 	<span id="managerSearchOutput">
 	</span><br /><br />
-	<input id="deleteMessage" type="button" value="Nachricht löschen" />
+	<input id="deleteMessage" class="btn btn-danger" type="button" value="Nachricht löschen" />
 	<br />
 {else}
 	<p>

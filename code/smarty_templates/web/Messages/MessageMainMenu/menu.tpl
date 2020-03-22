@@ -6,15 +6,15 @@
 }
 </style>
 {*Show the messages that the user got*}
-<p>
-	<b>Posteingang:</b>
-</p>
+	<h4>
+		Posteingang:
+	</h4>
 {if count($receivedMsg)}
-<table class="dataTable">
+<table class="table">
 	<tr>
-		<th>Beschreibung</th>
+		<th>Betreff</th>
 		<th>Status</th>
-		<th>Aktion</th>
+		<th>Aktionen</th>
 	</tr>
 
 	{foreach $receivedMsg as $message}
@@ -52,30 +52,26 @@
 <br /><h4>
 	Postausgang:
 </h4>
-<table class="dataTable">
+<table class="table">
 	<tr>
-		<th>ID</th>
-		<th>Beschreibung</th>
+		<th>Betreff</th>
 		<th>g&uuml;ltig von</th>
 		<th>g&uuml;ltig bis</th>
-		<th>Aktion</th>
+		<th>Aktionen</th>
 	</tr>
 
 	{foreach $createdMsg as $message}
 	<tr>
 		<td>
-			{$message.ID}
-		</td>
-		<td>
 			{if $message.GID eq $schbasID}<img src="../smarty/templates/web/images/schbas.png" title="Schulbuchausleihe-Nachricht">{/if}{$message.title}
 		</td>
 		<td>
-			{$message.validFrom}
+			{$message.validFrom|date_format:"%e.%m.%Y"}
 		</td>
 		<td{if strtotime($message.validTo) < time()}
 		class="dateBeyondValid"
 		{/if}>
-			{$message.validTo}
+			{$message.validTo|date_format:"%e.%m.%Y"}
 		</td>
 		<td>
 			{if $BaBeSkTerminal}

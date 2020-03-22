@@ -190,12 +190,6 @@ class MessageAuthor extends Messages {
 				SET `value` = "%s"
 				WHERE `name` = "messageEditGroupId"', $newGroupId));
 
-			if(TableMng::getDb()->affected_rows == 0) {
-				TableMng::query(sprintf(
-					'INSERT INTO SystemGlobalSettings (`value`, `name`)
-					VALUES ("%s", "messageEditGroupId")', $newGroupId));
-			}
-
 		} catch (Exception $e) {
 			$this->_interface->dieError('Konnte die Gruppe nicht verändern');
 		}

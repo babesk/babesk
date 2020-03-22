@@ -12,9 +12,9 @@ $(document).on('click', '.userSelectionButton', function(event){
 	addUserAsHiddenInp(meId, name, 'addMessage', 'userSelected');
 });
 
-$('#templateSelection').on('click', function(event) {
+$('.templateSelection').on('click', function(event) {
 
-	var templateId = $(this).children('option:selected').val();
+	var templateId = $(this).attr('id');
 
 	$.ajax({
 		type: "POST",
@@ -27,7 +27,7 @@ $('#templateSelection').on('click', function(event) {
 				alert('Konnte das Template nicht abrufen!');
 			}
 			templateData = $.parseJSON(data);
-			CKEDITOR.instances['messagetext'].setData(templateData.text);
+			CKEDITOR.instances['cke'].setData(templateData.text);
 			$('#messagetitle').val(templateData.title);
 		},
 		error: function(data) {

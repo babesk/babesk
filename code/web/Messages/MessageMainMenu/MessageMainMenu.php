@@ -185,8 +185,7 @@ class MessageMainMenu extends Messages {
 		else {
 			$this->_interface->DieError('Nur der Ersteller der Nachricht kann diese löschen');
 		}
-		$this->_smarty->display($this->_smartyPath
-			. 'messageDeleteFinished.tpl');
+		$this->showMainMenu();
 	}
 
 	/**

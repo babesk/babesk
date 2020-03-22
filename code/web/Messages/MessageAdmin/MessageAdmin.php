@@ -3,6 +3,7 @@
 require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_WEB . '/Messages/MessageFunctions.php';
 require_once PATH_WEB . '/Messages/Messages.php';
+require_once PATH_WEB . '/Messages/MessageMainMenu/MessageMainMenu.php';
 
 class MessageAdmin extends Messages {
 	/////////////////////////////////////////////////////////////////////
@@ -85,14 +86,9 @@ class MessageAdmin extends Messages {
 		$db = TableMng::getDb();
 		$msgTitle = $db->real_escape_string($_POST['messagetitle']);
 		$msgText = $db->real_escape_string($_POST['messagetext']);
-		$startDate = sprintf('%s-%s-%s',
-			$db->real_escape_string($_POST['StartDateYear']),
-			$db->real_escape_string($_POST['StartDateMonth']),
-			$db->real_escape_string($_POST['StartDateDay']));
-		$endDate = sprintf('%s-%s-%s',
-			$db->real_escape_string($_POST['EndDateYear']),
-			$db->real_escape_string($_POST['EndDateMonth']),
-			$db->real_escape_string($_POST['EndDateDay']));
+		$startDate = date("Y-m-d",strtotime($db->real_escape_string($_POST['startDate'])));
+
+        $endDate = date("Y-m-d",strtotime($db->real_escape_string($_POST['endDate'])));
 		$shouldReturn = isset($_POST['shouldReturn']) ?
 			'shouldReturn' : 'noReturn';
 		$shouldEmail = isset($_POST['shouldEmail']);
@@ -120,9 +116,7 @@ class MessageAdmin extends Messages {
 				$msgReceiverIds = array_merge($msgReceiverIds,
 					$userIdsOfGrades);
 			}
-			$queryReceivers = 'INSERT INTO MessageReceivers
-				(`messageId`, `userId`, `return`)
-				VALUES (?, ?, ?)';
+			$queryReceivers = 'INSERT INTO MessageReceivers (`messageId`, `userId`, `return`) VALUES (?, ?, ?)';
 			$stmt = $db->prepare($queryReceivers);
 			foreach ($msgReceiverIds as $rec) {
 				$stmt->bind_param("iis", $messageId, $rec, $shouldReturn);
@@ -130,8 +124,7 @@ class MessageAdmin extends Messages {
 			}
 			$db->autocommit(true);
 		} catch (Exception $e) {
-			$this->_interface->DieError('Konnte die Nachricht nicht
-				hinzufügen!');
+			$this->_interface->DieError('Konnte die Nachricht nicht hinzufügen!');
 		}
 		if($shouldEmail) {
 			$notSendStr = $this->newMessageSendEmail();
@@ -140,8 +133,7 @@ class MessageAdmin extends Messages {
 			$notSendStr = 'Es wurden keine Emails verschickt.';
 		}
 		$this->addSavedCopiesCount(count($msgReceiverIds), $_SESSION['uid']);
-		$this->_smarty->assign('emailsNotSend', $notSendStr);
-		$this->_smarty->display($this->_smartyPath . 'messageCreateFinished.tpl');
+		header("Location: index.php?module=web|Messages");
 	}
 
 	/**
@@ -591,7 +583,6 @@ class MessageAdmin extends Messages {
 		} catch (Exception $e) {
 			die('errorFetchTemplate');
 		}
-
 		die(json_encode($template[0]));
 	}
 
