@@ -107,7 +107,7 @@ class MessageAdmin extends Messages {
 			$this->newMessageAddCreator($messageId);
 			//Add receivers to the receiver-list
 			$msgReceiverIds = array();
-			if(isset($_POST['addMessageAddedUser']) && count($_POST['addMessageAddedUser'])) {
+			if(isset($_POST['users']) && count($_POST['users'])) {
 				$msgReceiverIds = array_merge($msgReceiverIds,
 					$_POST['addMessageAddedUser']);
 			}
@@ -272,6 +272,7 @@ class MessageAdmin extends Messages {
 				FROM SystemGrades');
 			$templates = TableMng::query(
 				'SELECT * FROM MessageTemplate WHERE GID=(SELECT ID FROM MessageGroups WHERE name="vanilla");');
+            $users = MessageFunctions::usersFetch();
 
 		} catch (Exception $e) {
 			$this->_interface->DieError('Konnte die nötigen Daten nicht abrufen.' . $e->getMessage());
@@ -279,6 +280,7 @@ class MessageAdmin extends Messages {
 
 		$this->_smarty->assign('grades', $grades);
 		$this->_smarty->assign('templates', $templates);
+        $this->_smarty->assign('users', $users);
 		$this->_smarty->display($this->_smartyPath . 'newMessage.tpl');
 	}
 
@@ -325,10 +327,23 @@ class MessageAdmin extends Messages {
 			$messageData['validFrom'] = formatDate($messageData['validFrom']);
 			$this->_smarty->assign('isCreator', $userId ===	$messageData ['originUserId']);
 			$shouldReturn = $this->shouldUsersReturn($receivers);
+
+			$users = MessageFunctions::usersFetch();
+			$receiverIDs = array();
+			foreach ($receivers as $receiver){
+				$receiverIDs[] = $receiver->id;
+			}
+            $managerIDs = array();
+			foreach ($managers as $manager){
+                $managerIDs[] = $manager->id;
+            }
 			$this->_smarty->assign('shouldReturn', $shouldReturn);
 			$this->_smarty->assign('receivers', $receivers);
 			$this->_smarty->assign('managers', $managers);
 			$this->_smarty->assign('messageData', $messageData);
+			$this->_smarty->assign('users', $users);
+            $this->_smarty->assign('receiverIDs', $receiverIDs);
+            $this->_smarty->assign('managerIDs', $managerIDs);
 			
 			$schbasID = MessageFunctions::getMessageGroupID('schbas');
 			
@@ -341,18 +356,6 @@ class MessageAdmin extends Messages {
 		}
 	}
 
-// 	/**
-// 	 * Assigns a Var to Smarty based on the check if the user is the creator of
-// 	 * the message or not
-// 	 */
-// 	protected function smartyAssignIsCreator($userId, $origUserId) {
-// 		if($userId === $origUserId) {
-// 			$this->_smarty->assign('isCreator');
-// 		}
-// 		else {
-// 			$this->_smarty->assign('isCreator', false);
-// 		}
-// 	}
 
 	/**
 	 * Fetches the Data of a Message from the Database and returns them
@@ -421,7 +424,7 @@ class MessageAdmin extends Messages {
 	protected function getReceiverOfMessage($id) {
 		$receivers = array();//Contains the Objects MessageAdminReceiver
 		$receiverArray = array();//Contains the Arrays coming from MySQL
-		$userForename = $userName = '';
+		$userForename = $userName = $class = '';
 		$id = TableMng::getDb()->real_escape_string($id);
 		//get IDs of the Receivers
 		try {
@@ -435,18 +438,22 @@ class MessageAdmin extends Messages {
 		}
 		//get the data of the receivers
 		$stmt = TableMng::getDb()->prepare(
-			'SELECT u.forename, u.name
+			'SELECT u.forename, u.name, CONCAT(g.gradelevel, g.label)
 			FROM SystemUsers u
+			LEFT JOIN SystemAttendances uigs ON
+					uigs.userId = u.ID AND
+					uigs.schoolyearId = @activeSchoolyear
+			LEFT JOIN SystemGrades g ON g.ID = uigs.gradeId
 			WHERE u.ID = ?;
 			');
 		foreach($receiverArray as $receiver) {
 			$stmt->bind_param('i', $receiver ['userId']);
-			$stmt->bind_result($userForename, $userName);
+			$stmt->bind_result($userForename, $userName, $class);
 			if($stmt->execute()) {
 				$stmt->fetch();
 				$receivers [] = new MessageAdminReceiver($receiver['userId'],
 					$userForename, $userName, $receiver['read'],
-					$receiver['return']);
+					$receiver['return'], $class);
 			}
 			else {
 				echo sprintf('Konnte den Empfänger mit der ID "%s" nicht laden', $receiver ['userId']);
@@ -753,12 +760,13 @@ class MessageAdmin extends Messages {
 class MessageAdminReceiver {
 
 	public function __construct($id, $forename, $name, $readMessage,
-		$returnedMessage) {
+		$returnedMessage, $class) {
 		$this->id = $id;
 		$this->readMessage = $readMessage;
 		$this->returnedMessage = $returnedMessage;
 		$this->forename = $forename;
 		$this->name = $name;
+		$this->class = $class;
 	}
 
 	public $id;
@@ -766,6 +774,7 @@ class MessageAdminReceiver {
 	public $returnedMessage;
 	public $forename;
 	public $name;
+	public $class;
 }
 
 /**

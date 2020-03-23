@@ -48,6 +48,7 @@
 	<tr>
 		<th>Vorname</th>
 		<th>Nachname</th>
+		<th>Klasse</th>
 		<th>gelesen</th>
 		<th>Rückgabe-Status</th>
 		<th>Aktion</th>
@@ -56,6 +57,7 @@
 	<tr>
 		<td>{$receiver->forename}</td>
 		<td>{$receiver->name}</td>
+		<td>{$receiver->class}</td>
 		<td>
 			{if ($receiver->readMessage)}
 				Ja
@@ -75,7 +77,7 @@
 		<td>
 			<a id="{$receiver->id}" class="removeReceiver" href="">
 				<img src="../include/res/images/delete.png" />
-			</a>
+			</a>&nbsp;&nbsp;&nbsp;&nbsp;
 			{if $shouldReturn}
 			<a id="{$receiver->id}" class="toReturned" href="">
 				<img src="../include/res/images/fileAdd.png"
@@ -87,7 +89,13 @@
 	{/foreach}
 </table>
 
-<input id="receiverSearch" type="text" placeholder="neuer Empfänger..." />
+	<select id="user-select" name="users" size="5" multiple>
+        {foreach item=user from=$users}
+			{if not in_array($user.userId, $receiverIDs)}
+				<option value="{$user.userId}">{$user.userFullname}</option>
+            {/if}
+        {/foreach}
+	</select><br />
 
 {if $shouldReturn}
 	<button id="showBarcodeInput" class="barcodeInput">
@@ -100,8 +108,6 @@
 {/if}
 <br />
 
-<span id="receiverSearchOutput">
-</span>
 <!-- <input id="receiverSelectButtonId1633" class="receiverSelectButton" type="button" value="Knut Terjung"> -->
 <br />
 {if $isCreator}
@@ -126,9 +132,15 @@
 		</tr>
 		{/foreach}
 	</table>
-	<input id="managerSearch" type="text" placeholder="neuer Manager..." /><br />
-	<span id="managerSearchOutput">
-	</span><br /><br />
+	<select id="manager-select" name="users" size="5" multiple>
+        {foreach item=user from=$users}
+            {if not in_array($user.userId, $managerIDs)}
+				<option value="{$user.userId}">{$user.userFullname}</option>
+            {/if}
+        {/foreach}
+	</select><br />
+	<br>
+	<br>
 	<input id="deleteMessage" class="btn btn-danger" type="button" value="Nachricht löschen" />
 	<br />
 {else}
@@ -138,32 +150,46 @@
 {/if}
 {/block}
 {block name=js_include append}
-<script type="text/JavaScript" src="{$path_js}/web/Messages/searchUser.js"></script>
-
+	<script type="text/JavaScript" src="{$path_js}/web/Messages/searchUser.js"></script>
+	<script type="text/javascript" src="{$path_js}/vendor/bootstrap-multiselect.min.js"></script>
 
 {literal}
 <script type="text/JavaScript">
     var _messageId = {/literal}{$messageData.ID}{literal};
 
 $(document).ready(function() {
-
-
-    $('#receiverSearch').on('keypress', function(event) {
-        searchUser('receiverSearch', 'receiverSearchOutput',
-            'receiverSelectButton');
+    $('#user-select').multiselect({
+        enableFiltering: true,
+        enableCaseInsensitiveFiltering: true,
+        filterPlaceholder: 'Suche',
+        nonSelectedText: 'Neuer Empfänger...',
+        maxHeight: 300,
+        nSelectedText: "ausgewählt",
+        templates: {
+            filter: '<li class="multiselect-item filter"><div class="input-group"> <span class="input-group-addon"><i class="fa fa-search fa-fw"> </i></span><input class="form-control multiselect-search" type="text"> </div></li>',
+            filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
+        }
+    });
+    $('#manager-select').multiselect({
+        enableFiltering: true,
+        enableCaseInsensitiveFiltering: true,
+        filterPlaceholder: 'Suche',
+        nonSelectedText: 'Neuer Manager...',
+        maxHeight: 300,
+        nSelectedText: "ausgewählt",
+        templates: {
+            filter: '<li class="multiselect-item filter"><div class="input-group"> <span class="input-group-addon"><i class="fa fa-search fa-fw"> </i></span><input class="form-control multiselect-search" type="text"> </div></li>',
+            filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
+        }
     });
 
-    $(document).on('click', '.receiverSelectButton', function(event) {
-        var meId = $(this).attr('id').replace('receiverSelectButtonId', '');
+    $('#user-select').on('change', function() {
+        var meId = $(this).find('option:selected').val()
         addReceiver(meId, {/literal}{$messageData.ID}{literal});
     });
 
-    $('#managerSearch').on('keypress', function(event) {
-        searchUser('managerSearch', 'managerSearchOutput', 'managerSelectButton');
-    });
-
-    $(document).on('click', '.managerSelectButton', function(event) {
-        var meId = $(this).attr('id').replace('managerSelectButtonId', '');
+    $('#manager-select').on('change', function() {
+        var meId = $(this).find('option:selected').val()
         addManager(meId, {/literal}{$messageData.ID}{literal});
     });
 
@@ -241,6 +267,7 @@ $(document).on('keyup', function(event) {
 })
 
 </script>
+
 {/literal}
 
 

@@ -28,10 +28,10 @@ fieldset {
 	<fieldset>
 		<legend>Nachricht</legend>
 		<label for="messagetitle">Betreff:</label><br>
-		<input id="messagetitle" type="text" name="messagetitle" placeholder="Betreff" class="form-control mb-2" /><br />
+		<input id="messagetitle" type="text" name="messagetitle" placeholder="Betreff" class="form-control mb-2" required /><br />
 		<br />
 		<label for="cke">Text:</label>
-		<textarea id="cke" class="ckeditor" name="messagetext"></textarea>
+		<textarea id="cke" class="ckeditor" name="messagetext" ></textarea>
 	</fieldset>
 	<fieldset>
 		<legend>Einstellungen</legend>
@@ -54,37 +54,34 @@ fieldset {
 		<legend>Gültigkeitsbereich</legend>
 		<label>
 			G&uuml;ltig von:
-			<input id="meal-date" name="startDate" class="datepicker form-control" data-provide="datepicker"
-				   data-date-format="dd.mm.yyyy" />
+			<input id="meal-date" name="startDate" class="datepicker form-control" data-provide="datepicker" data-date-week-start = "1"
+				   data-date-format="dd.mm.yyyy" value="{$smarty.now|date_format:"%e.%m.%Y"}" required/>
 		</label><br /><br />
 		<label>
 			G&uuml;ltig bis:
-			<input id="meal-date" name="endDate" class="datepicker form-control" data-provide="datepicker"
-				   data-date-format="dd.mm.yyyy" />
+			<input id="meal-date" name="endDate" class="datepicker form-control" data-provide="datepicker" data-date-week-start = "1"
+				   data-date-format="dd.mm.yyyy" value="{$smarty.now|date_format:"%e.%m.%Y"}" required/>
 		</label><br /><br />
 	</fieldset>
 	<fieldset>
 		<legend>Nachricht an einzelne Benutzer senden</legend>
-		<input id="searchUserInp" type="text" name="searchUserInp"
-			value="">
-		<div id="userSelection">
-		</div>
-		Einzelne Benutzer, an die die Nachricht geschickt wird:
+		<select id="user-select" name="users" size="5" multiple>
+            {foreach item=user from=$users}
+				<option value="{$user.userId}">{$user.userFullname}</option>
+            {/foreach}
+		</select><br />
 		<ul id="userSelected">
 		</ul>
 	</fieldset>
 	<fieldset>
-		<legend>An Klassen senden</legend>
+		<legend>Nachricht an Klassen senden</legend>
 		<select id="class-select" name="grades[]" size="5" multiple>
 			{foreach item=grade from=$grades}
 				<option value="{$grade.ID}">{$grade.name}</option>
 			{/foreach}
 		</select><br />
     </fieldset>
-	<div class="form-group">
-
-	</div>
-	<input id="submit" class="btn btn-primary" onclick="submit()" type="submit" value="Absenden" />
+	<input id="submit" class="btn btn-primary" type="submit" value="Absenden" />
 </form>
 {/block}
 
@@ -105,10 +102,31 @@ fieldset {
                 enableCaseInsensitiveFiltering: true,
                 filterPlaceholder: 'Suche',
                 nonSelectedText: 'Keine ausgewählt',
+                nSelectedText: "ausgewählt",
+				maxHeight: 300,
                 templates: {
                     filter: '<li class="multiselect-item filter"><div class="input-group"> <span class="input-group-addon"><i class="fa fa-search fa-fw"> </i></span><input class="form-control multiselect-search" type="text"> </div></li>',
                     filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
                 }
+            });
+            $('#user-select').multiselect({
+                enableFiltering: true,
+                enableCaseInsensitiveFiltering: true,
+                filterPlaceholder: 'Suche',
+                nonSelectedText: 'Keine ausgewählt',
+                maxHeight: 300,
+                nSelectedText: "ausgewählt",
+                templates: {
+                    filter: '<li class="multiselect-item filter"><div class="input-group"> <span class="input-group-addon"><i class="fa fa-search fa-fw"> </i></span><input class="form-control multiselect-search" type="text"> </div></li>',
+                    filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
+                }
+            });
+            $('#user-select').on('change', function() {
+                var selected = $(this).find('option:selected');
+                cleanUserAsHiddenInput('userSelected')
+				selected.each(function (elem) {
+                    addUserAsHiddenInp($(this).val(), $(this).text(), 'addMessage', 'userSelected');
+                })
             });
         });
     </script>

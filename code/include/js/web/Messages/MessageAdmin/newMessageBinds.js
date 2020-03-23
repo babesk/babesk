@@ -1,17 +1,3 @@
-$('#searchUserInp').on('keypress', function(event){
-
-	searchUser('searchUserInp', 'userSelection', 'userSelectionButton');
-});
-
-$(document).on('click', '.userSelectionButton', function(event){
-
-	var meId = $(this).attr('id').replace('userSelectionButtonId', '');
-	var name = $(this).val();
-
-	cleanSearchUser('userSelection');
-	addUserAsHiddenInp(meId, name, 'addMessage', 'userSelected');
-});
-
 $('.templateSelection').on('click', function(event) {
 
 	var templateId = $(this).attr('id');

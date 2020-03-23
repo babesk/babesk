@@ -12,8 +12,7 @@ class MessageFunctions {
 			'SELECT u.ID AS userId,
 				CONCAT(u.forename, " ", u.name) AS userFullname
 			FROM SystemUsers u
-				JOIN SystemAttendances uigs ON u.ID = uigs.userId
-			WHERE uigs.schoolyearId = @activeSchoolyear');
+			ORDER BY u.name');
 		return $users;
 	}
 
@@ -32,7 +31,7 @@ class MessageFunctions {
 		$query = sprintf("SELECT COUNT(*) AS count
 			FROM MessageReceivers r JOIN MessageMessages m ON m.ID = r.messageId
 			WHERE %s = userId AND %s = messageId
-			AND SYSDATE() BETWEEN validFrom AND validTo",
+			AND SYSDATE() BETWEEN validFrom AND DATE_ADD(validTo, INTERVAL 1 DAY)",
 			$escUserId, $escMessageId);
 		$isReceiving = TableMng::query($query);
 		return (bool) $isReceiving[0]['count'];
@@ -112,29 +111,6 @@ class MessageFunctions {
 
 	}
 
-	/**
-	 * Gets the users taht have a similar name to the $username
-	 */
-	public static function usersGetSimilarTo ($username, $maxUsersToGet) {
-
-		$bestMatches = array ();
-		$users = self::usersFetch ();
-
-		foreach ($users as $key => $user) {
-			$per = 0.0;
-			similar_text($username, $user ['userFullname'], $per);
-			$users [$key] ['percentage'] = $per;
-		}
-
-		usort ($users, array ('MessageFunctions', 'userPercentageComp'));
-
-		$elementCount = (count($users) >= $maxUsersToGet) ?
-			$maxUsersToGet : count($users);
-		for ($i = 0; $i < $elementCount; $i++) {
-			$bestMatches [] = $users [$i];
-		}
-		return $bestMatches;
-	}
 
 	/**
 	 * Compares two strings, used with usort()

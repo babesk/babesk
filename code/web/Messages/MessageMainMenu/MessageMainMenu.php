@@ -143,7 +143,8 @@ class MessageMainMenu extends Messages {
 			FROM MessageMessages m
 			JOIN MessageReceivers mr ON mr.userId = %s
 				AND m.ID = mr.messageId
-			WHERE SYSDATE() BETWEEN m.validFrom AND m.validTo
+			WHERE SYSDATE() BETWEEN m.validFrom AND DATE_ADD(m.validTo, INTERVAL 1 DAY)
+			ORDER BY m.validTo
 			', $_SESSION['uid']);
 		try {
 			$messages = TableMng::query ($query);
@@ -219,9 +220,9 @@ class MessageMainMenu extends Messages {
 		}
 		else if(MessageFunctions::checkHasReceived($messageId, $_SESSION['uid'])) {
 
-			$msgText = $msgTitle = $forename = $name = $grade = $msgRecId = $msgReturn = '';
+			$msgText = $msgTitle = $forename = $name = $grade = $msgRecId = $msgReturn = $cardID = $isRead = '';
 			$query = "SELECT m.title, m.text, mr.read, mr.ID, mr.return,
-					u.forename, u.name, CONCAT(g.gradelevel, g.label)
+					u.forename, u.name, CONCAT(g.gradelevel, g.label), c.cardnumber
 				FROM SystemUsers u
 				JOIN MessageReceivers mr ON mr.userId = u.ID
 				JOIN MessageMessages m ON mr.messageId = m.ID AND m.ID = ?
@@ -229,12 +230,13 @@ class MessageMainMenu extends Messages {
 					uigs.userId = u.ID AND
 					uigs.schoolyearId = @activeSchoolyear
 				LEFT JOIN SystemGrades g ON g.ID = uigs.gradeId
+				LEFT JOIN BabeskCards c ON u.ID = c.UID
 				WHERE u.ID = ?";
 			$stmt = $db->prepare($query);
 			if($stmt) {
 				$stmt->bind_param('ss', $messageId, $_SESSION['uid']);
 				$stmt->bind_result($msgTitle, $msgText, $isRead, $msgRecId, $msgReturn,
-					$forename, $name, $grade);
+					$forename, $name, $grade, $cardID);
 
 				$stmt->execute();
 				while($stmt->fetch()) {
@@ -247,6 +249,7 @@ class MessageMainMenu extends Messages {
 				$msgText = str_replace("{vorname}", $forename, $msgText);
 				$msgText = str_replace("{name}", $name, $msgText);
 				$msgText = str_replace("{klasse}", $grade, $msgText);
+                $msgText = str_replace("{kartennummer}", $cardID, $msgText);
 
 				$this->createPdf($msgTitle, $msgText, $grade, $msgReturn,$messageId,$_SESSION['uid']);
 			}
@@ -270,21 +273,6 @@ class MessageMainMenu extends Messages {
 		return preg_match("/BaBeSK/i", $_SERVER['HTTP_USER_AGENT']);
 	}
 
-	/**
-	 * Searches for users with Ajax
-	 */
-	private function searchUserAjax() {
-		$db = TableMng::getDb();
-		$username = $db->real_escape_string($_POST['username']);
-		$buttonClass = $db->real_escape_string($_POST['buttonClass']);
-		$users = MessageFunctions::usersGetSimilarTo($username, 10);
-		//output the findings
-		foreach($users as $user) {
-			echo sprintf(
-				'<input id="%sId%s" class="%s" type="button" value="%s"><br />',
-				$buttonClass, $user['userId'], $buttonClass, $user['userFullname']);
-		}
-	}
 
 	private function markMsgAsRead($msgReceiverId) {
 		$db = TableMng::getDb();

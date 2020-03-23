@@ -14,6 +14,7 @@
 	<tr>
 		<th>Betreff</th>
 		<th>Status</th>
+		<th>Läuft ab am:</th>
 		<th>Aktionen</th>
 	</tr>
 
@@ -31,11 +32,16 @@
 				<p>wurde zurückgegeben</p>
 			{/if}
 		</td>
+		<td{if strtotime($message.validTo) < time()}
+			class="dateBeyondValid"
+                {/if}>
+            {$message.validTo|date_format:"%e.%m.%Y"}
+		</td>
 		<td>
 			{if $BaBeSkTerminal}
 				Hinweis: Post kann nicht am BaBeSK-Terminal <br>ge&ouml;ffnet werden!
 			{else}
-			<a href="index.php?section=Messages|MessageMainMenu&action=showMessage&ID={$message.ID}">
+			<a target="_blank" rel="noopener" href="index.php?section=Messages|MessageMainMenu&action=showMessage&ID={$message.ID}">
 				<img src="../include/res/images/page_white_acrobat.png">
 			</a>
 			{/if}
@@ -79,11 +85,11 @@
 			{else}
 			<a href="index.php?section=Messages|MessageMainMenu&amp;action=showMessage&amp;ID={$message.ID}">
 				<img src="../include/res/images/page_white_acrobat.png">
-			</a>
+			</a>&nbsp;&nbsp;&nbsp;&nbsp;
 			{/if}
 			<a href="index.php?section=Messages|MessageMainMenu&amp;action=deleteMessage&amp;ID={$message.ID}">
 				<img src="../include/res/images/delete.png">
-			</a>
+			</a>&nbsp;&nbsp;&nbsp;&nbsp;
 			<a href="index.php?section=Messages|MessageAdmin&amp;action=showMessage&amp;ID={$message.ID}">
 				Details...
 			</a>

@@ -1,35 +1,3 @@
-
-/**
- * Searches for similar Users and puts suggestions into a container
- * @param  {[type]} toSearchForInput     The Input containing the value to be
- * used as a searchstring
- * @param  {[type]} outputContainer      the ID of a Container where buttons
- * get displayed, each one representing a user to select
- * @param  {[type]} selectionElementName The Class of the resulting buttons
- */
-function searchUser(toSearchForInput, outputContainer, selectionElementName) {
-	var name = document.getElementById(toSearchForInput).value;
-	console.log($('#' + toSearchForInput));
-	$.ajax({
-		type: "POST",
-		url: "index.php?section=Messages|MessageMainMenu&action=searchUserAjax",
-		data: {
-			'username': $('#' + toSearchForInput).val(),
-			'buttonClass': selectionElementName
-		},
-		success: function(data) {
-			$('#' + outputContainer).html(data);
-		}
-	});
-}
-
-/** Cleans the search-user dialog
- * @param string selectUserContainer The Container to clear the elements in
- */
-function cleanSearchUser(selectUserContainer) {
-	$('#' + selectUserContainer).html("");
-}
-
 /**
  * Adds a hidden Input-Field and a List-Element describing the User.
  * The List-Element will be shown to the User, so that he sees his already
@@ -52,6 +20,10 @@ function addUserAsHiddenInp(userId, name, form, addedUsersContainer) {
 	var output = document.createElement("li");
 	output.innerHTML = name;
 	document.getElementById(addedUsersContainer).appendChild(output);
+}
+
+function cleanUserAsHiddenInput(addedUsersContainer){
+    document.getElementById(addedUsersContainer).innerHTML = ""
 }
 
 function addReceiver(userId, messageId) {

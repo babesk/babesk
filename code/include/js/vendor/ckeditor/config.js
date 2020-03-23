@@ -12,7 +12,7 @@ CKEDITOR.editorConfig = function( config )
 	config.extraPlugins = 'messagevars';
 	config.toolbar_BaBeSK =
 	[
-		[ 'Bold', 'Italic','-','Cut','Copy','Paste','PasteFromWord','-','HorizontalRule','-','messageForename', 'messageName', 'messageGrade']
+		[ 'Bold', 'Italic','-','Cut','Copy','Paste','PasteFromWord','-','HorizontalRule','-','messageForename', 'messageName', 'messageGrade', 'messageCardID']
 	];
 	config.toolbar = 'BaBeSK';
 	 config.language = 'de';

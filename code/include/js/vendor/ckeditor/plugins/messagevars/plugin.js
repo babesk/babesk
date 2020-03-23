@@ -30,6 +30,13 @@ CKEDITOR.plugins.add( 'messagevars',
 							editor.insertHtml("{barcode}");
 						}
 					});
+                editor.addCommand( 'ID',
+                    {
+                        exec:function(editor)
+                        {
+                            editor.insertHtml("{kartennummer}");
+                        }
+                    });
 				editor.ui.addButton( 'messageForename',
 					{
 						label: 'Platzhalter f&#252;r: Vorname',
@@ -43,10 +50,16 @@ CKEDITOR.plugins.add( 'messagevars',
 						icon: this.path + 'name.png'
 					});
 				editor.ui.addButton( 'messageGrade',
-						{
-							label: 'Platzhalter f&#252;r: Klasse',
-							command: 'grade',
-							icon: this.path + 'grade.png'
-						});
+					{
+						label: 'Platzhalter f&#252;r: Klasse',
+						command: 'grade',
+						icon: this.path + 'grade.png'
+					});
+                editor.ui.addButton( 'messageCardID',
+                    {
+                        label: 'Platzhalter f&#252;r: Kartennummer',
+                        command: 'ID',
+                        icon: this.path + 'grade.png'
+                    });
 			}
 		} );
