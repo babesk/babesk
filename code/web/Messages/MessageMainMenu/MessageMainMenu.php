@@ -38,12 +38,6 @@ class MessageMainMenu extends Messages {
 				case 'showMessage':
 					$this->showMessage();
 					break;
-				case 'showMessageAdmin':
-					$this->showMessageAdmin();
-					break;
-				case 'searchUserAjax':
-					$this->searchUserAjax();
-					break;
 				default:
 					die('wrong Action-value');
 					break;
@@ -285,12 +279,6 @@ class MessageMainMenu extends Messages {
 		else {
 			$this->_interface->DieError('Konnte die Nachricht nicht als gelesen markieren' . $db->error);
 		}
-	}
-
-	private function showMessageAdmin() {
-		require_once 'MessageShowAdmin.php';
-		MessageShowAdmin::init($this->_smarty, $this->_smartyPath, $this->_interface);
-		MessageShowAdmin::execute();
 	}
 
 	/**

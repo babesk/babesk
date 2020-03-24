@@ -12,11 +12,6 @@
  * Users will be displayed as a list
  */
 function addUserAsHiddenInp(userId, name, form, addedUsersContainer) {
-	var hiddenInput = document.createElement("input");
-	hiddenInput.setAttribute("type", "hidden");
-	hiddenInput.setAttribute("name", form + 'AddedUser[' + userId + ']');
-	hiddenInput.setAttribute("value", userId);
-	document.getElementById(form).appendChild(hiddenInput);
 	var output = document.createElement("li");
 	output.innerHTML = name;
 	document.getElementById(addedUsersContainer).appendChild(output);

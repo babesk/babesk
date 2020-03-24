@@ -111,21 +111,6 @@ class MessageFunctions {
 
 	}
 
-
-	/**
-	 * Compares two strings, used with usort()
-	 */
-	protected static function userPercentageComp ($user1, $user2) {
-		if ($user1 ['percentage'] == $user2 ['percentage']) {
-			return 0;
-		}
-		else if ($user1 ['percentage'] < $user2 ['percentage']) {
-			return 1;
-		}
-		else if ($user1 ['percentage'] > $user2 ['percentage']) {
-			return -1;
-		}
-	}
 	
 	/**
 	 * returns the ID for the given message group name
