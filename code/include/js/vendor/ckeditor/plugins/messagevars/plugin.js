@@ -59,7 +59,7 @@ CKEDITOR.plugins.add( 'messagevars',
                     {
                         label: 'Platzhalter f&#252;r: Kartennummer',
                         command: 'ID',
-                        icon: this.path + 'grade.png'
+                        icon: this.path + 'cardid.png'
                     });
 			}
 		} );

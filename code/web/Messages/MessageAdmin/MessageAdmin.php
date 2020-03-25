@@ -109,7 +109,7 @@ class MessageAdmin extends Messages {
 			$msgReceiverIds = array();
 			if(isset($_POST['users']) && count($_POST['users'])) {
 				$msgReceiverIds = array_merge($msgReceiverIds,
-					$_POST['addMessageAddedUser']);
+					$_POST['users']);
 			}
 			$userIdsOfGrades = $this->saveMessageGrades();
 			if(count($userIdsOfGrades)) {

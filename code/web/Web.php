@@ -209,7 +209,7 @@ class Web {
 				FROM MessageReceivers mr
 				LEFT JOIN MessageMessages m ON mr.messageId = m.ID
 				WHERE %s = userId
-					AND SYSDATE() BETWEEN m.validFrom AND m.validTo
+					AND SYSDATE() BETWEEN m.validFrom AND DATE_ADD(validTo, INTERVAL 1 DAY)
 					AND mr.read = 0",
 				$_SESSION['uid']));
 
@@ -221,7 +221,7 @@ class Web {
 		}
 
 		if ($mailcount[0]['count'] > 0) {
-			$this->_smarty->assign('newmail', true);
+			$this->_smarty->assign('newmail', $mailcount[0]['count']);
 		}
 	}
 

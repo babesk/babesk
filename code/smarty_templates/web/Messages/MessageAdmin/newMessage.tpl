@@ -65,7 +65,7 @@ fieldset {
 	</fieldset>
 	<fieldset>
 		<legend>Nachricht an einzelne Benutzer senden</legend>
-		<select id="user-select" name="users" size="5" multiple>
+		<select id="user-select" name="users[]" size="5" multiple>
             {foreach item=user from=$users}
 				<option value="{$user.userId}">{$user.userFullname}</option>
             {/foreach}

@@ -106,6 +106,9 @@
 							</div>
 								{$path = $moduleGenMan->modulePathGet($module)}
 								{_g("modulepath_$path")}
+								{if $module->getName() == "Messages" and $newmail > 0}
+									<span class="badge badge-primary">{$newmail}</span>
+								{/if}
 						</div>
 					</a>
 					{if $module@iteration is even}

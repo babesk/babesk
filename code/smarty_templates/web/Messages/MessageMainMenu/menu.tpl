@@ -87,7 +87,7 @@
 				<img src="../include/res/images/page_white_acrobat.png">
 			</a>&nbsp;&nbsp;&nbsp;&nbsp;
 			{/if}
-			<a href="index.php?section=Messages|MessageMainMenu&amp;action=deleteMessage&amp;ID={$message.ID}">
+			<a href="#" data-toggle="modal" data-target="#deleteModal" data-id="{$message.ID}" data-title="{$message.title}">
 				<img src="../include/res/images/delete.png">
 			</a>&nbsp;&nbsp;&nbsp;&nbsp;
 			<a href="index.php?section=Messages|MessageAdmin&amp;action=showMessage&amp;ID={$message.ID}">
@@ -102,5 +102,47 @@
 	<a class="btn btn-success" href="index.php?section=Messages|MessageAdmin&amp;action=newMessageForm">
 		Neue Nachricht erstellen
 	</a>
+	<div class="modal fade" id="deleteModal">
+		<div class="modal-dialog ">
+			<div class="modal-content">
+
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">Nachricht löschen</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					Möchten Sie die Nachricht wirklich löschen?
+				</div>
+
+				<!-- Modal footer -->
+				<div class="modal-footer">
+					<form id="deleteForm" method="post" action="">
+						<button type="submit" class="btn btn-danger">Löschen</button>
+						<button type="button" class="btn btn-primary" data-dismiss="modal">Abbrechen</button>
+					</form>
+				</div>
+
+			</div>
+		</div>
+	</div>
 {/if}
+{/block}
+{block name=js_include append}
+	{literal}
+		<script type="text/javascript">
+			$(document).ready(function() {
+                $('#deleteModal').on('show.bs.modal', function (event) {
+                    var button = $(event.relatedTarget)
+                    var id = button.data('id')
+					var title = button.data('title')
+                    var modal = $(this)
+					modal.find(".modal-body").text("Möchten Sie die Nachricht \""+title+"\" wirklich löschen?")
+					modal.find("#deleteForm").attr('action', "index.php?section=Messages|MessageMainMenu&action=deleteMessage&ID="+id )
+                })
+            })
+		</script>
+	{/literal}
 {/block}
