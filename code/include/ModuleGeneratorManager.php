@@ -270,7 +270,7 @@ class ModuleGeneratorManager {
 			return true;
 		}
 		else {
-			if(count($module->_childs)) {
+			if($module->_childs != null) {
 				foreach($module->_childs as &$child) {
 					$ret = $this->moduleEnabledStatusChangeHelper($searchedId,
 						$child, $access);

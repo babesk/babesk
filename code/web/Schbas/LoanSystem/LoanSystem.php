@@ -112,13 +112,9 @@ class LoanSystem extends Schbas {
 				'Du bist in keiner Klasse eingetragen!'
 			);
 		}
-		$gradelevel = strval(intval($gradelevel)+1);
-		// Filter fuer Abijahrgang
 
-		if($gradelevel=="13") $this->_smarty->display($this->_smartyPath . 'lastGrade.tpl');;
-		;
 
-		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
+		$loanHelper = new \Babesk\Schbas\Loan($this->_dgit addataContainer);
 		$fees = $loanHelper->loanPriceOfAllBookAssignmentsForUserCalculate(
 			$user
 		);
