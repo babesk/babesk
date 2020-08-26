@@ -183,7 +183,6 @@ class UserDelete {
 	protected function createPdf($user,$uid) {
 
 		try {
-			require_once  PATH_INCLUDE .('/pdf/tcpdf/config/lang/ger.php');
 			require_once PATH_INCLUDE . '/pdf/tcpdf/tcpdf.php';
 
 			// create new PDF document
@@ -217,8 +216,6 @@ class UserDelete {
 			//set image scale factor
 			$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
-			//set some language-dependent strings
-			$pdf->setLanguageArray($l);
 
 			// ---------------------------------------------------------
 

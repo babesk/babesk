@@ -2,7 +2,6 @@
 
 namespace Babesk\Schbas;
 
-require_once  PATH_INCLUDE .('/pdf/tcpdf/config/lang/ger.php');
 require_once PATH_INCLUDE . '/pdf/tcpdf/tcpdf.php';
 
 class SchbasPdf {

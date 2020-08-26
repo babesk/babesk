@@ -38,7 +38,7 @@ class User extends System {
 		if(isset($_GET['showPdfOfDeletedUser'])) {
 			TableMng::sqlEscape($_GET['pdfId']);
 			$fileId = $_GET['pdfId'];
-			$deleter = new UserDelete();
+			$deleter = new UserDelete($this->_smarty);
 			$deleter->showPdfOfDeletedUser($fileId);
 			die();
 		}
