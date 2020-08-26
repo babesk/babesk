@@ -176,7 +176,7 @@
 
 			<div id="main_wrapper" class="">
 				<div class="container">
-					{include "{$path_smarty_tpl}/administrator/_flash-messages.tpl"}
+					{include "administrator/_flash-messages.tpl"}
 				</div>
 				<div class="container-fluid">
 					<div class="row">

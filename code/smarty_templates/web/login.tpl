@@ -1,4 +1,4 @@
-{extends file="{$path_smarty_tpl}/web/baseLayout.tpl"}{block name="content"}
+{extends file="web/baseLayout.tpl"}{block name="content"}
 
 	<div id="login" class="container">
 		<div class="col-xs-12 col-md-10 col-lg-8 col-md-offset-1 col-lg-offset-2">
