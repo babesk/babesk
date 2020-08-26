@@ -238,7 +238,7 @@ class ModuleGeneratorManager {
 	protected function modulePathGetRecHelper($moduleId, $module,
 		$begPath) {
 
-		if(count($module->_childs)) {
+		if(isset($module->_childs)) {
 
 			foreach($module->_childs as $mod) {
 				$path = $begPath . '/' . $mod->_name;

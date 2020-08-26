@@ -20,7 +20,6 @@ class DataContainer {
 		$interface,
 		$acl = NULL,
 		$pdo = NULL,
-		$entityManager = NULL,
 		$logger = NULL
 	) {
 
@@ -28,7 +27,6 @@ class DataContainer {
 		$this->_interface = $interface;
 		$this->_acl = $acl;
 		$this->_pdo = $pdo;
-		$this->_em = $entityManager;
 		$this->_logger = $logger;
 	}
 
@@ -73,14 +71,6 @@ class DataContainer {
 
 	public function setPdo($pdo) {
 		$this->_pdo = $pdo;
-	}
-
-	public function getEntityManager() {
-		return $this->_em;
-	}
-
-	public function setEntityManager($entityManager) {
-		$this->_em = $entityManager;
 	}
 
 	public function getLogger() {
@@ -138,11 +128,6 @@ class DataContainer {
 	 */
 	protected $_pdo;
 
-	/**
-	 * Doctrines entityManager
-	 * @var EntityManager
-	 */
-	protected $_em;
 
 	/**
 	 * Allows to Log Errors, notices and other stuff

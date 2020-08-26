@@ -203,8 +203,7 @@ class ModuleGenerator {
 	 * @todo When userHasAccess not set, warning?
 	 */
 	public function notAllowedChildsRemove() {
-
-		if(count($this->_childs)) {
+		if(isset($this->_childs)) {
 			foreach($this->_childs as $key => $child) {
 				if(isset($child->_userHasAccess)) {
 					$allowed = $child->_isEnabled && $child->_userHasAccess;

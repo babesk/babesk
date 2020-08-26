@@ -63,51 +63,6 @@ class DBConnect {
 		return $pdo;
 	}
 
-	/**
-	 * Creates and returns a new instance of doctrine
-	 * @return EntityManager The Doctrine Entity Manager
-	 */
-	public function getDoctrineEntityManager() {
-
-		try {
-			require_once PATH_3RD_PARTY . '/doctrine-orm/vendor/autoload.php';
-			$config = Doctrine\ORM\Tools\Setup::createYAMLMetadataConfiguration(
-					array(PATH_INCLUDE . '/models/mapping/yml'), true
-			);
-			$config->setProxyDir(PATH_INCLUDE . '/models/Proxies');
-			$config->setProxyNamespace('Babesk\\Proxies');
-			$config->addEntityNamespace('DM', 'Babesk\ORM');
-			$conn = array(
-				'driver' => 'pdo_mysql',
-				'dbname' => $this->_databaseName,
-				'user' => $this->_username,
-				'password' => $this->_password,
-				'host' => $this->_host
-			);
-			$loader = new \Doctrine\Common\ClassLoader(
-				'Babesk', PATH_INCLUDE . '/models/Entities'
-			);
-			$loader->register();
-			$loader = new \Doctrine\Common\ClassLoader(
-				'Repository', PATH_INCLUDE . '/models'
-			);
-			$loader->register();
-			$entityManager =  Doctrine\ORM\EntityManager::create(
-				$conn, $config
-			);
-			$entityManager->getEventManager()->addEventSubscriber(
-				new \Doctrine\DBAL\Event\Listeners\MysqlSessionInit(
-					'utf8', 'utf8_unicode_ci'
-				)
-			);
-
-			return $entityManager;
-
-		} catch (Exception $e) {
-			throw new Exception('Could not set up doctrine entity manager!');
-		}
-	}
-
 	public function setDatabaseValues ($host, $username, $password, $databaseName) {
 
 		$this->_host = $host;

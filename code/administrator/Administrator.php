@@ -205,7 +205,6 @@ class Administrator {
 			$connector = new DBConnect();
 			$connector->initDatabaseFromXML();
 			$this->_pdo = $connector->getPdo();
-			$this->_em = $connector->getDoctrineEntityManager();
 			$this->_pdo->query(
 				'SET @activeSchoolyear :=
 				(SELECT ID FROM SystemSchoolyears WHERE active = "1" LIMIT 1);
@@ -347,7 +346,6 @@ class Administrator {
 			clone($this->_adminInterface),
 			clone($this->_acl),
 			$this->_pdo,
-			$this->_em,
 			clone($this->_logger)
 		);
 
@@ -363,11 +361,6 @@ class Administrator {
 	 */
 	private $_acl;
 
-	/**
-	 * Doctrines entity Manager
-	 * @var EntityManager
-	 */
-	private $_em;
 
 	/**
 	 * The Interface handling displaying stuff

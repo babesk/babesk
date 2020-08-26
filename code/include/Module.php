@@ -54,7 +54,6 @@ abstract class Module {
 	protected function entryPoint($dataContainer) {
 
 		$this->_pdo = $dataContainer->getPdo();
-		$this->_em = $dataContainer->getEntityManager();
 		$this->_smarty = $dataContainer->getSmarty();
 		$this->_acl = $dataContainer->getAcl();
 		$this->_submoduleExecutionpath =
@@ -351,12 +350,6 @@ abstract class Module {
 	 * @var Pdo
 	 */
 	protected $_pdo;
-
-	/**
-	 * The Doctrine-Wrapper connection to the database
-	 * @var EntityManager
-	 */
-	protected $_em;
 
 	/**
 	 * Allows for checking if the User has access to the Submodules

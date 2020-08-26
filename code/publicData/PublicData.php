@@ -109,7 +109,6 @@ class PublicData {
 			$this->_pdo = $connector->getPdo();
 			$this->_pdo->query('SET @activeSchoolyear :=
 				(SELECT ID FROM SystemSchoolyears WHERE active = "1");');
-			$this->_em = $connector->getDoctrineEntityManager();
 
 		} catch (Exception $e) {
 			trigger_error('Could not create the PDO-Object!');
@@ -125,8 +124,6 @@ class PublicData {
 	private $_acl;
 
 	private $_pdo;
-
-	private $_em;
 
 	private $_logger;
 
