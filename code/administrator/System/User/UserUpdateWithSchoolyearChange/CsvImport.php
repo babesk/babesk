@@ -102,7 +102,6 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 
 		$content = $this->fileContentGet($filepath);
 		$this->csvCheck($content);
-		$content = $this->csvDataPrepare($content);
 		$this->userExistenceCompare($content);
 		$this->gradeConflictsCreate();
 		// $this->gimmeDebug();
@@ -236,41 +235,6 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 		}
 	}
 
-	private function csvDataPrepare($content) {
-
-		$subjectsHandle = function($row, $dataName) {
-			$possibleEntries = [];
-			$setting = $this->_em->getRepository('DM:SystemGlobalSettings')
-				->findOneByName($dataName);
-			if($setting) {
-				$possibleEntries = explode('|', $setting->getValue());
-			}
-			$entries = explode(',', $row[$dataName]);
-			foreach($entries as $entry) {
-				if(!in_array($entry, $possibleEntries)) {
-					$this->_interface->dieError('Ein unbekanntes Fach ist ' .
-						"für einen Nutzer eingetragen. Fach: '$entry'. " .
-						"Daten :" . print_r($row, true));
-				}
-			}
-			$tableData = implode('|', $entries);
-			$row[$dataName] = $tableData;
-			return $row;
-		};
-
-		return array_map(function($userRow) use ($subjectsHandle) {
-			if(!empty($userRow['special_course'])) {
-				$userRow = $subjectsHandle($userRow, 'special_course');
-			}
-			if(!empty($userRow['foreign_language'])) {
-				$userRow = $subjectsHandle($userRow, 'foreign_language');
-			}
-			if(!empty($userRow['religion'])) {
-				$userRow = $subjectsHandle($userRow, 'religion');
-			}
-			return $userRow;
-		}, $content);
-	}
 
 	/**
 	 * Compares the existence of users in csv-file and database
@@ -495,14 +459,12 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 			$stmtsu = $this->_pdo->prepare(
 				'INSERT INTO `UserUpdateTempSolvedUsers`
 					(origUserId, forename, name, newUsername, newTelephone,
-						newEmail, birthday, gradelevel, gradelabel,
-						religion, foreign_language, special_course)
+						newEmail, birthday, gradelevel, gradelabel)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 			$stmtu = $this->_pdo->prepare(
 				'INSERT INTO `UserUpdateTempUsers`
 					(origUserId, forename, name, newUsername, newTelephone,
-						newEmail, birthday, gradelevel, label, religion,
-						foreign_language, special_course)
+						newEmail, birthday, gradelevel, label)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 			$stmtc = $this->_pdo->prepare(
 				'INSERT INTO `UserUpdateTempConflicts`
@@ -529,13 +491,6 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 					$user['csv']['telephone'] : NULL;
 				$newEmail = (isset($user['csv']['email'])) ?
 					$user['csv']['email'] : NULL;
-				$newReligion = (isset($user['csv']['religion'])) ?
-					$user['csv']['religion'] : NULL;
-				$newForeignLanguage = (isset(
-						$user['csv']['foreign_language']
-					)) ? $user['csv']['foreign_language'] : NULL;
-				$newSpecialCourse = (isset($user['csv']['special_course'])) ?
-					$user['csv']['special_course'] : NULL;
 
 				if(!empty($this->_usersWithGradeConflicts) &&
 					in_array(
@@ -551,8 +506,7 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 						$newTelephone,
 						$newEmail,
 						$birthday,
-						$level, $label,
-						$newReligion, $newForeignLanguage, $newSpecialCourse
+						$level, $label
 					));
 					$uid = $this->_pdo->lastInsertId();
 					$stmtc->execute(array($user['db']['userId'], $uid, 'GradelevelConflict', 0));
@@ -566,8 +520,7 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 						$newTelephone,
 						$newEmail,
 						$birthday,
-						$level, $label,
-						$newReligion, $newForeignLanguage, $newSpecialCourse
+						$level, $label
 					));
 				}
 			}
@@ -593,9 +546,8 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 			$stmtu = $this->_pdo->prepare(
 				'INSERT INTO `UserUpdateTempUsers`
 					(origUserId, forename, name, newUsername, newTelephone,
-						newEmail, birthday, gradelevel, label, religion,
-						foreign_language, special_course) VALUES
-					(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+						newEmail, birthday, gradelevel, label) VALUES
+					(?, ?, ?, ?, ?, ?, ?, ?, ?)
 			');
 			$stmtc = $this->_pdo->prepare(
 				'INSERT INTO `UserUpdateTempConflicts`
@@ -613,20 +565,13 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 					$user['telephone'] : NULL;
 				$newEmail = (isset($user['email'])) ?
 					$user['email'] : NULL;
-				$newReligion = (isset($user['religion'])) ?
-					$user['religion'] : NULL;
-				$newForeignLanguage = (isset($user['foreign_language'])) ?
-					$user['foreign_language'] : NULL;
-				$newSpecialCourse = (isset($user['special_course'])) ?
-					$user['special_course'] : NULL;
 				$birthday = (!empty($user['birthday'])) ?
 					date('Y-m-d', strtotime($user['birthday'])) : NULL;
 
 				//Add user-entry
 				$stmtu->execute(array(
 					'0', $user['forename'], $user['name'], $newUsername,
-					$newTelephone, $newEmail, $birthday, $level, $label,
-					$newReligion, $newForeignLanguage, $newSpecialCourse
+					$newTelephone, $newEmail, $birthday, $level, $label
 				));
 				$uid = $this->_pdo->lastInsertId();
 				//Add conflict
@@ -685,10 +630,7 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 					`newEmail` varchar(64) DEFAULT NULL,
 					`birthday` date,
 					`gradelevel` int(3) NOT NULL DEFAULT 0,
-					`label` varchar(255) NOT NULL,
-					`religion` varchar(64) DEFAULT NULL,
-					`foreign_language` varchar(64) DEFAULT NULL,
-					`special_course` varchar(64) DEFAULT NULL,
+					`label` varchar(255) NOT NULL
 					PRIMARY KEY (`ID`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8;'
 			);
@@ -723,10 +665,7 @@ class CsvImport extends \administrator\System\User\UserUpdateWithSchoolyearChang
 					`newEmail` varchar(64) DEFAULT NULL,
 					`birthday` date,
 					`gradelevel` int(3) NOT NULL,
-					`gradelabel` varchar(255) NOT NULL,
-					`religion` varchar(64) DEFAULT NULL,
-					`foreign_language` varchar(64) DEFAULT NULL,
-					`special_course` varchar(64) DEFAULT NULL,
+					`gradelabel` varchar(255) NOT NULL
 					PRIMARY KEY (`ID`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8;'
 			);

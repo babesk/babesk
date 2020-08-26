@@ -66,36 +66,6 @@
 					Existiert der Nutzer bereits, wird der bestehende Benutzername damit überschrieben. (optional)
 				</td>
 			</tr>
-			<tr>
-				<td>
-					religion
-				</td>
-				<td>
-					Die neuen Religionsfaecher des Benutzers. Optional.
-					Mehrere Faecher moeglich, mit Komma (",") abgetrennt.
-					Alte Faecher die hier nicht auftauchen werden entfernt.
-				</td>
-			</tr>
-			<tr>
-				<td>
-					special_course
-				</td>
-				<td>
-					Die neuen Oberstufenkurse des Benutzers. Optional.
-					Mehrere Faecher moeglich, mit Komma (",") abgetrennt.
-					Alte Faecher die hier nicht auftauchen werden entfernt.
-				</td>
-			</tr>
-			<tr>
-				<td>
-					foreign_language
-				</td>
-				<td>
-					Die neuen Fremdsprachenkurse des Benutzers. Optional.
-					Mehrere Faecher moeglich, mit Komma (",") abgetrennt.
-					Alte Faecher die hier nicht auftauchen werden entfernt.
-				</td>
-			</tr>
 		</tbody>
 	</table>
 </fieldset>
@@ -167,15 +137,6 @@
 				<td>
 					birthday
 				</td>
-				<td>
-					religion
-				</td>
-				<td>
-					foreign_language
-				</td>
-				<td>
-					special_course
-				</td>
 			</tr>
 			<tr>
 				<td>
@@ -212,15 +173,6 @@
 				</td>
 				<td>
 					9.1.2001
-				</td>
-				<td>
-					WN
-				</td>
-				<td>
-					EN
-				</td>
-				<td>
-
 				</td>
 			</tr>
 		</tbody>

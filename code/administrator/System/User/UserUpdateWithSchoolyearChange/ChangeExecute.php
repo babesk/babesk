@@ -105,14 +105,7 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 					u.birthday = IFNULL(su.birthday, u.birthday),
 					u.email = IFNULL(su.newEmail, u.email),
 					u.telephone = IFNULL(su.newTelephone, u.telephone),
-					u.username = IFNULL(su.newUsername, u.username),
-					u.religion = IFNULL(su.religion, u.religion),
-					u.foreign_language = IFNULL(
-						su.foreign_language, u.foreign_language
-					),
-					u.special_course = IFNULL(
-						su.special_course, u.special_course
-					)
+					u.username = IFNULL(su.newUsername, u.username)
 			';
 
 			$this->_pdo->query($queryJoints);
@@ -187,11 +180,9 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 			$stmtu = $this->_pdo->prepare(
 				'INSERT INTO SystemUsers
 					(forename, name, username, password, email, telephone,
-						last_login, locked, GID, credit, soli, birthday,
-						religion, foreign_language, special_course)
+						last_login, locked, GID, credit, soli, birthday)
 				VALUES (?, ?, IFNULL(?, CONCAT(forename, ".", name)), "",
-					IFNULL(?, ""), IFNULL(?, ""), "", 0, 0, 0, 0, ?,
-					IFNULL(?, ""), IFNULL(?, ""), IFNULL(?, ""))'
+					IFNULL(?, ""), IFNULL(?, ""), "", 0, 0, 0, 0, ?)'
 			);
 			$stmtg = $this->_pdo->prepare(
 				'INSERT INTO SystemAttendances (
@@ -215,9 +206,7 @@ class ChangeExecute extends \administrator\System\User\UserUpdateWithSchoolyearC
 				$stmtu->execute(array(
 					$user['forename'], $user['name'], $user['newUsername'],
 					$user['newEmail'], $user['newTelephone'],
-					$user['birthday'], $user['religion'],
-					$user['foreign_language'], $user['special_course']
-				));
+					$user['birthday']));
 				$userId = $this->_pdo->lastInsertId();
 				$newUserIds[] = $userId;
 				$stmtg->execute(array($userId, $user['gradeId']));

@@ -65,9 +65,6 @@ class Users extends \System {
 			'locked' => $user->getLocked(),
 			'credit' => $user->getCredit(),
 			'soli' => $user->getSoli(),
-			'religion' => $user->getReligion(),
-			'foreignLanguage' => $user->getForeignLanguage(),
-			'specialCourse' => $user->getSpecialCourse(),
 			'activeGroups' => $activeGroups,
 			'bookAssignments' => $bookAssignments
 		];

@@ -8,6 +8,3 @@
 
 {$path_action_tpl = "$path_smarty_tpl/administrator/System/User/DisplayAll/Multiselection/actions"}
 
-{include file="$path_action_tpl/user-replace-religion.tpl"}
-{include file="$path_action_tpl/user-replace-course.tpl"}
-{include file="$path_action_tpl/user-replace-foreign_language.tpl"}
