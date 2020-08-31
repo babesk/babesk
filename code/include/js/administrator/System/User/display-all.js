@@ -257,7 +257,8 @@ $(document).ready(function() {
 					try {
 						data = JSON.parse(data);
 					} catch(e) {
-						toastr['error']('Konnte die Serverantwort nicht parsen.');
+						console.log(data)
+						toastr['error'](e);
 					}
 					if(data.value == 'success') {
 						toastr['success']('Benutzer erfolgreich gelöscht.');

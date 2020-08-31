@@ -225,8 +225,11 @@ class User extends System {
 
 	private function cardnumberDuplicatedCheck($cardnumber) {
 
-		$cards = $this->_em->getRepository('DM:BabeskCards')
-			->findByCardnumber($cardnumber);
+		$stmt = $this->_pdo->prepare('SELECT * FROM babeskcards WHERE cardnumber = ?');
+		$stmt->execute(array($cardnumber));
+		$cards = $stmt->fetchAll();
+
+
 		if(count($cards) > 0) {
 			die(json_encode(array(
 				'value' => 'error',

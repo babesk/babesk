@@ -46,7 +46,10 @@ class Users extends \System {
 
 	protected function sendSingleUser($id) {
 
-		$user = $this->_em->find('DM:SystemUsers', $id);
+		$stmt = $this->_pdo->prepare('SELECT * FROM SystemUsers WHERE ID = ?');
+		$stmt->execute(array($id));
+		$user = $stmt->fetch();
+
 		if(!$user) {
 			dieHttp('Konnte den Benutzer nicht finden', 400);
 		}
@@ -55,16 +58,16 @@ class Users extends \System {
 		$bookAssignments = $this->getSingleUserBookAssignments($user);
 		$schoolyears = $this->getSingleUserSchoolyears();
 		$userdata = [
-			'id' => $user->getId(),
-			'forename' => $user->getForename(),
-			'surname' => $user->getName(),
-			'username' => $user->getUsername(),
-			'email' => $user->getEmail(),
-			'telephone' => $user->getTelephone(),
-			'birthday' => $user->getBirthday(),
-			'locked' => $user->getLocked(),
-			'credit' => $user->getCredit(),
-			'soli' => $user->getSoli(),
+			'id' => $user['ID'],
+			'forename' => $user['forename'],
+			'surname' => $user['name'],
+			'username' => $user['username'],
+			'email' => $user['email'],
+			'telephone' => $user['telephone'],
+			'birthday' => $user['birthday'],
+			'locked' => $user['locked'] == 1,
+			'credit' => $user['credit'],
+			'soli' => $user['soli'],
 			'activeGroups' => $activeGroups,
 			'bookAssignments' => $bookAssignments
 		];
@@ -78,10 +81,9 @@ class Users extends \System {
 	protected function getSingleUserAllGroups() {
 
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT partial g.{id, name} FROM DM:SystemGroups g
-			');
-			$groups = $query->getResult(AbstractQuery::HYDRATE_ARRAY);
+		    $stmt = $this->_pdo->prepare('SELECT id, name FROM SystemGroups g');
+		    $stmt->execute();
+		    $groups = $stmt->fetchAll();
 
 		} catch(\Exception $e) {
 			$this->_logger->logO('Could not fetch all groups',
@@ -94,13 +96,14 @@ class Users extends \System {
 	protected function getSingleUserActiveGroups($user) {
 
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT partial g.{id}
-				FROM DM:SystemGroups g
-				INNER JOIN g.users u WITH u = :user
+		    $stmt = $this->_pdo->prepare('SELECT g.id
+				FROM SystemGroups g
+				INNER JOIN SystemUsers u WHERE u.ID = ?
 			');
-			$query->setParameter('user', $user);
-			$res = $query->getResult(AbstractQuery::HYDRATE_ARRAY);
+		    $stmt->execute(array($user['ID']));
+		    $res = $stmt->fetchAll();
+
+			//$res = $query->getResult(AbstractQuery::HYDRATE_ARRAY);
 			$groups = array_map(function($group) {
 				return $group['id'];
 			}, $res);
@@ -116,16 +119,15 @@ class Users extends \System {
 	protected function getSingleUserBookAssignments($user) {
 
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT partial usb.{id}, partial b.{id, title},
-					partial sy.{id, label}
-				FROM DM:SchbasUserShouldLendBook usb
-				INNER JOIN usb.book b
-				INNER JOIN usb.schoolyear sy
-				WHERE usb.user = :user
+			$stmt = $this->_pdo->prepare(
+				'SELECT usb.id, b.id, b.title, sy.id, sy.label
+				FROM SchbasUsersShouldLendBooks usb
+				INNER JOIN SchbasBooks b
+				INNER JOIN SystemSchoolyears sy
+				WHERE usb.userId = ?
 			');
-			$query->setParameter('user', $user);
-			$res = $query->getResult(AbstractQuery::HYDRATE_ARRAY);
+			$stmt->execute(array($user['ID']));
+			$res = $stmt->fetchAll();
 			return $res;
 
 		} catch(\Exception $e) {
@@ -138,10 +140,9 @@ class Users extends \System {
 	protected function getSingleUserSchoolyears() {
 
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT s FROM DM:SystemSchoolyears s'
-			);
-			$res = $query->getResult(AbstractQuery::HYDRATE_ARRAY);
+		    $stmt = $this->_pdo->prepare('SELECT * FROM SystemSchoolyears s');
+			$stmt->execute();
+			$res = $stmt->fetchAll();
 			return $res;
 
 		} catch(\Exception $e) {
