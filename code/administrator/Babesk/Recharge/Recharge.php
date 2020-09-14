@@ -525,26 +525,29 @@ class Recharge extends Babesk {
 		}elseif(isset($_POST['amount']) && isset($_POST['uid'])){
 			$this->rechargeUsercredits($_POST['amount'], $_POST['uid'], true);
 		}else{
-			$users = $this->_em->getRepository("DM:SystemUsers")->findAll();
+			$stmt = $this->_pdo->prepare("SELECT u.ID, u.forename, u.name, g.name as groupname, gradelevel, grades.label FROM SystemUsers u
+													JOIN BabeskPriceGroups g ON (u.GID = g.ID)
+													LEFT JOIN 
+														(SELECT a.* FROM SystemAttendances a 
+														JOIN SystemSchoolyears y ON (a.schoolyearId = y.ID) 
+														WHERE active = 1) sub
+													ON (sub.userId = u.ID)
+													LEFT JOIN SystemGrades grades ON (grades.ID = sub.gradeId) ");
+			$stmt->execute();
+			$users = $stmt->fetchAll();
 			$usersArr = array();
 			foreach ($users as &$user){
-				try{
-					$row['ID'] = $user->getID();
-					$row['forename'] = $user->getForename();
-					$row['name'] = $user->getName();
-					$row['priceGroup'] = $user->getPriceGroup()->getName();
-					$attendances = $user->getAttendances()[0];
-					if($attendances != null){
-						$grade = $user->getAttendances()[0]->getGrade();
-						if($grade != null)
-						$row['grade'] = $grade->getGradelevel() . $grade->getLabel();
-					}else{
-						$row['grade'] = "Keiner Klasse zugeordnet";
-					}
-					$usersArr[] = $row;
-				}catch (Exception $e){
-					
+				$row['ID'] = $user['ID'];
+				$row['forename'] = $user['forename'];
+				$row['name'] = $user['name'];
+				$row['priceGroup'] = $user['groupname'];
+				if($user['gradelevel'] != null){
+					$row['grade'] = $user['gradelevel'] . $user['label'];
+				}else{
+					$row['grade'] = "Keine Klasse";
 				}
+				$usersArr[] = $row;
+
 			}
 			$this->_smarty->assign('users', $usersArr);
 			$this->displayTpl('rechargeUser.tpl');

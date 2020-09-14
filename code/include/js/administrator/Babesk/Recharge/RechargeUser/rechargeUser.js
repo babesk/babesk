@@ -33,7 +33,6 @@ $(document).ready(function() {
       		filterClearBtn: '<span class="input-group-btn"> <button class="btn btn-default multiselect-clear-filter" type="button"> <i class="fa fa-pencil"></i></button></span>'
     	},
     	onChange: function(element, checked) {
-    		console.log($('#user-select option:selected').attr('value'));
     		$('#uid').val($('#user-select option:selected').attr('value'));
     		return update();
     	}

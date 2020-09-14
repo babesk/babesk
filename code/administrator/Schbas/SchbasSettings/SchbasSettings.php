@@ -275,7 +275,6 @@ class SchbasSettings extends Schbas {
 		require_once PATH_ACCESS . '/GlobalSettingsManager.php';
 		require_once PATH_ACCESS . '/SchoolyearManager.php';
 		require_once PATH_ACCESS . '/AttendancesManager.php';
-		require_once PATH_ACCESS . '/GradeManager.php';
 		$globalSettings = new GlobalSettingsManager();
 		$syManager = new SchoolyearManager();
 		$attendancesManager = new AttendancesManager();
