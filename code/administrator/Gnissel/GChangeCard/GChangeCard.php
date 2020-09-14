@@ -50,13 +50,20 @@ class GChangeCard extends Gnissel {
 
 	protected function changeCardShow() {
 
-		$userRepo = $this->_em->getRepository('DM:SystemUsers');
-		$user = $userRepo->findOneByUsername($_POST['username']);
-		$grade = $userRepo->getActiveGradeByUser($user);
+		$stmt = $this->_pdo->prepare("SELECT ID, name, forename FROM SystemUsers WHERE username = ?");
+		$stmt->execute(array($_POST['username']));
+		$user = $stmt->fetch();
+
+		$stmt = $this->_pdo->prepare("SELECT g.gradelevel, g.label FROM systemgrades g
+												JOIN SystemAttendances a ON (a.gradeId = g.ID)
+												JOIN SystemSchoolyears s ON (s.ID = a.schoolyearId)
+												WHERE s.active = 1 AND a.userId=?");
+		$stmt->execute(array($user['ID']));
+		$grade = $stmt->fetch();
 		if($user) {
-			$this->_smarty->assign('uid', $user->getId());
-			$this->_smarty->assign('name', $user->getName());
-			$this->_smarty->assign('forename', $user->getForename());
+			$this->_smarty->assign('uid', $user['ID']);
+			$this->_smarty->assign('name', $user['name']);
+			$this->_smarty->assign('forename', $user['forename']);
 		}
 		else {
 			$this->_interface->dieError(
@@ -64,9 +71,7 @@ class GChangeCard extends Gnissel {
 			);
 		}
 		if($grade) {
-			$this->_smarty->assign(
-				'class', $grade->getGradelevel() . $grade->getLabel()
-			);
+			$this->_smarty->assign('class', $grade['gradelevel'] . $grade['label']);
 		}
 		else {
 			$this->_smarty->assign('class', '---');
@@ -78,30 +83,25 @@ class GChangeCard extends Gnissel {
 	 * Changes the users cardnumber based on the input
 	 */
 	protected function changeCard() {
+		$stmt = $this->_pdo->prepare("SELECT cardnumber FROM BabeskCards WHERE UID = ?");
+		$stmt->execute(array($_POST['uid']));
+		$oldCard = $stmt->fetchAll();
 
-		$userRepo = $this->_em->getRepository('DM:SystemUsers');
-		$user = $userRepo->findOneById($_POST['uid']);
-		if(!$user) {
-			$this->_interface->dieError(
-				'Der Benutzer wurde nicht gefunden!'
-			);
-		}
-		$cards = $user->getCards();
-		if(count($cards) == 1) {
+		if(count($oldCard) == 1) {
 			$this->_interface->backlink('administrator|Gnissel|GChangeCard');
-			$existingCard = $cards[0];
-			$oldCardnumber = $existingCard->getCardnumber();
+			$oldCardnumber = $oldCard[0]['cardnumber'];
 			$newCardnumber = $_POST['newCard'];
 			$this->changeCardCheckInput($oldCardnumber, $newCardnumber);
-			$existingCard->setCardnumber($newCardnumber);
-			$this->_em->persist($existingCard);
-			$this->_em->flush();
+
+			$stmt = $this->_pdo->prepare("UPDATE BabeskCards SET cardnumber=? WHERE UID=?");
+			$stmt->execute(array($newCardnumber, $_POST['uid']));
+
 			$this->_interface->dieSuccess(
 				"Die Kartennummer wurde erfolgreich von '$oldCardnumber' auf" .
 				" '$newCardnumber' geändert."
 			);
 		}
-		else if(count($cards) == 0) {
+		else if(count($oldCard) == 0) {
 			$this->_interface->dieError(
 				'Der Benutzer hat noch keine Karte, die verändert werden kann.'
 			);
@@ -109,7 +109,7 @@ class GChangeCard extends Gnissel {
 		else {
 			$this->_logger->log('Error changing cardnumber. User has ' .
 				'multiple cards', 'Notice', NULL,
-				json_encode(array('uid' => $POST['uid'])));
+				json_encode(array('uid' => $_POST['uid'])));
 			$this->_interface->dieError('Der Benutzer hat mehrere Karten! ' .
 				'Kann die Karte nicht wechseln.');
 		}
@@ -131,9 +131,9 @@ class GChangeCard extends Gnissel {
 				'alten. Es wurde nichts verändert.'
 			);
 		}
-		$newCardExists = $this->_em
-			->getRepository('DM:BabeskCards')
-			->findByCardnumber($newCardnumber);
+		$stmt = $this->_pdo->prepare("SELECT * FROM BabeskCards WHERE cardnumber = ?");
+		$stmt->execute(array($newCardnumber));
+		$newCardExists = $stmt->fetch();
 		if($newCardExists) {
 			$this->_interface->dieError(
 				"Die Kartennummer '$newCardnumber' ist bereits vergeben."

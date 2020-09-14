@@ -87,13 +87,15 @@ class Change extends \User
 
 	private function cardnumberDuplicatedCheck($cardnumber) {
 
-		$cards = $this->_em->getRepository('DM:BabeskCards')
-			->findByCardnumber($cardnumber);
+	    $stmt = $this->_pdo->prepare("SELECT UID FROM BabeskCards WHERE cardnumber = ?");
+	    $stmt->execute(array($cardnumber));
+	    $cards = $stmt->fetchAll();
+
 		if(count($cards) == 0) {
 			return;
 		}
 		else if(
-			count($cards) == 1 && $cards[0]->getUid() == $this->_userId
+			count($cards) == 1 && $cards[0]['UID'] == $this->_userId
 		) {
 			return;
 		}
