@@ -18,7 +18,7 @@
 	</thead>
 	<tbody>
 		<% for(var i = 0; i < users.length; i++) { %>
-			<tr data-user-id="<%= users[i].id %>" tabindex="1">
+			<tr data-user-id="<%= users[i].ID %>" tabindex="1">
 				<td class="cardnumber"> <%= users[i].cardnumber %> </td>
 				<td class="forename"> <%= users[i].forename %> </td>
 				<td class="name"> <%= users[i].name %> </td>

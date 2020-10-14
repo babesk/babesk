@@ -5,7 +5,7 @@
 		Buch löschen
 	</div>
 	<div class="panel-body">
-		<p>Wollen sie das Buch {$book->getTitle()} wirklich löschen?</p>
+		<p>Wollen sie das Buch {$book['title']} wirklich löschen?</p>
 		{if $hasInventory}
 			<p>
 				<b>Warnung:</b>
@@ -15,7 +15,7 @@
 		{/if}
 	</div>
 	<div class="panel-footer">
-		<form align="center" action="index.php?section=Schbas|Booklist&amp;action=3&amp;ID={$book->getId()}" method="post">
+		<form align="center" action="index.php?section=Schbas|Booklist&amp;action=3&amp;ID={$book['id']}" method="post">
 			<input type="submit" class="btn btn-danger pull-right"
 				value="Ja, ich möchte das Buch löschen" name="delete">
 		</form>

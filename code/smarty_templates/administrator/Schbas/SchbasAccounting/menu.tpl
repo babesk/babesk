@@ -62,8 +62,8 @@ EnableSubmit = function(val)
 			<label class="control-label" for="book-overview-grades">Für:</label>
 			<select id="book-overview-grades" class="form-control" name="grade">
 				{foreach $grades as $grade}
-					<option value="{$grade->getId()}">
-						{$grade->getGradelevel()}{$grade->getLabel()}
+					<option value="{$grade['ID']}">
+						{$grade['gradelevel']}{$grade['label']}
 					</option>
 				{/foreach}
 			</select>
@@ -84,11 +84,9 @@ EnableSubmit = function(val)
 
 <fieldset>
 	<legend>Noch abzugebende B&uuml;cher</legend>
-	{hide}
 	<form action="index.php?section=Schbas|SchbasAccounting&action=remember" method="post">
 		<input type="submit" value="Liste mit allen Schülern erstellen">
 	</form>
-	{/hide}
 	Liste nach Klassen:<br/>
 	{$listOfClasses}
 </fieldset>

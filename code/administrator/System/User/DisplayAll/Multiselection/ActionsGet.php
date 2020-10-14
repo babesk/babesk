@@ -32,7 +32,6 @@ class ActionsGet extends \Multiselection {
 
 	protected function render() {
 
-		$this->_smarty->assign('doctrine', $this->_em);
 		$this->displayTpl('actions/base.tpl');
 	}
 

@@ -4,8 +4,8 @@ require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_ADMIN . '/Schbas/Schbas.php';
 require_once PATH_INCLUDE . '/Schbas/Loan.php';
 require_once PATH_INCLUDE . '/Schbas/Book.php';
+require_once PATH_INCLUDE . '/Schbas/Barcode.php';
 
-use Doctrine\Common\Collections\ArrayCollection;
 
 class Loan extends Schbas {
 
@@ -50,12 +50,13 @@ class Loan extends Schbas {
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
 		$user = $this->userByCardnumberGet($cardnumber);
 		$loanChoice = false;
-		$accounting = $this->_em->getRepository('DM:SchbasAccounting')
-			->findOneBy(['user' => $user, 'schoolyear' => $prepSchoolyear]);
-		if($accounting !== Null) {
+		$stmt = $this->_pdo->prepare("SELECT * FROM SchbasAccounting a LEFT JOIN SchbasLoanChoices lc ON (a.loanChoiceId = lc.ID) WHERE userId = ? AND schoolyearId = ?");
+		$stmt->execute(array($user['ID'], $prepSchoolyear));
+		$accounting = $stmt->fetch();
+		if($accounting) {
 			$userPaid = $this->userPaidForLoanCheck($accounting);
-			$userSelfpayer = $this->selfpayerCheck($accounting);
-			$loanChoice = $accounting->getLoanChoice()->getAbbreviation();
+			$userSelfpayer = ($accounting['abbreviation'] == 'ls');
+			$loanChoice = $accounting['abbreviation'];
 			$formSubmitted = true;
 		}
 		else {
@@ -64,7 +65,11 @@ class Loan extends Schbas {
 			$formSubmitted = false;
 		}
 		$exemplarsLent = $this->exemplarsStillLendByUserGet($user);
-		$booksSelfpaid = $user->getSelfpayingBooks();
+
+		$stmt = $this->_pdo->prepare("SELECT * FROM SchbasSelfpayer p JOIN SchbasBooks b ON (p.BID = b.id)
+												WHERE p.UID = ?");
+		$stmt->execute(array($user['ID']));
+		$booksSelfpaid = $stmt->fetchAll();
 		// The books that are already lend to the user will be highlighted
 		$booksToLoan = $loanHelper->loanBooksOfUserGet(
 			$user, ['includeAlreadyLend' => true]
@@ -73,10 +78,7 @@ class Loan extends Schbas {
 		foreach($booksToLoan as $book) {
 			$alreadyLent = false;
 			foreach($exemplarsLent as $exemplar) {
-				if(
-					$book === $exemplar->getBook() &&
-					$book->getId() == $exemplar->getBook()->getId()
-				) {
+				if($book['bookId'] === $exemplar['book_id']) {
 					$alreadyLent = true;
 					break;
 				}
@@ -86,20 +88,9 @@ class Loan extends Schbas {
 				'alreadyLent' => $alreadyLent
 			];
 		}
-        $accountingQb = $this->_em->createQueryBuilder()
-            ->select('u, a, lc')
-            ->from('DM:SystemUsers', 'u')
-            ->leftJoin(
-                'u.schbasAccounting', 'a',
-                'WITH', 'a.schoolyear = :prepSchoolyear'
-            )
-            ->leftJoin('a.loanChoice', 'lc')
-            ->where('u = :user');
-        $accountingQb->setParameter('prepSchoolyear', $prepSchoolyear);
-        $accountingQb->setParameter('user', $user);
-        $userdata = $accountingQb->getQuery()->getOneOrNullResult();
-		$this->_smarty->assign('user', $user);
-        $this->_smarty->assign('userdata', $userdata);
+
+        $this->_smarty->assign('userdata', $user);
+        $this->_smarty->assign('accounting', $accounting);
 		$this->_smarty->assign('formSubmitted', $formSubmitted);
 		$this->_smarty->assign('loanChoice', $loanChoice);
 		$this->_smarty->assign('userPaid', $userPaid);
@@ -112,16 +103,16 @@ class Loan extends Schbas {
 
 	private function userByCardnumberGet($cardnumber) {
 
-		$card = $this->_em->getRepository('DM:BabeskCards')
-			->findOneByCardnumber($cardnumber);
+		$stmt = $this->_pdo->prepare("SELECT u.*,c.lost FROM BabeskCards c JOIN SystemUsers u ON (c.UID = u.ID) WHERE cardnumber = ?");
+		$stmt->execute(array($cardnumber));
+		$card = $stmt->fetch();
 		if($card) {
-			if(!$card->getLost()) {
-				$user = $card->getUser();
-				if($user->getLocked()) {
+			if(!$card['lost']) {
+				if($card['locked']) {
 					$this->_interface->dieError('Der Benutzer ist gesperrt!');
 				}
 				else {
-					return $user;
+					return $card;
 				}
 			}
 			else {
@@ -136,83 +127,63 @@ class Loan extends Schbas {
 	}
 
 	private function userPaidForLoanCheck($acc) {
-
-		$loanChoice = $acc->getLoanChoice();
+		$stmt = $this->_pdo->prepare("SELECT * FROM SchbasLoanChoices WHERE ID = ?");
+		$stmt->execute(array($acc['loanChoiceId']));
+		$loanChoice = $stmt->fetch();
 		return (
 			(
-				$loanChoice->getAbbreviation() == 'ln' ||
-				$loanChoice->getAbbreviation() == 'lr'
+				$loanChoice['abbreviation'] == 'ln' ||
+				$loanChoice['abbreviation'] == 'lr'
 			) &&
-			$acc->getPayedAmount() >= $acc->getAmountToPay()
+			$acc['payedAmount'] >= $acc['amountToPay']
 		);
 	}
 
-	private function selfpayerCheck($accounting) {
-
-		$abbr = $accounting->getLoanChoice()->getAbbreviation();
-		return $abbr == 'ls';
-	}
-
 	private function exemplarsStillLendByUserGet($user) {
+		$stmt = $this->_pdo->prepare("SELECT * FROM SchbasInventory i 
+												JOIN SchbasBooks b ON (i.book_id = b.id)
+												JOIN SchbasLending l ON (l.inventory_id = i.id)
+												LEFT JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
+												WHERE l.user_id = ?
+												ORDER BY b.subjectId");
+		$stmt->execute(array($user['ID']));
+		$exemplars = $stmt->fetchAll();
 
-		$exemplars = $this->_em->createQuery(
-			'SELECT i FROM DM:SchbasInventory i
-				INNER JOIN i.book b
-				INNER JOIN i.usersLent u
-				WHERE u.id = :userId
-				ORDER BY b.subject
-		')->setParameter('userId', $user->getId())
-			->getResult();
 		return $exemplars;
-	}
-
-	private function booksSelfpaidByUserGet($user) {
-
-		$books = $user->getSelfpayingBooks();
-		return $books;
 	}
 
 	private function bookLoanToUserByBarcode($barcode, $userId) {
 
-		$exemplar = $this->exemplarByBarcodeGet($barcode);
-		if($exemplar) {
-			//Check if book is lent to someone
-			if($exemplar->getUsersLent()->count() == 0) {
-				if($this->bookLoanToUserToDb($exemplar, $userId)) {
-					die(json_encode(array(
-						'bookId' => $exemplar->getBook()->getId(),
-						'exemplarId' => $exemplar->getId(),
-						'title' => $exemplar->getBook()->getTitle()
-					)));
-				}
-				else {
-					http_response_code(500);
-					die(json_encode(array(
-						'message' => 'Ein Fehler ist beim Eintragen der ' .
-							'Ausleihe aufgetreten.'
-					)));
-				}
+        $barcode = \Babesk\Schbas\Barcode::createByBarcodeString($barcode);
+
+        $inventory = $barcode->getMatchingBookExemplar($this->_pdo);
+
+		//Check if book is lent to someone
+        $lent = $this->exemplarByBarcodeGet($barcode, $inventory);
+		if(!$lent) {
+			if($this->bookLoanToUserToDb($inventory, $userId)) {
+				die(json_encode(array(
+					'bookId' => $inventory['book_id'],
+					'exemplarId' => $inventory['exemplar'],
+					'title' => $inventory['title']
+				)));
 			}
 			else {
 				http_response_code(500);
-				//Exemplar should not be lent to two users at the same time
-				$user = $exemplar->getUsersLent()->first();
 				die(json_encode(array(
-					'message' => 'Dieses Exemplar ist im System bereits an ' .
-					$user->getForename() . ' ' . $user->getName() .
-					' verliehen!'
+					'message' => 'Ein Fehler ist beim Eintragen der ' .
+						'Ausleihe aufgetreten.'
 				)));
 			}
 		}
 		else {
-			$this->_logger->log('Book not found by barcode',
-				'Notice', Null, json_encode(array('barcode' => $barcode)));
 			http_response_code(500);
+			//Exemplar should not be lent to two users at the same time
 			die(json_encode(array(
-				'message' => 'Das Exemplar konnte nicht anhand des Barcodes ' .
-					'gefunden werden!'
+				'message' => 'Dieses Exemplar ist im System bereits verliehen!'
 			)));
 		}
+
 	}
 
 	/**
@@ -220,44 +191,31 @@ class Loan extends Schbas {
 	 * @param  string $barcode The Barcode of the exemplar
 	 * @return bool            true if it is lent
 	 */
-	private function exemplarByBarcodeGet($barcodeStr) {
+	private function exemplarByBarcodeGet($barcodeStr, $inventory) {
 
-		$bookHelper = new \Babesk\Schbas\Book($this->_dataContainer);
-		$barcode = $bookHelper->barcodeParseToArray($barcodeStr);
-		//$barcodeStr = $this->barcodeNormalize($barcodeStr);
-		//$barcode = $this->barcodeParseToArray($barcodeStr);
-		//Delimiter not used in Query
-		unset($barcode['delimiter']);
-		$query = $this->_em->createQuery(
-			'SELECT i, b FROM DM:SchbasInventory i
-				INNER JOIN i.book b
-					WITH b.class = :class AND b.bundle = :bundle
-				INNER JOIN b.subject s
-					WITH s.abbreviation = :subject
-				WHERE i.yearOfPurchase = :purchaseYear
-					AND i.exemplar = :exemplar
-		')->setParameters($barcode);
-		try {
-			$lent = $query->getSingleResult();
+        if(!$inventory){
+            $this->_logger->log('Book not found by barcode',
+                'Notice', Null, json_encode(array('barcode' => $barcodeStr)));
+            http_response_code(500);
+            die(json_encode(array(
+                'message' => 'Das Exemplar konnte nicht anhand des Barcodes ' .
+                    'gefunden werden!'
+            )));
 		}
-		catch(\Doctrine\ORM\NoResultException $e) {
-			return false;
-		}
-		return $lent;
+
+        $stmt = $this->_pdo->prepare("SELECT * FROM SchbasLending WHERE inventory_id = ?");
+        $stmt->execute(array($inventory['id']));
+        $lendings = $stmt->fetchAll();
+
+		return count($lendings) > 0;
 	}
 
 	private function bookLoanToUserToDb($exemplar, $userId) {
 
 		try {
-			$lending = new \Babesk\ORM\SchbasLending();
-			$user = $this->_em->find(
-				'DM:SystemUsers', $userId
-			);
-			$lending->setUser($user);
-			$lending->setInventory($exemplar);
-			$lending->setLendDate(new \DateTime());
-			$this->_em->persist($lending);
-			$this->_em->flush();
+			$timestamp = new DateTime();
+			$stmt = $this->_pdo->prepare("INSERT INTO SchbasLending(user_id, inventory_id, lend_date) VALUES (?, ?, ?)");
+			$stmt->execute(array($userId, $exemplar['id'], $timestamp->format("Y-m-d")));
 
 		} catch (Exception $e) {
 			$this->_logger->log('Error loaning a book-exemplar to a user',

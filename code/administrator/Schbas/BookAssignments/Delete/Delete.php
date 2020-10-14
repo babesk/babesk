@@ -20,10 +20,7 @@ class Delete extends \administrator\Schbas\BookAssignments\BookAssignments {
 		$schoolyearId = filter_input(INPUT_GET, 'schoolyearId');
 		$bookAssignmentId = filter_input(INPUT_POST, 'bookAssignmentId');
 		if($schoolyearId) {
-			$schoolyear = $this->_em->getReference(
-				'DM:SystemSchoolyears', $schoolyearId
-			);
-			$this->deleteAssignmentsOfSchoolyear($schoolyear);
+			$this->deleteAssignmentsOfSchoolyear($schoolyearId);
 		}
 		else if($bookAssignmentId) {
 			$this->deleteSingleAssignment($bookAssignmentId);
@@ -40,18 +37,14 @@ class Delete extends \administrator\Schbas\BookAssignments\BookAssignments {
 	protected function deleteAssignmentsOfSchoolyear($schoolyear) {
 
 		try {
-			$query = $this->_em->createQuery(
-				'DELETE FROM DM:SchbasUserShouldLendBook usb
-				WHERE usb.schoolyear = :schoolyear
-			');
-			$query->setParameter('schoolyear', $schoolyear);
-			$query->getResult();
+			$query = $this->_pdo->prepare('DELETE FROM SchbasUsersShouldLendBooks WHERE schoolyearId = ?');
+			$query->execute(array($schoolyear));
 			die('Die Buchzuweisungen wurden erfolgreich gelöscht');
 		}
 		catch(Exception $e) {
 			$this->_logger->logO('Could not delete assignments of schoolyear',
 				['sev' => 'error', 'moreJson' => ['msg' => $e->getMessage(),
-					'id' => $schoolyear->getId()]]);
+					'id' => $schoolyear]]);
 			dieHttp('Konnte die Buchzuweisungen nicht löschen', 500);
 		}
 	}
@@ -59,14 +52,8 @@ class Delete extends \administrator\Schbas\BookAssignments\BookAssignments {
 	protected function deleteSingleAssignment($bookAssignmentId) {
 
 		try {
-			$bookAssignment = $this->_em->find(
-				'DM:SchbasUserShouldLendBook', $bookAssignmentId
-			);
-			if(!$bookAssignment) {
-				dieHttp('Buchzuweisung nicht gefunden', 400);
-			}
-			$this->_em->remove($bookAssignment);
-			$this->_em->flush();
+		    $query = $this->_pdo->prepare("DELETE FROM SchbasUsersShouldLendBooks WHERE id = ?");
+		    $query->execute(array($bookAssignmentId));
 			die('Buchzuweisung erfolgreich gelöscht.');
 
 		} catch(\Exception $e) {

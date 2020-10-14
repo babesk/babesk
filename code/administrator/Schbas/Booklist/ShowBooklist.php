@@ -18,7 +18,10 @@ class ShowBooklist extends Booklist {
 		else {
 			$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 			$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-			$this->_smarty->assign('preparationSchoolyear', $schoolyear);
+			$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+			$stmt->execute(array($schoolyear));
+			$label = $stmt->fetch()['label'];
+			$this->_smarty->assign('preparationSchoolyear', $label);
 			$this->displayTpl('show-booklist.tpl');
 		}
 	}
@@ -35,43 +38,28 @@ class ShowBooklist extends Booklist {
 
 	protected function ajaxBooklist() {
 
-		$query = $this->booklistQueryGet();
-		$paginator = new \Doctrine\ORM\Tools\Pagination\Paginator(
-			$query, $fetchJoinCollection = true
-		);
-		$books = $this->bookArrayPopulate($paginator);
-		$pagecount = $this->pagecountGet($paginator);
+        $stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks b
+                                                LEFT JOIN SystemSchoolSubjects sub ON (sub.ID = b.subjectId)");
+        $stmt_search = $this->_pdo->prepare("SELECT * FROM SchbasBooks b
+                                                LEFT JOIN SystemSchoolSubjects sub ON (sub.ID = b.subjectId)
+                                                WHERE sub.abbreviation LIKE ?");
+        if($_POST['filterFor'] != "") {
+            $stmt_search->execute(array($_POST['filterFor']));
+            $books = $stmt_search->fetchAll();
+        }else {
+            $stmt->execute();
+            $books = $stmt->fetchAll();
+        }
+
+		$books = $this->bookArrayPopulate($books);
+		$pagecount = $this->pagecountGet($books);
+
+        $books = array_slice($books, $_POST['pagenumber'] * $_POST['booksPerPage'], $_POST['booksPerPage']);
 		die(json_encode(array(
 			'pagecount' => $pagecount, 'books' => $books
 		)));
 	}
 
-	/**
-	 * Creates and returns a query that fetches the book-variables
-	 * @return QueryBuilder A Doctrine-Query-Builder
-	 */
-	protected function booklistQueryGet() {
-
-		$query = $this->_em->createQueryBuilder()
-			->select(array('b, s'))
-			->from('Babesk\ORM\SchbasBook', 'b')
-			->leftJoin('b.subject', 's');
-		if(isset($_POST['filterFor']) && !isBlank($_POST['filterFor'])) {
-			$query->where('b.title LIKE :filterVar')
-			->orWhere('b.author LIKE :filterVar')
-			->orWhere('b.class LIKE :filterVar')
-			->orWhere('b.bundle LIKE :filterVar')
-			->orWhere('b.price LIKE :filterVar')
-			->orWhere('b.isbn LIKE :filterVar')
-			->orWhere('b.publisher LIKE :filterVar')
-			->orWhere('s.name LIKE :filterVar')
-			->orWhere('s.abbreviation LIKE :filterVar')
-			->setParameter('filterVar', '%' . $_POST['filterFor'] . '%');
-		}
-		$query->setFirstResult($_POST['pagenumber'] * $_POST['booksPerPage'])
-			->setMaxResults($_POST['booksPerPage']);
-		return $query;
-	}
 
 	/**
 	 * Populates the array of books to be returned to the client
@@ -83,18 +71,21 @@ class ShowBooklist extends Booklist {
 		$books = array();
 		foreach($paginator as $book) {
 			$bookAr = array(
-				'id' => $book->getId(),
-				'title' => $book->getTitle(),
-				'author' => $book->getAuthor(),
-				'gradelevel' => $book->getClass(),
-				'bundle' => $book->getBundle(),
-				'price' => $book->getPrice(),
-				'isbn' => $book->getIsbn(),
-				'publisher' => $book->getPublisher()
+				'id' => $book['id'],
+				'title' => $book['title'],
+				'author' => $book['author'],
+				'gradelevel' => $book['class'],
+				'bundle' => $book['bundle'],
+				'price' => $book['price'],
+				'isbn' => $book['isbn'],
+				'publisher' => $book['publisher']
 			);
-			$bookAr['subject'] = ($book->getSubject()) ?
-				$book->getSubject()->getName() : '';
-			$books[$book->getId()] = $bookAr;
+			$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolSubjects WHERE ID = ?");
+			$stmt->execute(array($book['subjectId']));
+			$subject = $stmt->fetch();
+			$bookAr['subject'] = ($subject) ?
+				$subject['name'] : '';
+			$books[$book['id']] = $bookAr;
 		}
 		$invData = $this->booksInventoryDataGet($paginator);
 		$books = $this->bookArrayMerge($books, $invData);
@@ -179,19 +170,17 @@ class ShowBooklist extends Booklist {
 	protected function booksHighestInventoryNumberGet($paginator) {
 
 		$invNums = array();
-		$query = $this->_em->createQuery(
-			'SELECT MAX(i.exemplar) FROM DM:SchbasInventory i
-				JOIN i.book b
-				WHERE b.id = :id
-		');
+		$query = $this->_pdo->prepare("SELECT max(exemplar) FROM SchbasInventory
+                                                 WHERE book_id = ?");
+
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())
-				->getSingleScalarResult();
-			if(!empty($res)) {
-				$invNums[$book->getId()]['highestExemplarNumber'] = (int) $res;
+			$query->execute(array($book['id']));
+			$res = $query->fetch();
+			if($res) {
+				$invNums[$book['id']]['highestExemplarNumber'] = (int) $res[0];
 			}
 			else {
-				$invNums[$book->getId()]['highestExemplarNumber'] = 0;
+				$invNums[$book['id']]['highestExemplarNumber'] = 0;
 			}
 		}
 		return $invNums;
@@ -208,16 +197,15 @@ class ShowBooklist extends Booklist {
 	protected function bookExemplarsLentGet($paginator) {
 
 		$booksLent = array();
-		$query = $this->_em->createQuery(
-			'SELECT COUNT(l) FROM DM:SchbasBook b
-				INNER JOIN b.exemplars e
-				INNER JOIN e.lending l
-				WHERE b.id = :id
-		');
+		$query = $this->_pdo->prepare("SELECT COUNT(*) FROM schbasbooks b
+                                                 JOIN SchbasInventory i ON (i.book_id = b.id)
+                                                 JOIN SchbasLending l ON (l.inventory_id=i.id)
+                                                 WHERE b.id = ?");
+
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())
-				->getSingleScalarResult();
-			$booksLent[$book->getId()]['exemplarsLent'] = (int)$res;
+		    $query->execute(array($book['id']));
+			$res = $query->fetch();
+			$booksLent[$book['id']]['exemplarsLent'] = (int)$res[0];
 		}
 
 		return $booksLent;
@@ -234,14 +222,11 @@ class ShowBooklist extends Booklist {
 	protected function bookExemplarCountGet($paginator) {
 
 		$booksInventory = array();
-		$query = $this->_em->createQuery(
-			'SELECT COUNT(e.id) FROM DM:SchbasBook b
-				INNER JOIN b.exemplars e
-				WHERE b.id = :id
-		');
+		$query = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasInventory WHERE book_id = ?");
 		foreach($paginator as $book) {
-			$res = $query->setParameter('id', $book->getId())->getResult();
-			$booksInventory[$book->getId()]['allExemplars'] = $res[0][1];
+		    $query->execute(array($book['id']));
+			$res = $query->fetch();
+			$booksInventory[$book['id']]['allExemplars'] = $res[0];
 		}
 
 		return $booksInventory;
@@ -284,11 +269,10 @@ class ShowBooklist extends Booklist {
 	protected function bookExemplarsNeededGet($paginator) {
 
 		$loan = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$trigger = $this->specialCourseTriggerGet();
 		$booksNeeded = array();
 		foreach($paginator as $book) {
 			$count = $loan->amountOfInventoryAssignedToUsersGet($book);
-			$booksNeeded[$book->getId()]['exemplarsNeeded'] = $count;
+			$booksNeeded[$book['id']]['exemplarsNeeded'] = $count;
 		}
 		return $booksNeeded;
 	}
@@ -308,62 +292,17 @@ class ShowBooklist extends Booklist {
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
 		$booksSelfpayed = [];
+		$query = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasSelfpayer WHERE BID = ?");
 		foreach($paginator as $book) {
-			$query = $this->_em->createQuery(
-				'SELECT COUNT(u) FROM DM:SchbasBook b
-				INNER JOIN b.selfpayingBookEntities sb
-				INNER JOIN sb.user u
-				INNER JOIN u.attendances a WITH a.schoolyear = :schoolyear
-				WHERE b = :book
-			');
-			$query->setParameter('schoolyear', $prepSchoolyear);
-			$query->setParameter('book', $book);
-			$count = $query->getSingleScalarResult();
-			$booksSelfpayed[$book->getId()]['exemplarsSelfpayed'] = $count;
+		    $query->execute(array($book['id']));
+			$count = $query->fetch()[0];
+			$booksSelfpayed[$book['id']]['exemplarsSelfpayed'] = $count;
 		}
 		return $booksSelfpayed;
 	}
 
-	/**
-	 * Checks if the subject is listed in a subject-group like religion
-	 * @param  string $subject         The abbreviation for a subject like 'EN'
-	 * @param  bool   $isSpecialCourse If the special_courses list should be
-	 *                                 considered, too
-	 * @return bool                    True if the subject is listed, false if
-	 *                                 not
-	 */
-	protected function bookSubjectIsListedCheck($subject, $isSpecialCourse) {
 
-		if(empty($this->_allReligions) &&
-			empty($this->_allForeignLanguages) &&
-			empty($this->_allSpecialCourses)
-		) {
-			$this->bookSubjectIsListedCacheFill();
-		}
 
-		return (in_array($subject, $this->_allReligions) ||
-			in_array($subject, $this->_allForeignLanguages) ||
-			(
-				$isSpecialCourse &&
-				in_array($subject, $this->_allSpecialCourses)
-			)
-		);
-	}
-
-	/**
-	 * Caches the lists defining which subject is assigned to which group
-	 */
-	protected function bookSubjectIsListedCacheFill() {
-
-		$globalSettings = $this->_em
-			->getRepository('DM:SystemGlobalSettings');
-		$rel = $globalSettings->findOneByName('religion')->getValue();
-		$this->_allReligions = explode('|', $rel);
-		$lan = $globalSettings->findOneByName('foreign_language')->getValue();
-		$this->_allForeignLanguages = explode('|', $lan);
-		$course = $globalSettings->findOneByName('special_course')->getValue();
-		$this->_allSpecialCourses = explode('|', $course);
-	}
 
 	/**
 	 * Calculates the amount of book-exemplars to buy
@@ -383,26 +322,6 @@ class ShowBooklist extends Booklist {
 		return $toBuy;
 	}
 
-	/**
-	 * Fetches the value from the db defining the begin of specialCourses
-	 * @return int    The value
-	 */
-	protected function specialCourseTriggerGet() {
-
-		$trigger = $this->_em
-			->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('special_course_trigger');
-
-		if(empty($trigger)) {
-			$this->_logger->log(
-				'no "special_course_trigger" defined in SystemGlobalSettings',
-				'Notice', Null);
-			throw new MySQLException('Could not fetch special_course_trigger');
-		}
-		else {
-			return (int)$trigger->getValue();
-		}
-	}
 
 	/**
 	 * Splits the given gradelevels in lower and higher-same as $trigger
@@ -462,29 +381,8 @@ class ShowBooklist extends Booklist {
 		return $ar1;
 	}
 
-	/////////////////////////////////////////////////////////////////////
-	//Attributes
-	/////////////////////////////////////////////////////////////////////
 
-	/*==========  Cached Stuff  ==========*/
 
-	/**
-	 * Stores the value of GlobalSetting's religion-row
-	 * @var array
-	 */
-	protected $_allReligions;
-
-	/**
-	 * Stores the value of GlobalSetting's foreign_language-row
-	 * @var array
-	 */
-	protected $_allForeignLanguages;
-
-	/**
-	 * Stores the value of GlobalSetting's special_course-row
-	 * @var array
-	 */
-	protected $_allSpecialCourses;
 }
 
 ?>

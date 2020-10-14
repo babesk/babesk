@@ -14,7 +14,6 @@ abstract class Action {
 	public function __construct($dataContainer) {
 
 		$this->_pdo = $dataContainer->getPdo();
-		$this->_em = $dataContainer->getEntityManager();
 		$this->_smarty = $dataContainer->getSmarty();
 		$this->_acl = $dataContainer->getAcl();
 		$this->_submoduleExecutionpath =
@@ -80,11 +79,6 @@ abstract class Action {
 	 */
 	protected $_pdo;
 
-	/**
-	 * The Doctrine-Wrapper connection to the database
-	 * @var EntityManager
-	 */
-	protected $_em;
 
 	/**
 	 * Allows for checking if the User has access to the Submodules

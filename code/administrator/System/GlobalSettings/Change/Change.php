@@ -33,27 +33,13 @@ class Change extends \administrator\System\GlobalSettings\GlobalSettings {
 	/////////////////////////////////////////////////////////////////////
 
 	protected function entryChange($name, $value) {
-
-		try {
-			$entry = $this->_em->getRepository('DM:SystemGlobalSettings')
-				->findOneByName($name);
-		}
-		catch(Exception $e) {
-			dieHttp('Konnte Eintrag nicht abrufen', 500);
-		}
-		if($entry) {
-			try {
-				$entry->setValue($value);
-				$this->_em->persist($entry);
-				$this->_em->flush();
-			}
-			catch(Exception $e) {
-				dieHttp('Konnte Eintrag nicht ändern', 500);
-			}
-		}
-		else {
-			dieHttp('Eintrag nicht gefunden.', 400);
-		}
+        try {
+            $stmt = $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value = ? WHERE name = ?");
+            $stmt->execute(array($value, $name));
+        }
+        catch(Exception $e) {
+            dieHttp('Konnte Eintrag nicht ändern', 500);
+        }
 
 		die('Eintrag erfolgreich geändert.');
 	}

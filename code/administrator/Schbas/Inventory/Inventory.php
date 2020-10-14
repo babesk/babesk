@@ -157,7 +157,14 @@ class Inventory extends Schbas {
 		$sort, $filter, $activePage, $entriesPerPage, $displayColumns
 	) {
 		$this->sendIndexCheckInput($entriesPerPage);
-		$qb = $this->_em->createQueryBuilder()
+		$stmt = $this->_pdo->prepare("SELECT * FROM SchbasInventory i LEFT JOIN SchbasLending l ON (i.id = l.inventory_id) LEFT JOIN SystemUsers u ON (l.user_id = u.ID)");
+		$stmt->execute();
+		$result = $stmt->fetchAll();
+
+		$stmtRowCount = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasInventory");
+		$stmtRowCount->execute();
+		$rowCount = $stmtRowCount->fetch()[0];
+		/**$qb = $this->_em->createQueryBuilder()
 			->select(['i', 'b', 's'])
 			->from('DM:SchbasInventory', 'i')
 			->leftJoin('i.book', 'b')
@@ -171,15 +178,13 @@ class Inventory extends Schbas {
 			->leftJoin('i.book', 'b')
 			->leftJoin('b.subject', 's')
 			->leftJoin('i.lending', 'l')
-			->leftJoin('l.user', 'u');
-		if(!empty($filter)) {
+			->leftJoin('l.user', 'u');*/
+		/**if(!empty($filter)) {
 			$this->sendIndexApplyFilter($filter, $qb, $displayColumns);
 			$this->sendIndexApplyFilter($filter, $rowCountQb, $displayColumns);
 		}
 		$qb->setFirstResult(($activePage - 1) * $entriesPerPage)
-			->setMaxResults($entriesPerPage);
-		$result = $qb->getQuery()->getResult();
-		$rowCount = $rowCountQb->getQuery()->getSingleScalarResult();
+			->setMaxResults($entriesPerPage);*/
 
 		$data = $this->sendIndexCreateAnswerData(
 			$result, $rowCount, $entriesPerPage
@@ -231,14 +236,10 @@ class Inventory extends Schbas {
 	) {
 
 		$data = [];
-		foreach($result as $row) {
+		/**foreach($result as $row) {
 			$rowData = [];
 			$rowData['id'] = $row->getId();
-			if($row->getLending() && count($row->getLending()) > 0) {
-				if(count($row->getLending()) > 1) {
-					$this->_logger->log('Inventory is lend multiple times!',
-						'warning');
-				}
+			if($row['lend_date']) {
 				$user = $row->getLending()->first()->getUser();
 				$rowData['lentUser'] = [
 					'id' => $user->getId(),
@@ -271,7 +272,8 @@ class Inventory extends Schbas {
 				$rowData['barcode'] = 'Buch nicht gefunden!';
 			}
 			$data['data'][] = $rowData;
-		}
+		}*/
+		$data['data'] = $result;
 		$data['pageCount'] = ceil($rowCount / $entriesPerPage);
 		return $data;
 	}

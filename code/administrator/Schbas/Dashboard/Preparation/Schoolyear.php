@@ -39,8 +39,9 @@ class Schoolyear
 	/////////////////////////////////////////////////////////////////////
 
 	protected function preparationSchoolyearChange($id) {
-
-		$schoolyear = $this->_em->find('DM:SystemSchoolyears', $id);
+	    $stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+	    $stmt->execute(array($id));
+	    $schoolyear = $stmt->fetch();
 
 		if(!$schoolyear) {
 			$this->_logger->log('Could not find the schoolyear',
@@ -48,18 +49,8 @@ class Schoolyear
 			dieHttp('Das Schuljahr wurde nicht gefunden', 422);
 		}
 
-		$configEntry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('schbasPreparationSchoolyearId');
-
-		if(!$configEntry) {
-			$this->_logger->log('Could not find the ' .
-				'schbasPreparationSchoolyearId', 'error');
-			dieHttp('Die Einstellung wurde nicht gefunden', 500);
-		}
-
-		$configEntry->setValue($schoolyear->getId());
-		$this->_em->persist($configEntry);
-		$this->_em->flush();
+		$stmt = $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value = ? WHERE name = ?");
+		$stmt->execute(array($schoolyear['ID'], 'schbasPreparationSchoolyearId'));
 		die('Schuljahr erfolgreich verändert.');
 	}
 

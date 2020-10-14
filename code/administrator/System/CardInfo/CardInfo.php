@@ -78,43 +78,19 @@ class CardInfo extends System {
 
 	private function cardinfoDisplay($cardnumber) {
 
-		$card = $this->_em->getRepository('DM:BabeskCards')
-			->findOneByCardnumber($cardnumber);
-		if($card) {
-			try {
-				$user = $card->getUser();
-				$user->getForename(); //Force loading of user-proxy to Entity
-			} catch (Doctrine\ORM\EntityNotFoundException $e) {
-				$this->_logger->log('Card exists, but linked user not!',
-					'error', Null, json_encode(array(
-						'cardnumber' => $cardnumber)));
-				$this->_interface->dieError(
-					'Karte an einen nicht-existenten Benutzer vergeben!'
-				);
-			}
-			try {
-				$grade = $this->_em
-					->getRepository('DM:SystemUsers')
-					->getActiveGradeByUser($user);
-			} catch (\Doctrine\ORM\NonUniqueResultException $e) {
-				$this->_interface->flashDanger(
-					'Benutzer hat mehrere aktive Klassen!'
-				);
-			}
-			$this->cardinfoRender($card, $user, $grade);
+		$stmt = $this->_pdo->prepare("SELECT * FROM BabeskCards c
+												JOIN useractiveclass u ON (u.ID = c.UID)
+												WHERE cardnumber = ?");
+		$stmt->execute(array($cardnumber));
+		$user = $stmt->fetch();
+		if($user) {
+            $this->_smarty->assign('user', $user);
+            $this->displayTpl('result.tpl');
 		}
 		else {
 			$this->_interface->dieError('Karte ist nicht vergeben.');
 		}
 		die();
-	}
-
-	private function cardinfoRender($card, $user, $grade) {
-
-		$this->_smarty->assign('card', $card);
-		$this->_smarty->assign('user', $user);
-		$this->_smarty->assign('grade', $grade);
-		$this->displayTpl('result.tpl');
 	}
 }
 

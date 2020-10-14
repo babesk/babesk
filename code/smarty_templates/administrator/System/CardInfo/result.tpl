@@ -4,7 +4,7 @@
 
 <div class="panel panel-primary">
 	<div class="panel-heading">
-		<h3 class="panel-title">Kartennummer {$card->getCardnumber()}</h3>
+		<h3 class="panel-title">Kartennummer {$user['cardnumber']}</h3>
 	</div>
 	<div class="panel-body">
 		{if $user}
@@ -13,7 +13,7 @@
 					<label>Name</label>
 				</div>
 				<div class="col-sm-10">
-					{$user->getForename()} {$user->getName()}
+					{$user['forename']} {$user['name']}
 				</div>
 			</div>
 			<div class="row">
@@ -21,7 +21,7 @@
 					<label>Gesperrt</label>
 				</div>
 				<div class="col-sm-10">
-					{if $user->getLocked()}
+					{if $user['locked']}
 						<span class="text-danger">
 							<span class="fa fa-exclamation-triangle"></span>
 							Ja
@@ -37,11 +37,7 @@
 				<label>Klasse</label>
 			</div>
 			<div class="col-sm-10">
-				{if $grade}
-					{$grade->getGradelevel()}{$grade->getLabel()}
-				{else}
-					Keine aktive Klasse vorhanden
-				{/if}
+					{$user['gradelevel']}{$user['label']}
 			</div>
 		</div>
 	</div>
@@ -52,7 +48,7 @@
 		</a>
 		{if $user}
 			<a class="btn btn-default"
-				href="index.php?module=administrator|System|User|DisplayChange&ID={$user->getId()}">
+				href="index.php?module=administrator|System|User|DisplayChange&ID={$user['ID']}">
 				Benutzer anzeigen/verändern
 			</a>
 		{/if}

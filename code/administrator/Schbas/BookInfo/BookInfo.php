@@ -2,7 +2,7 @@
 
 require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_ADMIN . '/Schbas/Schbas.php';
-require_once PATH_INCLUDE . '/Schbas/Book.php';
+require_once PATH_INCLUDE . '/Schbas/Barcode.php';
 
 class BookInfo extends Schbas {
 
@@ -54,21 +54,11 @@ class BookInfo extends Schbas {
 	private function invDataFetch($barcodeStr) {
 
 		try {
-			$bookHelper = new \Babesk\Schbas\Book($this->_dataContainer);
-			$barcode = $bookHelper->barcodeParseToArray($barcodeStr);
-			unset($barcode['delimiter']); //Not used in query
-			$query = $this->_em->createQuery(
-				'SELECT i, b, s, u FROM DM:SchbasInventory i
-					INNER JOIN i.book b
-						WITH b.class = :class AND b.bundle = :bundle
-					INNER JOIN b.subject s
-						WITH s.abbreviation = :subject
-					LEFT JOIN i.usersLent u
-					WHERE i.yearOfPurchase = :purchaseYear
-						AND i.exemplar = :exemplar
-			')->setParameters($barcode);
+            $barcode = \Babesk\Schbas\Barcode::createByBarcodeString($barcodeStr);
 
-			return $query->getOneOrNullResult();
+            $inventory = $barcode->getMatchingBookExemplar($this->_pdo);
+
+			return $inventory;
 
 		} catch (Exception $e) {
 			$this->_logger->log('Error fetching the bookinfo', 'Notice',
@@ -80,20 +70,17 @@ class BookInfo extends Schbas {
 
 	private function bookinfoTemplateGenerate($exemplar) {
 
-		$book = $exemplar->getBook();
-		if(!$book) {
-			$this->_logger->logO('Book for exemplar not found', ['sev' => 'error', 'moreJson' => ['id' => $exemplar->getId()]]);
-			$this->_interface->dieError('Buch zum Exemplar nicht gefunden!');
-		}
-		$user = false;
-		if($exemplar->getUsersLent()) {
-			$user = $exemplar->getUsersLent()->first();
-			$activeGrade = $this->_em->getRepository('DM:SystemUsers')
-				->getActiveGradeByUser($user);
-		}
+		$stmt = $this->_pdo->prepare("SELECT u.* FROM UserActiveClass u JOIN SchbasLending l ON (u.ID = l.user_id) WHERE inventory_id = ?");
+		$stmt->execute(array($exemplar['id']));
+		$user = $stmt->fetch();
+
+		if(!user)
+			$activeGrade = "---";
+		else
+			$activeGrade = $user['gradelevel'].$user['label'];
 		$this->_smarty->assign('activeGrade', $activeGrade);
 		$this->_smarty->assign('user', $user);
-		$this->_smarty->assign('book', $book);
+		$this->_smarty->assign('book', $exemplar);
 		$this->displayTpl('result.tpl');
 	}
 }

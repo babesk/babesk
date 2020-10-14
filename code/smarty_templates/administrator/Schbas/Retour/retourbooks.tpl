@@ -3,12 +3,6 @@
 
 <h2 class="module-header">Ausleihliste f&uuml;r: {$fullname}</h2>
 
-{if $user->getSchbasAccounting() && count($user->getSchbasAccounting())}
-	{$accounting = $user->getSchbasAccounting()->first()}
-	{if $accounting->getLoanChoice()}
-		{$loanChoiceName = $accounting->getLoanChoice()->getName()}
-	{/if}
-{/if}
 
 <div class="panel panel-default">
 	<table class="table">
@@ -32,8 +26,8 @@
 			<tr>
 				<td>
 					{if $accounting}
-						{if $loanChoiceName}
-							{$loanChoiceName}
+						{if $accounting['lcName']}
+							{$accounting['lcName']}
 						{else}
 							???
 						{/if}
@@ -44,7 +38,7 @@
 				<td>
 					{if $accounting}
 						{$missingClass = ''}
-						{$missing = $accounting->getAmountToPay() - $accounting->getPayedAmount()}
+						{$missing = $accounting['amountToPay'] - $accounting['payedAmount']}
 						{if $missing == 0}
 							{$missingClass = 'text-success'}
 						{else}
@@ -59,14 +53,14 @@
 				</td>
 				<td>
 					{if $accounting}
-						{$accounting->getPayedAmount()} €
+						{$accounting['payedAmount']} €
 					{else}
 						---
 					{/if}
 				</td>
 				<td>
 					{if $accounting}
-						{$accounting->getAmountToPay()} €
+						{$accounting['amountToPay']} €
 					{else}
 						---
 					{/if}
@@ -95,30 +89,22 @@
 		</thead>
 		<tbody>
 			{foreach $data as $retourbook}
-				{$exemplar = $retourbook->getExemplars()->first()}
 			<tr>
-				<td>{$retourbook->getTitle()}</td>
-				<td>{$retourbook->getAuthor()}</td>
-				<td>{$retourbook->getPublisher()}</td>
+				<td>{$retourbook['title']}</td>
+				<td>{$retourbook['author']}</td>
+				<td>{$retourbook['publisher']}</td>
 				<td>
-					{$retourbook->getSubject()->getAbbreviation()}
-					{$exemplar->getYearOfPurchase()}
-					{$retourbook->getClass()}
-					{$retourbook->getBundle()}
+					{$retourbook['subName']}
+					{$retourbook['year_of_purchase']}
+					{$retourbook['class']}
+					{$retourbook['bundle']}
 					/
-					{$exemplar->getExemplar()}
+					{$retourbook['exemplar']}
 				</td>
 			</tr>
 			{/foreach}
 		</tbody>
 	</table>
-
-
-	{*
-	{foreach $data as $retourbook}
-		{$retourbook.title}, {$retourbook.author}, {$retourbook.publisher}. Inv.-Nr.: {$retourbook.subject} {$retourbook.year_of_purchase} {$retourbook.class} {$retourbook.bundle} / {$retourbook.exemplar}<br />
-	{/foreach}
-	*}
 </div>
 	<a class="btn btn-primary pull-right"
 		 href="index.php?module=administrator|Schbas|Retour">

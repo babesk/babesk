@@ -8,21 +8,20 @@
 			</tr>
 		</thead>
 		<tbody>
-			{foreach $data as $retourbook}
-				{$exemplar = $retourbook->getExemplars()->first()}
+        {foreach $data as $retourbook}
 			<tr>
-				<td>{$retourbook->getTitle()}</td>
-				<td>{$retourbook->getAuthor()}</td>
-				<td>{$retourbook->getPublisher()}</td>
+				<td>{$retourbook['title']}</td>
+				<td>{$retourbook['author']}</td>
+				<td>{$retourbook['publisher']}</td>
 				<td>
-					{$retourbook->getSubject()->getAbbreviation()}
-					{$exemplar->getYearOfPurchase()}
-					{$retourbook->getClass()}
-					{$retourbook->getBundle()}
+                    {$retourbook['subName']}
+                    {$retourbook['year_of_purchase']}
+                    {$retourbook['class']}
+                    {$retourbook['bundle']}
 					/
-					{$exemplar->getExemplar()}
+                    {$retourbook['exemplar']}
 				</td>
 			</tr>
-			{/foreach}
+        {/foreach}
 		</tbody>
 	</table>

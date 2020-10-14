@@ -782,49 +782,6 @@ class User extends System {
 	}
 
 
-	/**
-	 * Checks if the user has the subject. If not, remove the book-assignment
-	 * It calls the Db to check the subjects, so if you change the subject
-	 * beforehand make sure to commit those to the db.
-	 * It also calculates the correct book from the classes.
-	 *
-	 * This could be so much better. Sorry, future me...
-	 *
-	 * @param  object $user    The user of the book-assignment
-	 * @param  object $subject The subject of the book of the book-assignment.
-	 * @return bool            true if a bookAssignment was removed, else false
-	 */
-	protected function removeBookAssignmentIfSubjectRemoved($user, $subject) {
-
-		require_once PATH_INCLUDE . '/Schbas/Loan.php';
-		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$userGrade = $this->_em->getRepository('DM:SystemUsers')
-			->getGradeByUserAndSchoolyear($user, $schoolyear);
-		if(!$userGrade) { return false; }
-		$userSubjects = $loanHelper->userSubjectsCalc(
-			$user, $userGrade->getGradelevel()
-		);
-		if(!in_array($subject->getAbbreviation(), $userSubjects)) {
-			$bookAssignments = $loanHelper->
-				findBookAssignmentsForUserBySubject(
-					$user, $subject, $schoolyear
-				);
-			if($bookAssignments && count($bookAssignments)) {
-				foreach($bookAssignments as $bookAssignment) {
-					$this->_em->remove($bookAssignment);
-				}
-				$this->_em->flush();
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		else {
-			return false;
-		}
-	}
 
 
 	///////////////////////////////////////////////////////////////////////

@@ -12,11 +12,11 @@
 		{foreach $usersWithBooks as $unit}
 			<tr>
 				<td width="200">
-					{$unit.user->getForename()} {$unit.user->getName()}
+					{$unit.user['forename']} {$unit.user['name']}
 				</td>
 				<td width="430">
 					{foreach $unit.books as $book}
-						&middot; {$book->getTitle()}<br>
+						&middot; {$book['title']}<br>
 					{/foreach}
 				</td>
 			</tr>

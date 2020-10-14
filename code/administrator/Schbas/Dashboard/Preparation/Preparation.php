@@ -17,8 +17,6 @@ class Preparation extends \administrator\Schbas\Dashboard\Dashboard {
 	public function execute($dataContainer) {
 
 		$this->entryPoint($dataContainer);
-		$this->_settingsRepo = $this->_em
-			->getRepository('DM:SystemGlobalSettings');
 		$data = $this->fetchData();
 		dieJson($data);
 	}
@@ -40,10 +38,10 @@ class Preparation extends \administrator\Schbas\Dashboard\Dashboard {
 
 	protected function fetchPreparationSchoolyearData() {
 
-		$preparationSchoolyearId = $this->_settingsRepo
-			->findOneByName('schbasPreparationSchoolyearId')
-			->getValue();
-		$stmt = $this->_em->getConnection()->prepare(
+	    $stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = ?");
+	    $stmt->execute(array('schbasPreparationSchoolyearId'));
+	    $preparationSchoolyearId = $stmt->fetch()['value'];
+		$stmt = $this->_pdo->prepare(
 			'SELECT sy.ID AS id, sy.label AS label,
 				COUNT(usb.id) as assignmentCount
 			FROM SystemSchoolyears sy
@@ -75,18 +73,26 @@ class Preparation extends \administrator\Schbas\Dashboard\Dashboard {
 
 	protected function fetchSchbasClaimStatus() {
 
-		$status = $this->_settingsRepo->findOneByName('isSchbasClaimEnabled')
-			->getValue();
+        $stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = ?");
+        $stmt->execute(array('isSchbasClaimEnabled'));
+        $status = $stmt->fetch()['value'];
 		return $status != 0;
 	}
 
 	protected function fetchDeadlines() {
 
-		$claim = $this->_settingsRepo->findOneByName('schbasDeadlineClaim');
-		$trans = $this->_settingsRepo->findOneByName('schbasDeadlineTransfer');
+        $stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = ?");
+
+        $stmt->execute(array('schbasDeadlineClaim'));
+        $claim = $stmt->fetch()['value'];
+
+        $stmt->execute(array('schbasDeadlineTransfer'));
+        $trans = $stmt->fetch()['value'];
+
+
 		// Format to ISO-time
-		$claim = date('Y-m-d', strtotime($claim->getValue()));
-		$trans = date('Y-m-d', strtotime($trans->getValue()));
+		$claim = date('Y-m-d', strtotime($claim));
+		$trans = date('Y-m-d', strtotime($trans));
 		return [
 			'schbasDeadlineClaim' => $claim,
 			'schbasDeadlineTransfer' => $trans
@@ -97,7 +103,6 @@ class Preparation extends \administrator\Schbas\Dashboard\Dashboard {
 	//Attributes
 	/////////////////////////////////////////////////////////////////////
 
-	protected $_settingsRepo;
 }
 
 ?>

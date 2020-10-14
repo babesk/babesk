@@ -19,7 +19,7 @@
 		<td><%= exemplarsToBuy %></td>
 		<td><%= exemplarsSelfpayed %></td>
 		<td>
-		<a class="btn btn-info btn-xs" href="index.php?section=Schbas|Booklist&action=2&ID=<%= id %>" title="Bucheinstellungen">
+		<a class="btn btn-info btn-xs" href="index.php?section=Schbas|Booklist&action=2&ID=<%= id %>" title="Bearbeiten">
 				<span class="fa fa-cog"></span>
 		</a>
 		<a class="btn btn-danger btn-xs" href="index.php?section=Schbas|Booklist&action=3&ID=<%= id %>" title="Buch löschen">
@@ -47,7 +47,7 @@
 	Die Anzahl der benötigten Bücher für das nächste Schuljahr kann inkorrekt sein. Um ein korrektes Ergebnis zu erhalten, müssen alle Bücher, die wieder verliehen werden können, als nicht verliehen gespeichert sein. Weiterhin müssen alle Selbstzahler korrekt eingetraten sein.
 	Die Zahlen gelten für das Schbas-Vorbereitungsschuljahr, momentan also für
 	<span class="label label-info">
-		{$preparationSchoolyear->getLabel()}
+		{$preparationSchoolyear}
 	</span>
 </div>
 

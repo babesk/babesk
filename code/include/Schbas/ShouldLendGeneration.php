@@ -16,7 +16,7 @@ class ShouldLendGeneration {
 	public function __construct($dataContainer) {
 
 		$this->_dataContainer = $dataContainer;
-		$this->_em = $dataContainer->getEntityManager();
+		$this->_pdo = $dataContainer->getPDO();
 		$this->_logger = clone($dataContainer->getLogger());
 		$this->_logger->categorySet(
 			'Babesk/Schbas/Loan/ShouldLendGeneration'
@@ -52,7 +52,6 @@ class ShouldLendGeneration {
 		}
 
 		$this->generateInit();
-		$entries = [];
 		foreach($this->_users as $user) {
 			$gradelevel = $this->gradelevelGet($user);
 			if(!$gradelevel) { continue; }
@@ -64,20 +63,16 @@ class ShouldLendGeneration {
 			);
 			if(!$classes) { continue; }
 			foreach($this->_books as $book) {
-				$bookSubject = $book->getSubject();
+				$bookSubject = $book['abbreviation'];
 				if(!$bookSubject) { continue; }
-				$bookSubjectAbbreviation = $bookSubject->getAbbreviation();
 				// Book is for other gradelevels than the user is in
-				if(!in_array($book->getClass(), $classes)) { continue; }
-				if($this->isBookFiltered(
-					$bookSubjectAbbreviation, $subjects, $gradelevel)
-				) {
-					$this->entryAdd($user, $book);
-				}
+				if(!in_array($book['class'], $classes)) { continue; }
+                if(in_array($bookSubject, $subjects)) {
+                    //if($this->isBookFiltered($bookSubjectAbbreviation, $subjects, $gradelevel)) {
+                    $this->entryAdd($user, $book);
+                }
 			}
 		}
-		// Commit changes
-		$this->_em->flush();
 		return true;
 	}
 
@@ -93,8 +88,7 @@ class ShouldLendGeneration {
 		if(!$this->_users) {
 			$this->usersFetch();
 		}
-		$this->booksFetch();
-		$this->filtersFetch();
+		$this->booksFetch();;
 		$this->specialCourseTriggerFetch();
 	}
 
@@ -113,7 +107,8 @@ class ShouldLendGeneration {
 	protected function usersFetch() {
 
 		try {
-			$userQuery = $this->_em->createQuery(
+		    $stmt = $this->_pdo->query("SELECT * FROM SystemUsers");
+			/**$userQuery = $this->_em->createQuery(
 				'SELECT partial u.{
 						id, religion, foreign_language, special_course
 					},
@@ -125,14 +120,11 @@ class ShouldLendGeneration {
 			');
 			$userQuery->setParameter(
 				'schoolyear', $this->_schoolyear
-			);
-			//Silly doctrine, dont lazy-load oneToOne-entries automatically
-			$userQuery->setHint(
-				\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true
-			);
-			$this->_users = $userQuery->getResult();
+			);*/
+
+			$this->_users = $stmt->fetchAll();
 		}
-		catch (\Doctrine\ORM\Query\QueryException $e) {
+		catch (Exception $e) {
 			$this->_logger->logO('Could not fetch the users',
 				['sev' => 'error', 'moreJson' => $e->getMessage()]);
 			throw new \Exception('Could not fetch the users');
@@ -143,46 +135,35 @@ class ShouldLendGeneration {
 
 		// Fetch the books
 		try {
-			$bookQuery = $this->_em->createQuery(
+		    $stmt = $this->_pdo->query("SELECT b.*, sub.name, sub.abbreviation FROM SchbasBooks b LEFT JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)");
+			/**$bookQuery = $this->_em->createQuery(
 				'SELECT partial b.{id, class}, partial s.{id, abbreviation}
 				FROM DM:SchbasBook b
 				INNER JOIN b.subject s
-			');
-			$this->_books = $bookQuery->getResult();
+			');*/
+			$this->_books = $stmt->fetchAll();
 		}
-		catch (\Doctrine\ORM\Query\QueryException $e) {
+		catch (Exception $e) {
 			$this->_logger->logO('Could not fetch the books',
 				['sev' => 'error', 'moreJson' => $e->getMessage()]);
 			throw new \Exception('Could not fetch the books');
 		}
 	}
 
-	protected function filtersFetch() {
-
-		// Init the filter-array
-		// It filters the books based on their subject.
-		// The filter-list define the special subjects to which the user must
-		// explicitly attend, else books of this subject will not be assigned
-		// to the user.
-		list($lang, $rel, $course) = $this->_loanHelper
-			->bookSubjectFilterArrayGet();
-		$this->_bookFilterWithCourse = array_merge($lang, $rel, $course);
-		$this->_bookFilter = array_merge($lang, $rel);
-	}
 
 	protected function specialCourseTriggerFetch() {
 
-		$triggerObj = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('special_course_trigger');
-		$this->_specialCourseTrigger = (int)$triggerObj->getValue();
+	    $stmt = $this->_pdo->query("SELECT * FROM SystemGlobalSettings WHERE name = 'special_course_trigger'");
+
+		$this->_specialCourseTrigger = (int)$stmt->fetch()['value'];
 	}
 
 	protected function gradelevelGet($user) {
 
 		if(!$this->_isExternalUsers) {
-			$grade = $user->getAttendances()
-				->first()
-				->getGrade();
+		    $stmt = $this->_pdo->prepare("SELECT gradelevel FROM SystemGrades g JOIN SystemAttendances a ON (g.ID = a.gradeId) WHERE userId = ? AND schoolyearId = ?");
+		    $stmt->execute(array($user['ID'], $this->_schoolyear));
+			$grade = $stmt->fetch();
 		}
 		else {
 			// When given external users, they may wont have hydrated the
@@ -199,7 +180,7 @@ class ShouldLendGeneration {
 		if(!$grade) {
 			return false;
 		}
-		$gradelevel = $grade->getGradelevel();
+		$gradelevel = $grade['gradelevel'];
 		return $gradelevel;
 	}
 
@@ -242,11 +223,12 @@ class ShouldLendGeneration {
 
 	protected function entryAdd($user, $book) {
 
-		$entry = new \Babesk\ORM\SchbasUserShouldLendBook();
-		$entry->setUser($user);
-		$entry->setBook($book);
-		$entry->setSchoolyear($this->_schoolyear);
-		$this->_em->persist($entry);
+	    $stmt = $this->_pdo->prepare("INSERT INTO SchbasUsersShouldLendBooks(userId, bookId, schoolyearId) VALUES (?,?,?)");
+	    $stmt->execute(array(
+	        $user['ID'],
+            $book['id'],
+            $this->_schoolyear
+        ));
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -254,9 +236,13 @@ class ShouldLendGeneration {
 	/////////////////////////////////////////////////////////////////////
 
 	protected $_dataContainer;
-	protected $_em;
+
 	protected $_logger;
 
+    /**
+     * @var \PDO
+     */
+    protected $_pdo;
 	protected $_loanHelper;
 
 	protected $_schoolyear;

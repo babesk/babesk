@@ -1,7 +1,6 @@
 <?php
 
 namespace Babesk\Schbas;
-use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Contains operations useful for the loan-process of Schbas
@@ -64,13 +63,12 @@ class Loan {
 		$classes = $this->gradelevel2IsbnIdent($gradelevel);
 		if($classes) {
 			try {
-				$query = $this->_em->createQuery(
-					'SELECT b, s FROM DM:SchbasBook b
-					LEFT JOIN b.subject s
-					WHERE b.class IN (:classes)
-				');
-				$query->setParameter('classes', $classes);
-				$books = $query->getResult();
+				$stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks b 
+											  LEFT JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
+											  WHERE b.class IN ?");
+				$classesString = "(". implode(",", $classes) .")";
+				$stmt->execute(array($classesString));
+				$books = $stmt->fetchAll();
 				return $books;
 			}
 			catch(\Exception $e) {
@@ -99,9 +97,6 @@ class Loan {
 			return $loanPrice;
 		}
 		else {
-			$this->_logger->logO('A book assigned to a user has no valid ' .
-				'class', ['sev' => 'error', 'moreJson' => ['userId' =>
-						$user->getId(), 'bookId' => $book->getId()]]);
 			throw new \Exception('No book-class "' . $class . '" found.');
 		}
 	}
@@ -139,10 +134,10 @@ class Loan {
 		$feeReduced = 0.00;
 		foreach($books as $book) {
 			$normalPrice = $this->bookLoanPriceCalculate(
-				$book->getPrice(), $book->getClass()
+				$book['price'], $book['class']
 			);
 			$reducedPrice = $this->bookReducedLoanPriceCalculate(
-				$book->getPrice(), $book->getClass()
+				$book['price'], $book['class']
 			);
 			$feeNormal += $normalPrice;
 			$feeReduced += $reducedPrice;
@@ -178,32 +173,19 @@ class Loan {
 			// Default to subtracting the selfpaid books
 			$subtractSelfpay = (empty($opt['includeSelfpay']));
 			$includeAlreadyLend = (!empty($opt['includeAlreadyLend']));
-			$qb = $this->_em->createQueryBuilder()
-				->select(['b', 'usb'])
-				->from('DM:SchbasBook', 'b')
-				->innerJoin('b.usersShouldLend', 'usb')
-				->innerJoin('usb.user', 'u');
+			$query = "SELECT * FROM SchbasBooks b 
+					  JOIN SchbasUsersShouldLendBooks usb ON (b.id = usb.bookId)
+					  JOIN SystemUsers u ON (u.ID = usb.userId) 
+					  WHERE usb.schoolyearId = :syid
+					  AND usb.userId = :uid ";
 			if($subtractSelfpay) {
-				// Use selfpayingBookEntities because its a left join and
-				// doctrines many-to-many would join all entries of the first
-				// table and parse the WITH to filter the _second_ table, not
-				// the first, resulting in unnecessary rows generated.
-				$qb->leftJoin(
-					'u.selfpayingBookEntities', 'sbe', 'WITH', 'sbe.book = b'
-				)->leftJoin('sbe.book', 'sb');
+				$query = $query . " AND usb.bookId NOT IN (SELECT BID FROM SchbasSelfpayer WHERE UID = :uid)";
 			}
-			$qb->where('usb.schoolyear = :schoolyear')
-				->andWhere('usb.user = :user');
-			if($subtractSelfpay) {
-				// We want all entries where the book will _not_ be bought by
-				// the user himself, so we check for null
-				$qb->andWhere('sb IS NULL');
-			}
-			$qb->setParameter('schoolyear', $schoolyear);
-			$qb->setParameter('user', $user);
+			$stmt = $this->_pdo->prepare($query);
+			$stmt->execute(array(':syid' => $schoolyear,
+								 ':uid' => $user['ID']));
 
-			$query = $qb->getQuery();
-			$books = $query->getResult();
+			$books = $stmt->fetchAll();
 
 			if(!$includeAlreadyLend) {
 				$books = $this->loanBooksGetFilterAlreadyLentBooks(
@@ -224,14 +206,9 @@ class Loan {
 	 * @return array        The books
 	 */
 	public function lendBooksOfUserGet($user) {
-
-		$query = $this->_em->createQuery(
-			'SELECT b FROM DM:SchbasBook b
-			INNER JOIN b.exemplars e
-			INNER JOIN e.usersLent ul WITH ul = :user
-		');
-		$query->setParameter('user', $user);
-		$lendBooks = $query->getResult();
+		$stmt = $this->_pdo->prepare("SELECT b.* FROM SchbasLending l JOIN SchbasInventory i ON (i.id = l.inventory_id) JOIN SchbasBooks b ON (b.id = i.book_id) WHERE user_id = ?");
+		$stmt->execute(array($user['ID']));
+		$lendBooks = $stmt->fetchAll();
 		return $lendBooks;
 	}
 
@@ -256,7 +233,7 @@ class Loan {
 		$booksToReturn = [];
 		foreach($lendBooks as $lendBook) {
 			foreach($shouldLendBooks as $shouldLendBook) {
-				if($lendBook->getId() == $shouldLendBook->getId()) {
+				if($lendBook['id'] == $shouldLendBook['id']) {
 					continue 2;
 				}
 			}
@@ -291,15 +268,10 @@ class Loan {
 
 		$schoolyear = $this->schbasPreparationSchoolyearGet();
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT COUNT(usb) FROM DM:SchbasBook b
-				INNER JOIN b.usersShouldLend usb
-					WITH usb.schoolyear = :schoolyear
-				WHERE b = :book
-			');
-			$query->setParameter('book', $book);
-			$query->setParameter('schoolyear', $schoolyear);
-			return $query->getSingleScalarResult();
+			$query = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasUsersShouldLendBooks usb
+										   WHERE bookId = ? AND schoolyearId = ?");
+			$query->execute(array($book['id'], $schoolyear));
+			return $query->fetch()[0];
 		}
 		catch(\Exception $e) {
 			$this->_logger->logO('Error fetching amount of inventory ' .
@@ -311,32 +283,24 @@ class Loan {
 
 	/**
 	 * Returns the schoolyear for which schbas is getting prepared
-	 * @return \Babesk\ORM\SystemSchoolyears on success or a false value
+	 * @return int ID of the Schoolyear
 	 */
 	public function schbasPreparationSchoolyearGet() {
 
-		$sySetting = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('schbasPreparationSchoolyearId');
-		//Add entry if not existing
-		if(!$sySetting) {
-			$sySetting = new \Babesk\ORM\SystemGlobalSettings();
-			$sySetting->setName('schbasPreparationSchoolyearId');
-			$sySetting->setValue('');
-			$this->_em->persist($sySetting);
-			$this->_em->flush();
-		}
-		$syEntry = $this->_em->getRepository('DM:SystemSchoolyears')
-			->findOneById($sySetting->getValue());
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name=?");
+		$stmt->execute(array("schbasPreparationSchoolyearId"));
+		$syEntry = $stmt->fetch()['value'];
 		return $syEntry;
 	}
 
 	public function booksAssignedToGradelevelsGet() {
 
-		$books = $this->_em->getRepository('DM:SchbasBook')
-			->findAll();
+		$stmt = $this->_pdo->query("SELECT * FROM SchbasBooks");
+		$books = $stmt->fetchAll();
+
 		$booksInGradelevels = array();
 		foreach($books as $book) {
-			$gradelevels = $this->isbnIdent2Gradelevel($book->getClass());
+			$gradelevels = $this->isbnIdent2Gradelevel($book['class']);
 			$booksInGradelevels[] = array(
 				'book' => $book,
 				'gradelevels' => $gradelevels
@@ -345,19 +309,6 @@ class Loan {
 		return $booksInGradelevels;
 	}
 
-	public function bookSubjectFilterArrayGet() {
-
-		$gsRepo = $this->_em->getRepository(
-			'DM:SystemGlobalSettings'
-		);
-		$lang   = $gsRepo->findOneByName('foreign_language')->getValue();
-		$rel    = $gsRepo->findOneByName('religion')->getValue();
-		$course = $gsRepo->findOneByName('special_course')->getValue();
-		$langAr = explode('|', $lang);
-		$relAr = explode('|', $rel);
-		$courseAr = explode('|', $course);
-		return [$langAr, $relAr, $courseAr];
-	}
 
 	/**
 	 * Calculates the subjects of a user by accumulating the correct columns
@@ -368,19 +319,13 @@ class Loan {
 	 */
 	public function userSubjectsCalc($user, $gradelevel) {
 
-		$userSubjects = array_merge(
-			explode('|', $user->getReligion()),
-			explode('|', $user->getForeignLanguage())
-		);
-		$trigger = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('special_course_trigger');
-		if($trigger->getValue() <= $gradelevel) {
-			$userSubjects = array_merge(
-				$userSubjects,
-				explode('|', $user->getSpecialCourse())
-			);
-		}
-		return $userSubjects;
+        $coreSubjects = \TableMng::query("SELECT abbreviation FROM SchbasCoreSubjects c JOIN SystemSchoolSubjects s ON c.subject_id = s.ID WHERE gradelevel = ".$gradelevel);
+        $userSubjects = array_unique(array_merge(
+                explode('|', $user['special_course']),
+                array_column($coreSubjects, "abbreviation"))
+        );
+
+        return $userSubjects;
 	}
 
 	public function findBookAssignmentsForUserBySubject(
@@ -419,7 +364,6 @@ class Loan {
 	protected function entryPoint($dataContainer) {
 
 		$this->_pdo = $dataContainer->getPdo();
-		$this->_em = $dataContainer->getEntityManager();
 		$this->_dataContainer = $dataContainer;
 		$this->_logger = clone($dataContainer->getLogger());
 		$this->_logger->categorySet('Babesk/Schbas/Loan');
@@ -446,21 +390,20 @@ class Loan {
 	}
 
 	protected function loanBooksGetFilterAlreadyLentBooks($books, $user) {
-
-		$query = $this->_em->createQuery(
-			'SELECT b FROM DM:SchbasBook b
-			INNER JOIN b.exemplars e
-			INNER JOIN e.lending l
-			WHERE l.user = :user
-		');
-		$query->setParameter('user', $user);
-		$bookCollection = new ArrayCollection($books);
-		$alreadyLendBooks = new ArrayCollection($query->getResult());
-		$filteredBooks = $bookCollection->filter(
-			function($book) use ($alreadyLendBooks) {
-				return !$alreadyLendBooks->contains($book);
+		$stmt = $this->_pdo->prepare("SELECT i.book_id FROM SchbasLending l JOIN SchbasInventory i ON (l.inventory_id = i.id) WHERE user_id = ?");
+		$stmt->execute(array($user['ID']));
+		$lent = $stmt->fetchAll();
+		$filteredBooks = array();
+		foreach ($books as $book){
+			$notLend = true;
+			foreach ($lent as $le){
+				if($book['bookId'] == $le['book_id'])
+					$notLend = false;
 			}
-		);
+			if($notLend){
+				$filteredBooks[] = $book;
+			}
+		}
 		return $filteredBooks;
 	}
 
@@ -471,11 +414,11 @@ class Loan {
 	protected $_gradelevelIsbnIdentAssoc = array(
 		'5'  => array('05', '56'),
 		'6'  => array('56', '06', '69', '67'),
-		'7'  => array('78', '07', '69', '79', '67'),
-		'8'  => array('78', '08', '69', '79', '89'),
-		'9'  => array('90', '91', '09', '92', '69', '79', '89'),
-		'10' => array('90', '91', '10', '92'),
-		'11' => array('12', '92', '13'),
+		'7'  => array('78', '07', '69', '79', '67', '70'),
+		'8'  => array('78', '08', '69', '79', '89', '70'),
+		'9'  => array('90', '91', '09', '92', '69', '79', '89', '70'),
+		'10' => array('90', '91', '10', '92', '70'),
+		'11' => array('12', '92', '13', '11'),
 		'12' => array('12', '92', '13'),
 		'13' => array('13','23')
 	);
@@ -507,11 +450,11 @@ class Loan {
 		"79" => 3,
 		"91" => 3,
 		"69" => 4,
-		"92" => 4
+		"92" => 4,
+		"70" => 4
 	);
 
 	protected $_pdo;
-	protected $_em;
 	protected $_logger;
 	protected $_dataContainer;
 }

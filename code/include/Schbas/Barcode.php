@@ -94,21 +94,29 @@ class Barcode {
 		return true;
 	}
 
-	public function getMatchingBookExemplar($em) {
+	public function getMatchingBookExemplar($pdo) {
 
-		$query = $em->createQuery(
-			'SELECT i, l FROM DM:SchbasInventory i
-			LEFT JOIN i.lending l
-			INNER JOIN i.book b WITH b.class = :class AND b.bundle = :bundle
-			INNER JOIN b.subject s WITH s.abbreviation = :subject
-			WHERE i.yearOfPurchase = :yearOfPurchase AND i.exemplar = :exemplar
-		');
-		$query->setParameter('class', $this->_class)
-			->setParameter('bundle', $this->_bundle)
-			->setParameter('subject', $this->_subject)
-			->setParameter('yearOfPurchase', $this->_purchaseYear)
-			->setParameter('exemplar', $this->_exemplar);
-		return $query->getOneOrNullResult();
+	    $stmt = $pdo->prepare("SELECT * FROM SystemSchoolSubjects WHERE abbreviation = ?");
+	    $stmt->execute(array($this->_subject));
+	    $subjectID = $stmt->fetch();
+	    if(!$subjectID)
+	        return false;
+
+	    $stmt = $pdo->prepare("SELECT i.*, b.title, b.author, b.publisher, b.isbn, b.price, b.class, b.bundle, sub.name AS subName FROM SchbasInventory i 
+                              JOIN SchbasBooks b ON (i.book_id = b.id)
+                              JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
+                              WHERE year_of_purchase = :yop
+                              AND exemplar = :exemplar
+                              AND b.subjectId = :subjectID
+                              AND b.class = :class
+                              AND b.bundle = :bundle");
+	    $stmt->execute(array(
+	        ':yop' => $this->_purchaseYear,
+            ':exemplar' => $this->_exemplar,
+            ':subjectID' => $subjectID['ID'],
+            ':class' => $this->_class,
+            ':bundle' => $this->_bundle));
+		return $stmt->fetch();
 	}
 
 	public function getMatchingBooks($em) {
@@ -124,18 +132,6 @@ class Barcode {
 		return $query->getResult();
 	}
 
-	/**
-	 * Checks if the given barcode has the same book-data as this instance
-	 * @param  Barcode $compareBarcode The barcode to compare to
-	 * @return bool                    true if it has the same data, else false
-	 */
-	public function sameBookDataAs($compareBarcode) {
-		return (
-			$this_subject == $compareBarcode->getSubject() &&
-			$this->_class == $compareBarcode->getClass() &&
-			$this->_bundle == $compareBarcode->getBundle()
-		);
-	}
 
 	/////////////////////////////////////////////////////////////////////
 	//Implements

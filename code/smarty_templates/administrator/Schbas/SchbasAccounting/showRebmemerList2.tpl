@@ -23,7 +23,7 @@
 		<td align="left">{$forename[$i]}</td>
 		<td align="left">
 			{foreach $books[$i] as $book}
-				<li>{$book->getTitle()}</li>
+				<li>{$book['title']}</li>
 			{/foreach}
 		</td>
 	</tr>

@@ -2,12 +2,7 @@
 {block name=content}
 
 <h3 class="module-header">Ausleihliste</h3>
-    {if $userdata->getSchbasAccounting() && count($userdata->getSchbasAccounting())}
-        {$accounting = $userdata->getSchbasAccounting()->first()}
-        {if $accounting->getLoanChoice()}
-            {$loanChoiceName = $accounting->getLoanChoice()->getName()}
-        {/if}
-    {/if}<div class="panel panel-default">
+    <div class="panel panel-default">
 	<table class="table">
 		<thead>
 		<tr>
@@ -29,8 +24,8 @@
 		<tr>
 			<td>
                 {if $accounting}
-                    {if $loanChoiceName}
-                        {$loanChoiceName}
+                    {if $accounting['name']}
+                        {$accounting['name']}
                     {else}
 						???
                     {/if}
@@ -41,7 +36,7 @@
 			<td>
                 {if $accounting}
                     {$missingClass = ''}
-                    {$missing = $accounting->getAmountToPay() - $accounting->getPayedAmount()}
+                    {$missing = $accounting['amountToPay'] - $accounting['payedAmount']}
                     {if $missing == 0}
                         {$missingClass = 'text-success'}
                     {else}
@@ -56,14 +51,14 @@
 			</td>
 			<td>
                 {if $accounting}
-                    {$accounting->getPayedAmount()} €
+                    {$accounting['payedAmount']} €
                 {else}
 					---
                 {/if}
 			</td>
 			<td>
                 {if $accounting}
-                    {$accounting->getAmountToPay()} €
+                    {$accounting['amountToPay']} €
                 {else}
 					---
                 {/if}
@@ -75,11 +70,11 @@
 <div class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">
-			Ausleihliste für: {$user->getForename()} {$user->getName()}
+			Ausleihliste für: {$userdata['forename']} {$userdata['name']}
 		</h3>
 	</div>
 	<ul class="list-group checklist">
-		{if $formSubmitted}
+		{if $accounting}
 			<li class="list-group-item list-group-item-success">
 				<span class="fa fa-check fa-fw pull-left"></span>
 				Das Formular zur Buchausleihe wurde abgegeben.
@@ -98,7 +93,7 @@
 						<span class="fa fa-info-circle pull-left"></span>
 						Der Benutzer ist Selbsteinkäufer!
 					</li>
-				{else if $loanChoice == 'nl'}
+				{elseif $loanChoice == 'nl'}
 					<li class="list-group-item list-group-item-warning">
 						<span class="fa fa-info-circle pull-left"></span>
 						Keine Teilnahme des Benutzers!
@@ -141,16 +136,15 @@
 					</thead>
 					<tbody>
 						{foreach $exemplarsLent as $exemplar}
-							{$book = $exemplar->getBook()}
 							<tr>
 								<td>
-									{$book->getTitle()}
+									{$exemplar['title']}
 								</td>
 								<td>
-									{$exemplar->getExemplar()}
+									{$exemplar['exemplar']}
 								</td>
 								<td>
-									{$book->getSubject()->getName()}
+									{$exemplar['abbreviation']}
 								</td>
 							</tr>
 						{/foreach}
@@ -170,7 +164,7 @@
 				<ul class="selfbuy-books-list">
 					{foreach $booksSelfpaid as $book}
 						<li>
-							{$book->getTitle()}
+							{$book['title']}
 						</li>
 					{/foreach}
 				</ul>
@@ -191,7 +185,7 @@
 			{foreach $booksToLoan as $bookData}
 				{$book = $bookData.book}
 				{$alreadyLent = $bookData.alreadyLent}
-				<tr data-book-id="{$book->getId()}"
+				<tr data-book-id="{$book['id']}"
 					{if $alreadyLent}class="bg-success text-success"{/if}>
 					<td>
 						{if $alreadyLent}
@@ -200,9 +194,9 @@
 								bereits ausgeliehen
 							</small>&nbsp;
 						{/if}
-						{$book->getTitle()}
+						{$book['title']}
 					</td>
-					<td>{$book->getPublisher()}</td>
+					<td>{$book['publisher']}</td>
 				</tr>
 			{/foreach}
 		</tbody>
@@ -228,7 +222,7 @@
 	Nächster Benutzer
 </a>
 
-<input type="hidden" id="user-id" value="{$user->getId()}" />
+<input type="hidden" id="user-id" value="{$userdata['UID']}" />
 
 {/block}
 

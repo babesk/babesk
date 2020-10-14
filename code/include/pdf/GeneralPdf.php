@@ -1,6 +1,5 @@
 <?php
 
-require_once  PATH_INCLUDE .'/pdf/tcpdf/config/lang/ger.php';
 require_once PATH_INCLUDE . '/pdf/tcpdf/tcpdf.php';
 
 class GeneralPdf {
@@ -49,7 +48,6 @@ class GeneralPdf {
 		$this->_title = $title;
 		$this->_content = $content;
 
-		require_once  PATH_INCLUDE .'/pdf/tcpdf/config/lang/ger.php';
 		require_once PATH_INCLUDE . '/pdf/tcpdf/tcpdf.php';
 
 		// create new PDF document

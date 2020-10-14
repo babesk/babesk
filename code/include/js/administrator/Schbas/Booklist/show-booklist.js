@@ -33,7 +33,6 @@ $(document).ready(function() {
 					"booksPerPage": $('#books-per-page').val()
 				},
 				function(res) {
-					console.log(res);
 					tableRefresh(res.books);
 					paginatorRefresh(res.pagecount);
 					$('[title]').tooltip();
@@ -50,8 +49,6 @@ $(document).ready(function() {
 			var tbody = $('#booklist tbody');
 			$('#booklist tbody').html('');
 			$.each(books, function(ind, book) {
-				console.log(book);
-
 				var row = microTmpl($('#booklist-row-template').html(), book)
 				tbody.append(row);
 			});

@@ -2,6 +2,7 @@
 
 require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_ADMIN . '/Schbas/Schbas.php';
+require_once PATH_INCLUDE . '/Schbas/SchbasPdf.php';
 
 class Booklist extends Schbas {
 
@@ -15,35 +16,17 @@ class Booklist extends Schbas {
 		defined('_AEXEC') or die('Access denied');
 
 		require_once 'AdminBooklistInterface.php';
-		require_once 'AdminBooklistProcessing.php';
 
 		parent::entryPoint($dataContainer);
 		parent::moduleTemplatePathSet();
 
 		$BookInterface = new AdminBooklistInterface($this->relPath);
-		$BookProcessing = new AdminBooklistProcessing(
-			$this->_dataContainer, $BookInterface
-		);
-
-		$action_arr = array('show_booklist' => 1,
-							'add_book' => 4,
-							'del_book' => 6);
 
 		if (isset($_GET['action'])) {
 			$action = $_GET['action'];
 			switch ($action) {
 				case 2: //edit a book
 					$this->editBook();
-					die();
-					if (isset ($_POST['isbn_search'])) {
-						$bookID = $BookProcessing->getBookIdByISBN($_POST['isbn_search']);
-						$BookProcessing->editBook($bookID);
-					}
-					else if (!isset ($_POST['subject'], $_POST['class'],$_POST['title'],$_POST['author'],$_POST['publisher'],$_POST['isbn'],$_POST['price'],$_POST['bundle'])){
-						$BookProcessing->editBook($_GET['ID']);
-					}else{
-						$BookProcessing->changeBook($_GET['ID'],$_POST['subject'], $_POST['class'],$_POST['title'],$_POST['author'],$_POST['publisher'],$_POST['isbn'],$_POST['price'],$_POST['bundle']);
-					}
 					break;
 				case 3: //delete an entry
 					$this->deleteBook();
@@ -51,26 +34,17 @@ class Booklist extends Schbas {
 				case 4: //add an entry
 					$this->addBook();
 					break;
-				case 5: //filter
-					$BookProcessing->ShowBooklist("search", $_POST['search']);
-					break;
-
-				case 6: //search an entry for deleting
-
-					$BookProcessing->ScanForDeleteEntry();
-
-					break;
 				case 'showBooksFNY':
-					$BookProcessing->showBooksForNextYear();
+					$this->showBooksForNextYear();
 					break;
 				case 'showBooksBT':
-					$BookProcessing->showBooksByTopic();
+					$this->showBooksByTopic();
 					break;
 				break;
 			}
 		}
 		else {
-			$BookInterface->ShowSelectionFunctionality($action_arr);
+			$BookInterface->ShowSelectionFunctionality();
 		}
 	}
 
@@ -84,58 +58,56 @@ class Booklist extends Schbas {
 			$this->editBookUpload();
 		}
 		else if(isset($_GET['ID'])) {
-			$book = $this->_em->getReference('DM:SchbasBook', $_GET['ID']);
-			$query = $this->_em->createQuery(
-				'SELECT b, s FROM DM:SchbasBook b
-				LEFT JOIN b.subject s
-				WHERE b = :book
-			');
-			$query->setParameter('book', $book);
-			$book = $query->getOneOrNullResult();
-			$this->_smarty->assign('book', $book);
-			$this->displayTpl('change_book.tpl');
-		}
-		else if(isset($_POST['isbn_search'])) {
-			$book = $this->_em->getRepository('DM:SchbasBook')
-				->findOneByIsbn($_POST['isbn_search']);
-			$this->_smarty->assign('book', $book);
-			$this->displayTpl('change_book.tpl');
+		    $stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks b JOIN SystemSchoolSubjects s ON (b.subjectId=s.ID) WHERE b.id = ?");
+		    $stmt->execute(array($_GET['ID']));
+		    $book = $stmt->fetch();
+		    if($book) {
+                $this->_smarty->assign('book', $book);
+                $this->displayTpl('change_book.tpl');
+            }else{
+                $this->displayTpl('index.tpl');
+            }
 		}
 	}
 
 	private function editBookUpload() {
 
 		$_POST['price'] = str_replace(',', '.', $_POST['price']);
-		$book = $this->_em->find('DM:SchbasBook', $_GET['ID']);
-		if(!$book) {
-			$this->_interface->dieError('Buch nicht gefunden.');
-		}
-		$book->setTitle($_POST['title'])
-			->setClass($_POST['class'])
-			->setAuthor($_POST['author'])
-			->setPublisher($_POST['publisher'])
-			->setIsbn($_POST['isbn'])
-			->setPrice($_POST['price'])
-			->setBundle($_POST['bundle']);
-		if(!empty($_POST['subject'])) {
-			$subject = $this->_em->getRepository('DM:SystemSchoolSubject')
-				->findOneByName($_POST['subject']);
-			if($subject) {
-				$book->setSubject($subject);
-			}
-			else {
-				$this->_interface->dieError(
-					"Konnte das Fach $_POST[subject] nicht finden."
-				);
-			}
-		}
-		else {
-			$book->setSubject();
-		}
-		$this->_em->persist($book);
-		$this->_em->flush();
+
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolSubjects 
+                                                WHERE name = :subname OR abbreviation = :subname");
+		$stmt->execute(array(':subname' => $_POST['subject']));
+		$subject = $stmt->fetch();
+		if(!$subject){
+            $this->_interface->dieError(
+                "Konnte das Fach $_POST[subject] nicht finden."
+            );
+        }
+		$stmt = $this->_pdo->prepare("UPDATE SchbasBooks SET 
+                                                title = :title, 
+                                                author = :author,
+                                                publisher = :publisher,
+                                                isbn = :isbn,
+                                                price = :price,
+                                                subjectId = :subjectID,
+                                                class = :class,
+                                                bundle = :bundle
+                                                WHERE id = :id");
+		$stmt->execute(array(
+		    ':title' => $_POST['title'],
+            ':author' => $_POST['author'],
+            ':publisher' => $_POST['publisher'],
+            ':isbn' => $_POST['isbn'],
+            ':price' => $_POST['price'],
+            ':subjectID' => $subject['ID'],
+            ':class' => $_POST['class'],
+            ':bundle' => $_POST['bundle'],
+            ':id' => $_GET['ID']
+        ));
+
+        $this->_interface->backlink('administrator|Schbas|Booklist|ShowBooklist');
 		$this->_interface->dieSuccess(
-			"Das Buch {$book->getTitle()} wurde erfolgreich verändert."
+			"Das Buch {$_POST['title']} wurde erfolgreich verändert."
 		);
 	}
 
@@ -152,24 +124,29 @@ class Booklist extends Schbas {
 	private function addBookUpload() {
 
 		$_POST['price'] = str_replace(',', '.', $_POST['price']);
-		$subject = $this->_em->getRepository('DM:SystemSchoolSubject')
-			->findOneByName($_POST['subject']);
-		if(!$subject) {
-			$this->_interface->dieError(
-				"Konnte das Fach $_POST[subject] nicht finden."
-			);
-		}
-		$book = new \Babesk\ORM\SchbasBook();
-		$book->setTitle($_POST['title'])
-			->setClass($_POST['class'])
-			->setAuthor($_POST['author'])
-			->setPublisher($_POST['publisher'])
-			->setIsbn($_POST['isbn'])
-			->setPrice($_POST['price'])
-			->setBundle($_POST['bundle'])
-			->setSubject($subject);
-		$this->_em->persist($book);
-		$this->_em->flush();
+
+        $stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolSubjects 
+                                                WHERE name = :subname OR abbreviation = :subname");
+        $stmt->execute(array(':subname' => $_POST['subject']));
+        $subject = $stmt->fetch();
+        if(!$subject){
+            $this->_interface->dieError(
+                "Konnte das Fach $_POST[subject] nicht finden."
+            );
+        }
+
+        $stmt = $this->_pdo->prepare("INSERT INTO SchbasBooks(title, author, publisher, isbn, price, subjectId, class, bundle) VALUES 
+                                                (:title, :author, :publisher, :isbn, :price, :subjectID, :class, :bundle)");
+        $stmt->execute(array(
+            ':title' => $_POST['title'],
+            ':author' => $_POST['author'],
+            ':publisher' => $_POST['publisher'],
+            ':isbn' => $_POST['isbn'],
+            ':price' => $_POST['price'],
+            ':subjectID' => $subject['ID'],
+            ':class' => $_POST['class'],
+            ':bundle' => $_POST['bundle'],
+        ));
 		$this->_interface->backlink('administrator|Schbas|Booklist');
 		$this->_interface->dieSuccess(
 			"Das Buch $_POST[title] wurde erfolgreich hinzugefügt."
@@ -178,16 +155,8 @@ class Booklist extends Schbas {
 
 	private function deleteBook() {
 
-		if(isset($_POST['barcode'])) {
-			//Delete the book by barcode
-			$book = $this->_em->getRepository('DM:SchbasBook')
-				->findOneByIsbn($_POST['barcode']);
-			$this->deleteBookFromDatabase($book);
-		}
-		else if(isset($_POST['delete'])) {
-			//Delete the book
-			$book = $this->_em->getReference('DM:SchbasBook', $_GET['ID']);
-			$this->deleteBookFromDatabase($book);
+		if(isset($_POST['delete'])) {
+			$this->deleteBookFromDatabase($_GET['ID']);
 		}
 		else {
 			$this->deleteBookConfirmation();
@@ -197,9 +166,14 @@ class Booklist extends Schbas {
 	private function deleteBookConfirmation() {
 
 		if(isset($_GET['ID'])) {
-			$book = $this->_em->find('DM:SchbasBook', $_GET['ID']);
+		    $stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks WHERE id = ?");
+		    $stmt->execute(array($_GET['ID']));
+		    $book = $stmt->fetch();
 			if($book) {
-				$hasInventory = count($book->getExemplars()) > 0;
+			    $stmt = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasInventory WHERE book_id = ?");
+                $stmt->execute(array($_GET['ID']));
+                $count = $stmt->fetch()[0];
+				$hasInventory = $count > 0;
 				$this->_smarty->assign('hasInventory', $hasInventory);
 				$this->_smarty->assign('book', $book);
 				$this->displayTpl('deletion_confirm.tpl');
@@ -212,44 +186,158 @@ class Booklist extends Schbas {
 		}
 		else {
 			$this->_interface->dieError(
-				'Buch-ID nicht angegeben?!'
+				'Das Buch konnte nicht gefunden werden.'
 			);
 		}
 	}
 
-	private function deleteBookFromDatabase($book) {
+	private function deleteBookFromDatabase($bookID) {
 
-		$query = $this->_em->createQuery(
-			'SELECT b, e, l FROM DM:SchbasBook b
-			LEFT JOIN b.exemplars e
-			LEFT JOIN e.lending l
-			WHERE b = :book
-		');
-		$query->setParameter('book', $book);
-		$book = $query->getOneOrNullResult();
-		if($book) {
-			//delete exemplars and its lending-statuses connected to the books
-			foreach($book->getExemplars() as $exemplar) {
-				foreach($exemplar->getLending() as $lending) {
-					$this->_em->remove($lending);
-				}
-				$this->_em->remove($exemplar);
-			}
-			$this->_em->remove($book);
-			$this->_em->flush();
-			$this->_interface->backlink('administrator|Schbas|Booklist');
-			$this->_interface->dieSuccess(
-				"Das Buch {$book->getTitle()} wurde erfolgreich gelöscht."
-			);
-		}
-		else {
-			$this->_interface->dieError(
-				'Das zu löschende Buch konnte nicht gefunden werden.'
-			);
-		}
+	    $lending = $this->_pdo->prepare("DELETE FROM SchbasLending WHERE inventory_id IN (SELECT id FROM SchbasInventory WHERE book_id = ?)");
+	    $lending->execute(array($bookID));
+
+	    $inventory = $this->_pdo->prepare("DELETE FROM SchbasInventory WHERE book_id = ?");
+	    $inventory->execute(array($bookID));
+
+	    $bookDel = $this->_pdo->prepare("DELETE FROM SchbasBooks WHERE id = ?");
+	    $bookDel->execute(array($bookID));
+
+
+        $this->_interface->backlink('administrator|Schbas|Booklist|ShowBooklist');
+        $this->_interface->dieSuccess(
+            "Das Buch wurde erfolgreich gelöscht."
+        );
+
 	}
 
-	/////////////////////////////////////////////////////////////////////
+    /**
+     * Show list of books which students can keep for next schoolyear, ordered by schoolyear.
+     */
+    function showBooksForNextYear() {
+
+        if (isset($_POST['grade'])) {
+            require_once PATH_INCLUDE . '/Schbas/Loan.php';
+            require_once PATH_ACCESS . '/BookManager.php';
+
+            $gradelevel = $_POST['grade'];
+            $loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
+            $booksThisYear = $loanHelper->booksInGradelevelToLoanGet(
+                $gradelevel
+            );
+            $booksNextYear = $loanHelper->booksInGradelevelToLoanGet(
+                $gradelevel + 1
+            );
+            // Only books that are both in this gradelevel and next gradelevel
+            // will be displayed
+            if(!empty($booksThisYear) && !empty($booksNextYear))
+                $books = array_intersect($booksThisYear, $booksNextYear);
+            else
+                $books = array();
+            $this->showPdf($books);
+        }
+        else {
+            $this->BookInterface->ShowSelectionForBooksToKeep();
+        }
+    }
+
+    /**
+     * Show list of books by topics.
+     */
+    function showBooksByTopic() {
+
+        require_once 'AdminBooklistInterface.php';
+        if (isset($_POST['topic'])) {
+            $stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks b JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID) WHERE sub.abbreviation = ?");
+            $stmt->execute(array($_POST['topic']));
+            $books = $stmt->fetchAll();
+            $this->showPdfFT($books);
+        }
+        else {
+            $this->BookInterface->ShowSelectionForBooksByTopic();
+        }
+    }
+
+
+    private function showPdf($booklist) {
+        $title = "<h2 align='center'>Lehrb&uuml;cher, die f&uuml;r Jahrgang ".($_POST['grade']+1)." behalten werden k&ouml;nnen</h2>";
+        $books = '<table border="0" bordercolor="#FFFFFF" style="background-color:#FFFFFF" width="100%" cellpadding="0" cellspacing="1">
+
+			<tr style="font-weight:bold; text-align:center;"><th>Fach</th><th>Titel</th><th>Verlag</th><th>ISBN-Nr.</th><th>Preis</th></tr>';
+        foreach ($booklist as $book) {
+            // $bookPrices += $book['price'];
+            $books .= '<tr><td>' . $book->getSubject()->getName() . '</td><td>' . $book->getTitle() . '</td><td>' . $book->getPublisher() . '</td><td>' . $book->getIsbn() . '</td><td align="right">' . $book->getPrice() . ' &euro;</td></tr>';
+        }
+        //$books .= '<tr><td></td><td></td><td></td><td style="font-weight:bold; text-align:center;">Summe:</td><td align="right">'.$bookPrices.' &euro;</td></tr>';
+        $books .= '</table>';
+        $books = str_replace('ä', '&auml;', $books);
+        $books = str_replace('é', '&eacute;', $books);
+
+        $schbasPdf = new \Babesk\Schbas\SchbasPdf('pdf');
+        $schbasPdf->create($title . $books);
+        $schbasPdf->output();
+    }
+
+
+    private function showPdfFT($booklist) {
+
+        $title = "<h2 align='center'>Lehrb&uuml;cher f&uuml;r Fach " .
+            ($_POST['topic']) . '</h2>';
+        $books = '<table border="0" bordercolor="#FFFFFF" style="background-color:#FFFFFF" width="100%" cellpadding="0" cellspacing="1">
+
+		<tr style="font-weight:bold; text-align:center;"><th>Klasse</th><th>Titel</th><th>Verlag</th><th>ISBN-Nr.</th><th>Preis</th></tr>';
+        $classAssign = array(
+            '5'=>'05,56',			// hier mit assoziativem array
+            // arbeiten, in der wertzuw.
+            '6'=>'56,06,69,67',		// alle kombinationen auflisten
+            // sql-abfrage:
+            '7'=>'78,07,69,79,67',	// SELECT * FROM `schbas_books` WHERE `class` IN (werte-array pro klasse)
+            '8'=>'78,08,69,79,89',
+            '9'=>'90,91,09,92,69,79,89',
+            '10'=>'90,91,10,92',
+            '11'=>'12,92,13',
+            '12'=>'12,92,13'
+        );
+        foreach ($booklist as $book) {
+            $classKey="";
+            foreach ($classAssign as $key => $value) {
+                if (strpos($value,$book['class']) !== false) {
+                    $classKey.=$key."/";
+                }
+            }
+            $classKey = rtrim($classKey, "/");
+            $books.= '<tr><td>'.$classKey.'</td><td>'.$book['title'].'</td><td>'.$book['publisher'].'</td><td>'.$book['isbn'].'</td><td align="right">'.$book['price'].' &euro;</td></tr>';
+        }
+        $books .= '</table>';
+        $books = str_replace('ä', '&auml;', $books);
+        $books = str_replace('é', '&eacute;', $books);
+        try {
+            $schbasPdf = new \Babesk\Schbas\SchbasPdf(
+                "Buchliste_Fach_".$_POST['topic']
+            );
+            $schbasPdf->create($title . $books);
+            $schbasPdf->output();
+        }
+        catch(Exception $e) {
+            $this->_interface->DieError('Konnte das PDF nicht erstellen!');
+        }
+    }
+
+    /**
+     * Returns the book ID by a given ISBN
+     */
+    function getBookIdByISBN($isbn_search) {
+        require_once PATH_ACCESS . '/BookManager.php';
+        $bookManager = new BookManager();
+        try {
+            $book_id = $bookManager->getBookIDByISBN($isbn_search);
+        } catch (Exception $e) {
+            $this->BookInterface->dieError($this->messages['error']['notFound'] . $e->getMessage());
+        }
+        return $book_id['id'];
+    }
+
+
+    /////////////////////////////////////////////////////////////////////
 	//Attributes
 	/////////////////////////////////////////////////////////////////////
 

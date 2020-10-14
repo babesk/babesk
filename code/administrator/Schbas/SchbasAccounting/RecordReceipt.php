@@ -30,17 +30,17 @@ class RecordReceipt extends \SchbasAccounting {
 		$this->entryPoint($dataContainer);
 
 		try {
-			$count = $this->_em->createQuery(
-				'SELECT COUNT(a) FROM DM:SchbasAccounting a'
-			)->getSingleScalarResult();
-			if(!$count) {
+		    $stmt = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasAccounting");
+		    $stmt->execute();
+			$count = $stmt->fetch();
+			if($count[0] == 0) {
 				$this->_interface->dieMsg('Es gibt keine Einträge.');
 			}
 		}
 		catch(\Exception $e) {
 			$this->_logger->logO('Could not check if accounting-entries exist',
 				['sev' => 'error', 'more' => $e->getMessage()]);
-			$this->_interface->dieError('Konnte die Einträge nicht checken');
+			$this->_interface->dieError('Konnte die Einträge nicht lesen');
 		}
 
 
@@ -88,10 +88,14 @@ class RecordReceipt extends \SchbasAccounting {
 		);
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
+
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+		$stmt->execute(array($prepSchoolyear));
+		$schoolyear = $stmt->fetch();
 		if(count($data['users'])) {
 			die(json_encode(array(
 				'users' => $data['users'], 'pagecount' => $data['pagecount'],
-				'schbasPreparationSchoolyear' => $prepSchoolyear->getLabel()
+				'schbasPreparationSchoolyear' => $schoolyear['label']
 			)));
 		}
 		else {
@@ -115,37 +119,30 @@ class RecordReceipt extends \SchbasAccounting {
 		$filter, $filterForCol, $sortColumn, $pagenum, array $options = []
 	) {
 
-		$query = $this->userdataQueryCreate(
+		$data = $this->userdataQueryCreate(
 			$filter, $filterForCol, $sortColumn, $pagenum, $options
 		);
-		$paginator = new \Doctrine\ORM\Tools\Pagination\Paginator(
-			$query, $fetchJoinCollection = true
-		);
+        $pagecount = $this->pagecountGet($data);
+        $data = array_slice($data, ($pagenum -1) * $this->_usersPerPage, $this->_usersPerPage);
+
 		$users = array();
-		if(count($paginator)) {
-			foreach($paginator as $page) {
-				$user = $page[0];
-				//Doctrines array-hydration treats foreign keys different
-				$user['cardnumber'] = $page['cardnumber'];
-				$user['payedAmount'] = (isset($page['payedAmount'])) ?
-					$page['payedAmount'] : 0.00;
-				$user['amountToPay'] = (isset($page['amountToPay'])) ?
-					$page['amountToPay'] : 0.00;
-				$user['missingAmount'] = (isset($page['missingAmount'])) ?
-					$page['missingAmount'] : 0.00;
-				$user['loanChoice'] = $page['loanChoice'];
-				$user['loanChoiceAbbreviation'] =
-					$page['loanChoiceAbbreviation'];
-				$user['activeGrade'] = $page['activeGrade'];
-				$users[] = $user;
-			}
-			$pagecount = ceil((int) count($paginator) / $this->_usersPerPage);
-			$pagecount = ($pagecount != 0) ? $pagecount : 1;
-			return array('users' => $users, 'pagecount' => $pagecount);
-		}
-		else {
-			return array('users' => array(), 'pagecount' => 1);
-		}
+        /**foreach($data as $page) {
+            $user = $page[0];
+            //Doctrines array-hydration treats foreign keys different
+            $user['cardnumber'] = $page['cardnumber'];
+            $user['payedAmount'] = (isset($page['payedAmount'])) ?
+                $page['payedAmount'] : 0.00;
+            $user['amountToPay'] = (isset($page['amountToPay'])) ?
+                $page['amountToPay'] : 0.00;
+            $user['missingAmount'] = (isset($page['missingAmount'])) ?
+                $page['missingAmount'] : 0.00;
+            $user['loanChoice'] = $page['loanChoice'];
+            $user['loanChoiceAbbreviation'] =
+                $page['loanChoiceAbbreviation'];
+            $user['activeGrade'] = $page['activeGrade'];
+            $users[] = $user;
+        }*/
+        return array('users' => $data, 'pagecount' => $pagecount);
 	}
 
 	/**
@@ -160,99 +157,103 @@ class RecordReceipt extends \SchbasAccounting {
 
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$queryBuilder = $this->_em->createQueryBuilder()
-			->select(
-				'partial u.{id, forename, name, username}, c.cardnumber, ' .
-				'a.payedAmount, a.amountToPay, lc.name AS loanChoice, ' .
-				'lc.abbreviation AS loanChoiceAbbreviation, ' .
-				'lc.id AS loanChoiceId, ' .
-				'a.amountToPay - a.payedAmount AS missingAmount, ' .
-				'CONCAT(g.gradelevel, g.label) AS activeGrade'
-			)->from('DM:SystemUsers', 'u')
-			->leftJoin(
-				'u.schbasAccounting', 'a',
-				'WITH', 'a.schoolyear = :prepSchoolyear'
-			)->leftJoin('u.cards', 'c')
-			->leftJoin('u.attendances', 'uigs')
-			->leftJoin('uigs.schoolyear', 's', 'WITH', ' s = :prepSchoolyear')
-			->leftJoin('uigs.grade', 'g')
-			->leftJoin('a.loanChoice', 'lc')
-			->andWhere('s.id IS NOT NULL');
-		$queryBuilder->setParameter('prepSchoolyear', $prepSchoolyear);
+		$query = "SELECT u.*, c.cardnumber, lc.name AS loanChoice, lc.abbreviation AS loanChoiceAbbreviation, lc.id AS loanChoiceId, CONCAT(u.gradelevel, u.label) AS activeGrade, a.amountToPay, a.payedAmount, a.amountToPay - a.payedAmount AS missingAmount 
+                  FROM UserActiveClass u
+                  JOIN BabeskCards c ON (c.UID = u.ID)
+                  LEFT JOIN (SELECT * FROM SchbasAccounting WHERE schoolyearId = :syID) a ON (u.ID = a.userId)
+                  LEFT JOIN SchbasLoanChoices lc ON (a.loanChoiceId = lc.ID)
+                  LEFT JOIN SystemAttendances att ON (att.userId = u.ID)
+                  WHERE att.schoolyearId = :syID  ";
+
 		if(isset($options['specialFilter'])) {
 			if($options['specialFilter'] == 'showMissingAmountOnly') {
-				$queryBuilder->having('missingAmount > 0');
+			    $query .= "AND a.amountToPay - a.payedAmount > 0 ";
 			}
 			else if($options['specialFilter'] == 'showMissingFormOnly') {
-				$queryBuilder->having('lc IS NULL');
+			    $query .= "AND lc.id IS NULL ";
 			}
 			else if($options['specialFilter'] == 'showSelfbuyerOnly') {
-				$queryBuilder->having('lc.abbreviation = \'nl\'');
+                $query .= "AND lc.abbreviation = 'nl' ";
 			}
 			else if($options['specialFilter'] == 'showNotPayingOnly') {
-				$queryBuilder->having('lc.abbreviation = \'ls\'');
+                $query .= "AND lc.abbreviation = 'ls' ";
 			}
 			else if($options['specialFilter'] == 'showPayedTooMuch') {
-                $queryBuilder->having('missingAmount<0');
+                $query .= "AND a.amountToPay - a.payedAmount < 0 ";
             }
 		}
 		if(!empty($filter) && !empty($filterForCol)) {
-			$filters = array();
+		    $queryOr = "AND (0 ";
 			if(in_array('cardnumber', $filterForCol)) {
-				$filters[] = 'c.cardnumber LIKE :filter';
+                $queryOr .= "OR c.cardnumber LIKE :filter ";
 			}
 			if(in_array('grade', $filterForCol)) {
-				$filters[] = 'CONCAT(g.gradelevel, g.label) LIKE :filter';
+                $queryOr .= "OR CONCAT(u.gradelevel, u.label) LIKE :filter ";
 			}
 			if(in_array('username', $filterForCol)) {
-				$filters[] = 'u.username LIKE :filter';
+                $queryOr .= "OR u.username LIKE :filter ";
 			}
-			$str = implode(' OR ', $filters);
-			$queryBuilder->andWhere($str);
-			$queryBuilder->setParameter('filter', "%${filter}%");
+			$queryOr .= ") ";
+			$query .= $queryOr;
 		}
-		$this->_logger->log($sortColumn);
+
 		if(!empty($sortColumn)) {
 			if($sortColumn == 'grade') {
-				$queryBuilder->orderBy('activeGrade');
+				$query .= "ORDER BY activeGrade";
 			}
 			else if($sortColumn == 'name') {
-				$queryBuilder->orderBy('u.name');
+				$query .= "ORDER BY u.name";
 			}
 			else {
 				$this->_logger->log('Unknown column to sort for',
 					'Notice', Null, json_encode(array('col' => $sortColumn)));
 			}
 		}
-		$queryBuilder->setFirstResult(($pagenum - 1) * $this->_usersPerPage)
-			->setMaxResults($this->_usersPerPage);
-		$query = $queryBuilder->getQuery();
-		//For performance, paginator eats arrays, too
-		$query->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-		return $query;
+
+		$stmt = $this->_pdo->prepare($query);
+		$stmt->execute(array(
+		    'syID' => $prepSchoolyear,
+            'filter' => $filter
+        ));
+		$res = $stmt->fetchAll();
+
+        return $res;
 	}
+
+    protected function pagecountGet($paginator) {
+
+        $bookcount = count($paginator);
+        // No division by zero, never show zero sites
+        if($this->_usersPerPage != 0 && $bookcount > 0) {
+            $pagecount = ceil($bookcount / (int)$this->_usersPerPage);
+        }
+        else {
+            $pagecount = 1;
+        }
+        return $pagecount;
+    }
 
 	private function paidAmountChange($userId, $amount, $toPay) {
 
 		try {
 			$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-			$user = $this->_em->getRepository('DM:SystemUsers')
-				->findOneById($userId);
+			$stmt = $this->_pdo->prepare("SELECT * FROM SystemUsers WHERE id = ?");
+			$stmt->execute(array($userId));
+			$user = $stmt->fetch();
 			$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
 			if(!isset($user)) {
 				throw new Exception('User not found!');
 			}
-			$accounting = $this->_em->getRepository('DM:SchbasAccounting')
-				->findOneBy(['user' => $user, 'schoolyear' => $schoolyear]);
-			$accounting->setPayedAmount($amount);
-			$accounting->setAmountToPay($toPay);
-			$paid = $accounting->getPayedAmount();
-			$toPay = $accounting->getAmountToPay();
-			$missing = $toPay - $paid;
-			$this->_em->persist($accounting);
-			$this->_em->flush();
+			$stmt = $this->_pdo->prepare("UPDATE SchbasAccounting SET payedAmount = :pa, amountToPay = :atp WHERE userId = :uid AND schoolyearId = :syid");
+			$stmt->execute(array(
+			    ':pa' => $amount,
+                ':atp' => $toPay,
+                ':uid' => $userId,
+                ':syid' => $schoolyear
+            ));
+			$missing = $toPay - $amount;
 			die(json_encode(array(
-				'userId' => $userId, 'paid' => $paid, 'toPay' => $toPay, 'missing' => $missing
+				'userId' => $userId, 'paid' => $amount, 'toPay' => $toPay, 'missing' => $missing
 			)));
 
 		} catch(Exception $e) {

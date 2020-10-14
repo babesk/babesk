@@ -202,7 +202,9 @@ class Schoolyear extends System {
 			$this->_interface->dieMsg(_g('The Schoolyear was not deleted'));
 		}
 		else {
-			$sy = $this->_em->find('DM:SystemSchoolyears', $_GET['ID']);
+			$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE id = ?");
+			$stmt->execute(array($_GET['ID']));
+			$sy = $stmt->fetch();
 			if($sy) {
 				$this->_interface->displayDeleteSchoolYearConfirmation($sy);
 			}

@@ -14,8 +14,7 @@ class AdminBooklistInterface extends AdminInterface{
 		$this->smarty->assign('booklistParent', $this->MOD_HEADING);
 	}
 
-	function ShowSelectionFunctionality($arr_action) {
-		$this->smarty->assign('action', $arr_action);
+	function ShowSelectionFunctionality() {
 		$this->smarty->display($this->tplFilePath.'index.tpl');
 	}
 
@@ -38,9 +37,6 @@ class AdminBooklistInterface extends AdminInterface{
 		$this->smarty->display($this->tplFilePath.'deletion_confirm.tpl');
 	}
 
-	function ShowScanForDeleteEntry() {
-		$this->smarty->display($this->tplFilePath.'delete_entry_scan.tpl');
-	}
 
 	/**
 	 * The Path to the Smarty-Parent-Templatefile

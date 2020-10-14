@@ -69,25 +69,27 @@ class View extends \administrator\Schbas\BookAssignments\BookAssignments {
 
 	protected function schoolyearDataGet($schoolyearId) {
 
-		$schoolyears = $this->_em->getRepository('DM:SystemSchoolyears')
-			->findAll();
-		$syPrepEntry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('schbasPreparationSchoolyearId');
+		$stmt = $this->_pdo->query("SELECT * FROM SystemSchoolyears");
+		$schoolyears = $stmt->fetchAll();
+
+		$stmt = $this->_pdo->query("SELECT * FROM SystemGlobalSettings WHERE name = 'schbasPreparationSchoolyearId'");
+		$syPrepEntry = $stmt->fetch();
+
 		$jsonData = [];
 		foreach($schoolyears as $schoolyear) {
 			// The schoolyear to be first displayed is the schoolyear thats
 			// active in schbasPreparationSchoolyear if no schoolyearId is
 			// given
 			$isActive = (
-				($schoolyearId && $schoolyear->getId() == $schoolyearId) ||
+				($schoolyearId && $schoolyear['ID'] == $schoolyearId) ||
 				(
 					!$schoolyearId &&
-					$schoolyear->getId() == $syPrepEntry->getValue()
+					$schoolyear['ID'] == $syPrepEntry['value']
 				)
 			);
 			$jsonData[] = [
-				'id' => $schoolyear->getId(),
-				'name' => $schoolyear->getLabel(),
+				'id' => $schoolyear['ID'],
+				'name' => $schoolyear['label'],
 				'active' => $isActive
 			];
 		}
@@ -96,7 +98,7 @@ class View extends \administrator\Schbas\BookAssignments\BookAssignments {
 
 	protected function bookDataGet($schoolyearId) {
 
-		$stmt = $this->_em->getConnection()->prepare(
+		$stmt = $this->_pdo->prepare(
 			'SELECT b.id AS bookId, b.title AS bookName, g.ID AS gradeId,
 				g.label AS gradeLabel, g.gradelevel AS gradelevel,
 				COUNT(a.id) AS userCount

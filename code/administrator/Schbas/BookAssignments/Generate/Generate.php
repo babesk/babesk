@@ -63,13 +63,14 @@ class Generate extends \administrator\Schbas\BookAssignments\BookAssignments {
 	protected function overviewInfosSend() {
 
 		$loanBookMan = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$schoolyear = $loanBookMan->schbasPreparationSchoolyearGet();
-		$assignmentsExist = $this->assignmentsForSchoolyearExistCheck(
-			$schoolyear
-		);
+		$schoolyearID = $loanBookMan->schbasPreparationSchoolyearGet();
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+		$stmt->execute(array($schoolyearID));
+		$schoolyear = $stmt->fetch();
+		$assignmentsExist = $this->assignmentsForSchoolyearExistCheck($schoolyearID		);
 		$booksInGradelevels = $this->booksAssignedToGradelevelsGet();
 		die(json_encode(array(
-			'schoolyear' => $schoolyear->getLabel(),
+			'schoolyear' => $schoolyear['label'],
 			'assignmentsForSchoolyearExist' => $assignmentsExist,
 			'bookAssignmentsForGrades' => $booksInGradelevels
 		)));
@@ -83,14 +84,9 @@ class Generate extends \administrator\Schbas\BookAssignments\BookAssignments {
 	protected function assignmentsForSchoolyearExistCheck($schoolyear) {
 
 		try {
-			$query = $this->_em->createQuery(
-				'SELECT COUNT(usb) FROM DM:SchbasUserShouldLendBook usb
-					WHERE usb.schoolyear = :schoolyear
-			');
-			$query->setParameter('schoolyear', $schoolyear);
-			$res = $query->getOneOrNullResult(
-				\Doctrine\ORM\Query::HYDRATE_SINGLE_SCALAR
-			);
+		    $stmt = $this->_pdo->prepare("SELECT COUNT(*) FROM SchbasUsersShouldLendBooks WHERE schoolyearId = ?");
+		    $stmt->execute(array($schoolyear));
+		    $res = $stmt->fetch()[0];
 			return (int)$res > 0;
 
 		} catch(\Exception $e) {
@@ -118,8 +114,8 @@ class Generate extends \administrator\Schbas\BookAssignments\BookAssignments {
 			$gradelevels = $data['gradelevels'];
 			foreach($gradelevels as $gradelevel) {
 				$booksInGradelevels[$gradelevel][] = array(
-					'id' => $book->getId(),
-					'name' => $book->getTitle()
+					'id' => $book['id'],
+					'name' => $book['title']
 				);
 			}
 		}
@@ -220,12 +216,8 @@ class Generate extends \administrator\Schbas\BookAssignments\BookAssignments {
 	protected function deleteExistingAssignmentsForSchoolyear($schoolyear) {
 
 		try {
-			$query = $this->_em->createQuery(
-				'DELETE FROM DM:SchbasUserShouldLendBook usb
-					WHERE usb.schoolyear = :schoolyear
-			');
-			$query->setParameter('schoolyear', $schoolyear);
-			$query->getResult();
+		    $stmt = $this->_pdo->prepare("DELETE FROM SchbasUsersShouldLendBooks WHERE schoolyearId = ?");
+		    $stmt->execute(array($schoolyear));
 
 		} catch(Exception $e) {
 			$this->_logger->logO('Could not delete existing assignments for ' .

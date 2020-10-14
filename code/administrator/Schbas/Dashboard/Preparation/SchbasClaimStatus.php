@@ -36,17 +36,19 @@ class SchbasClaimStatus
 
 	protected function changeStatus($newStatus) {
 
-		$statusEntry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('isSchbasClaimEnabled');
+	    $stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = ?");
+	    $stmt->execute(array('isSchbasClaimEnabled'));
+	    $statusEntry = $stmt->fetch();
+
 		if(!$statusEntry) {
 			$this->_logger->logO('Could not find isSchbasClaimEnabled',
 				['sev' => 'error']);
 			dieHttp('Konnte Einstellung nicht finden', 500);
 		}
-		if($statusEntry->getValue() != $newStatus) {
+		if($statusEntry['value'] != $newStatus) {
 			$val = ($newStatus) ? 1 : 0;
-			$statusEntry->setValue($val);
-			$this->_em->flush();
+			$stmt = $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value = ? WHERE id = ?");
+			$stmt->execute(array($val, $statusEntry['id']));
 			die('Status wurde erfolgreich verändert');
 		}
 		else {

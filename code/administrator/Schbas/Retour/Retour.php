@@ -78,40 +78,32 @@ class Retour extends Schbas {
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSy = $loanHelper->schbasPreparationSchoolyearGet();
 		$uid = $this->GetUser($card_id);
-		$user = $this->_em->find('DM:SystemUsers', $uid);
-		$query = $this->_em->createQuery(
-			'SELECT b, e, l FROM DM:SchbasBook b
-			INNER JOIN b.exemplars e
-			INNER JOIN e.lending l WITH l.user = :user
-		');
-		$query->setParameter('user', $user);
-		$loanbooks = $query->getResult();
+		$stmt = $this->_pdo->prepare("SELECT * FROM UserActiveClass WHERE ID = ?");
+		$stmt->execute(array($uid));
+		$user = $stmt->fetch();
+
+		$stmt = $this->_pdo->prepare("SELECT b.*, i.exemplar, i.year_of_purchase, sub.name AS subName FROM SchbasLending l
+												JOIN SchbasInventory i ON (l.inventory_id = i.id)
+												JOIN SchbasBooks b ON (i.book_id = b.id)
+												LEFT JOIN SystemSchoolsubjects sub ON (sub.ID = b.subjectId)
+												WHERE l.user_id = ?");
+		$stmt->execute(array($uid));
+		$loanbooks = $stmt->fetchAll();
 		if(!count($loanbooks)) {
 			$this->_interface->dieMsg('Der Benutzer hat keine Bücher ausgeliehen.');
 		}
-		$grade = $this->_em->getRepository('DM:SystemUsers')->getActiveGradeByUser($user);
-		$userData = "{$user->getForename()} {$user->getName()} ";
-		if($grade) {
-			$userData .="({$grade->getGradelevel()}{$grade->getLabel()})";
-		}
-		$accountingQb = $this->_em->createQueryBuilder()
-			->select('u, a, lc')
-			->from('DM:SystemUsers', 'u')
-			->leftJoin(
-				'u.schbasAccounting', 'a',
-				'WITH', 'a.schoolyear = :prepSchoolyear'
-			)
-			->leftJoin('a.loanChoice', 'lc')
-			->where('u = :user');
-		$accountingQb->setParameter('prepSchoolyear', $prepSy);
-		$accountingQb->setParameter('user', $user);
-		$user = $accountingQb->getQuery()->getOneOrNullResult();
+
+		$userData = "{$user['forename']} {$user['name']} ({$user['gradelevel']}{$user['label']})";
+
+        $stmt = $this->_pdo->prepare("SELECT a.*, lc.name as lcName FROM SchbasAccounting a LEFT JOIN SchbasLoanChoices lc ON (a.loanChoiceId = lc.ID) WHERE userId = ? AND schoolyearId = ?");
+        $stmt->execute(array($user['ID'], $prepSy));
+        $accounting = $stmt->fetch();
 
 		$this->_smarty->assign('cardid', $card_id);
 		$this->_smarty->assign('uid', $uid);
 		$this->_smarty->assign('data', $loanbooks);
 		$this->_smarty->assign('fullname',$userData);
-		$this->_smarty->assign('user', $user);
+		$this->_smarty->assign('accounting', $accounting);
 		$this->_smarty->assign('adress', ($_SERVER['HTTP_HOST']).$_SERVER['REQUEST_URI']);
 		$this->displayTpl('retourbooks.tpl');
 	}
@@ -123,21 +115,17 @@ class Retour extends Schbas {
 
 		try {
 			$uid = $this->GetUser($card_id);
-			$user = $this->_em->find('DM:SystemUsers', $uid);
-			$query = $this->_em->createQuery(
-				'SELECT b, e, l FROM DM:SchbasBook b
-				INNER JOIN b.exemplars e
-				INNER JOIN e.lending l WITH l.user = :user
-			');
-			$query->setParameter('user', $user);
-			$loanbooks = $query->getResult();
+
+            $stmt = $this->_pdo->prepare("SELECT b.*, i.exemplar, i.year_of_purchase, sub.name AS subName FROM SchbasLending l
+												JOIN SchbasInventory i ON (l.inventory_id = i.id)
+												JOIN SchbasBooks b ON (i.book_id = b.id)
+												LEFT JOIN SystemSchoolsubjects sub ON (sub.ID = b.subjectId)
+												WHERE l.user_id = ?");
+            $stmt->execute(array($uid));
+            $loanbooks = $stmt->fetchAll();
 			if(!count($loanbooks)) {
 				$this->displayTpl('retourbooksAjaxEmpty.tpl');
 			}
-			$grade = $this->_em->getRepository('DM:SystemUsers')
-				->getActiveGradeByUser($user);
-			$userData = "{$user->getForename()} {$user->getName()} " .
-				"({$grade->getGradelevel()}{$grade->getLabel()})";
 
 		} catch (Exception $e) {
 			$this->_logger->logO('Error in ajax of Schbas Retour',
@@ -152,7 +140,6 @@ class Retour extends Schbas {
 			'adress', ($_SERVER['HTTP_HOST']).$_SERVER['REQUEST_URI']
 		);
 		$this->_smarty->assign('data', $loanbooks);
-		$this->_smarty->assign('fullname',$userData);
 		$this->displayTpl('retourbooksAjax.tpl');
 	}
 
@@ -162,18 +149,18 @@ class Retour extends Schbas {
 	 */
 	function RetourBook($inventarnr,$uid) {
 
-		$user = $this->_em->find('DM:SystemUsers', $uid);
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemUsers WHERE ID = ?");
+		$stmt->execute(array($uid));
+		$user = $stmt->fetch();
 		if($user) {
 			$barcode = \Babesk\Schbas\Barcode::createByBarcodeString(
 				$inventarnr
 			);
-			$inventory = $barcode->getMatchingBookExemplar($this->_em);
+			$inventory = $barcode->getMatchingBookExemplar($this->_pdo);
 			if(!$inventory) { return false; }
-			$lending = $inventory->getLending();
-			if(!$lending) { return false; }
 			try {
-				$this->_em->remove($lending->first());
-				$this->_em->flush();
+				$stmt = $this->_pdo->prepare("DELETE FROM SchbasLending WHERE inventory_id = ? AND user_id = ?");
+				$stmt->execute(array($inventory['id'], $uid));
 				return true;
 			}
 			catch(Exception $e) {
@@ -230,20 +217,6 @@ class Retour extends Schbas {
 		return $uid;
 	}
 
-	public function fetchUserDetails($userId) {
-
-		$userDetails = TableMng::query(sprintf(
-			'SELECT u.*,
-			(SELECT CONCAT(g.gradelevel, g.label) AS class
-					FROM SystemAttendances uigs
-					LEFT JOIN SystemGrades g ON uigs.gradeId = g.ID
-					WHERE uigs.userId = u.ID AND
-						uigs.schoolyearId = @activeSchoolyear) AS class
-			FROM SystemUsers u WHERE `ID` = %s', $userId));
-
-
-		return $userDetails[0];
-	}
 
 	/////////////////////////////////////////////////////////////////////
 	//Attributes

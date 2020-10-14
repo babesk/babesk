@@ -103,21 +103,16 @@ class WebHomepageSettings extends System {
 	}
 
 	protected function maintenance() {
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = 'siteIsUnderMaintenance'");
+		$stmt->execute();
+		$entry = $stmt->fetch();
 
-		$entry = $this->_em->getRepository(
-				'DM:SystemGlobalSettings'
-			)->findOneByName('siteIsUnderMaintenance');
 		if($entry) {
-			$val = $entry->getValue();
+			$val = $entry['value'];
 		}
 		else {
-			// Global Setting does not exist; create it
-			$setting = new \Babesk\ORM\SystemGlobalSettings();
-			$setting->setName('siteIsUnderMaintenance');
-			$setting->setValue(0);
-			$this->_em->persist($setting);
-			$this->_em->flush();
-			$val = $setting->getValue();
+			$this->_pdo->prepare("INSERT INTO SystemGlobalSettings(name, value) VALUES ('siteIsUnderMaintenance', 0)")->execute();
+			$val = 0;
 		}
 
 		$this->_smarty->assign('maintenance', $val);
@@ -132,11 +127,8 @@ class WebHomepageSettings extends System {
 
 		$value = (isset($_POST['maintenance'])) ? 1 : 0;
 		try {
-			$setting = $this->_em->getRepository(
-					'DM:SystemGlobalSettings'
-				)->findOneByName('siteIsUnderMaintenance');
-			$setting->setValue($value);
-			$this->_em->flush();
+			$stmt = $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value=? WHERE name='siteIsUnderMaintenance'");
+			$stmt->execute(array($value));
 
 		} catch (Exception $e) {
 			$this->_interface->dieError(

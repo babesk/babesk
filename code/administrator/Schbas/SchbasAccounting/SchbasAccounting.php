@@ -32,8 +32,6 @@ class SchbasAccounting extends Schbas {
 		$this->_pdo = $dataContainer->getPdo();
 
 
-
-
 		if(isset($_GET['action'])) {
 			switch($_GET['action']) {
 
@@ -61,27 +59,15 @@ class SchbasAccounting extends Schbas {
 				case 'userRemoveByID':
 					if (isset($_POST['UserID'])){
 						$this->userRemoveByID();
-
 					}else{
 						$this->SchbasAccountingInterface->showDelete();
-
 					}
-
 					break;
 				case 'remember2':
 					$this->remember2();
 					break;
 				case 'rebmemer2':
 					$this->rebmemer2();
-					break;
-				case 1:
-					if (isset($_GET['ajax'])){
-						//$this->SchbasAccountingInterface->test();
-						$this->executePayment($_POST['ID'], $_POST['payment']);
-						break;
-					}else{
-						$this->showUsers();break;
-					}
 					break;
 				default:
 					die('Wrong action-value given');
@@ -93,13 +79,12 @@ class SchbasAccounting extends Schbas {
 
 			$listOfClasses = $this->getListOfClasses();
 			$listOfClassesRebmemer = $this->getListOfClasses("rebmemer2");
-			$grades = $this->_em->getRepository('DM:SystemGrades')
-				->findAll();
+			$gradesTbl = TableMng::query("SELECT * FROM SystemGrades");
 			$this->_smarty->assign('listOfClasses', $listOfClasses);
 			$this->_smarty->assign(
 				'listOfClassesRebmemer', $listOfClassesRebmemer
 			);
-			$this->_smarty->assign('grades', $grades);
+			$this->_smarty->assign('grades', $gradesTbl);
 			$this->displayTpl('menu.tpl');
 		}
 	}
@@ -176,20 +161,19 @@ class SchbasAccounting extends Schbas {
 		if($userId && $loanChoiceStr) {
 
 			$loanChoices = array('nl','ln','lr','ls');
-			$user = $this->_em->find('DM:SystemUsers', $userId);
+			$user = $this->getUserByID($userId);
 			if(!$user) {
 				$this->SchbasAccountingInterface->dieError(
 					'Konnte den Benutzer nicht finden.'
 				);
 			}
-			$accounting = $this->_em->getRepository('DM:SchbasAccounting')
-				->findOneBy(
-					['user' => $user, 'schoolyear' => $prepSchoolyear]
-				);
+			$stmt = $this->_pdo->prepare("SELECT * FROM SchbasAccounting WHERE userId = ? AND schoolyearId = ?");
+			$stmt->execute(array($userId, $prepSchoolyear));
+			$accounting = $stmt->fetch();
 			if ($accounting) {
 				http_response_code(409);
 				die('Der Antrag für diesen Benutzer wurde bereits ' .
-					'eingescannt. Bitte löschen sie ihn manuell, um ihn neu ' .
+					'eingescannt. Bitte löschen Sie ihn manuell, um ihn neu ' .
 					'hinzuzufügen.');
 			}
 			if(!$this->isUserInSchoolyearCheck($user, $prepSchoolyear)) {
@@ -201,30 +185,25 @@ class SchbasAccounting extends Schbas {
 
 				require_once PATH_INCLUDE . '/Schbas/Loan.php';
 				$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-				$loanChoice = $this->_em->getRepository('DM:SchbasLoanChoice')
-					->findOneByAbbreviation($loanChoiceStr);
+				$stmt = $this->_pdo->prepare("SELECT * FROM SchbasLoanChoices WHERE abbreviation = ?");
+				$stmt->execute(array($loanChoiceStr));
+				$loanChoice = $stmt->fetch();
 				try {
 					list($feeNormal, $feeReduced) = $loanHelper
 						->loanPriceOfAllBookAssignmentsForUserCalculate($user);
 
-					if ($loanChoice->getAbbreviation() == "ln") {
+					if ($loanChoice['abbreviation'] == "ln") {
 						$amountToPay = $feeNormal;
 					}
-					else if ($loanChoice->getAbbreviation() == "lr") {
+					else if ($loanChoice['abbreviation'] == "lr") {
 						$amountToPay = $feeReduced;
 					}
 					else {
 						$amountToPay = 0.00;
 					}
 
-					$accounting = new \Babesk\ORM\SchbasAccounting();
-					$accounting->setUser($user);
-					$accounting->setSchoolyear($prepSchoolyear);
-					$accounting->setLoanChoice($loanChoice);
-					$accounting->setPayedAmount(0.00);
-					$accounting->setAmountToPay($amountToPay);
-					$this->_em->persist($accounting);
-					$this->_em->flush();
+					$stmt = $this->_pdo->prepare("INSERT INTO SchbasAccounting(userId, loanChoiceId, payedAmount, amountToPay, schoolyearId) VALUES (?,?,?,?,?)");
+					$stmt->execute(array($user['ID'], $loanChoice['ID'], 0, $amountToPay, $prepSchoolyear));
 					die('success');
 				}
 				catch(\Exception $e) {
@@ -244,117 +223,10 @@ class SchbasAccounting extends Schbas {
 
 	protected function isUserInSchoolyearCheck($user, $schoolyear) {
 		//Check if the user is in the SchbasPreparationSchoolyear
-		$count = $this->_em->createQuery(
-			'SELECT COUNT(u) FROM DM:SystemUsers u
-				INNER JOIN u.attendances uigs
-				INNER JOIN uigs.schoolyear s WITH s = :schoolyear
-				WHERE u = :user
-		')->setParameter('user', $user)
-			->setParameter('schoolyear', $schoolyear)
-			->getSingleScalarResult();
-		return $count > 0;
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemAttendances WHERE userId = ? AND schoolyearId = ?");
+		$stmt->execute(array($user['ID'], $schoolyear));
+		return $stmt->fetch();
 	}
-
-	private function showUsers () {
-		$schoolyearDesired = TableMng::query('SELECT ID FROM SystemSchoolyears WHERE active = 1');
-		$schoolyearID = $schoolyearDesired[0]['ID'];
-		$gradeID = TableMng::query("SELECT DISTINCT gradeID FROM SystemAttendances WHERE schoolyearID = $schoolyearID");
-		foreach ($gradeID as $grade){
-			$ID = $grade['gradeID'];
-			$SaveTheCows = TableMng::query("SELECT * FROM SystemGrades WHERE ID = $ID");
-			// Cows stands for Code of worst systematic
-			$gradesAll[] = $SaveTheCows[0];
-		}
-		$users = TableMng::query(
-			'SELECT * FROM SystemUsers ORDER BY name ASC'
-		);
-		$users = $this->addGradeLabelToUsers($users);
-		$users = $this->addPayedAmountToUsers($users);
-		if (isset ($_GET['gradeIdDesired'])){
-			for ($i=0; $i<sizeof($gradesAll); $i++){
-				if ($gradesAll[$i]['gradelevel'].'-'.$gradesAll[$i]['label'] == $_GET['gradeIdDesired']){
-					$gradeDesired = $gradesAll[$i]['ID'];
-				}
-			}
-			$i = 0;
-			foreach ($users as &$user) {
-				if (isset($user["gradeLabel"])){
-					if ($user["gradeLabel"] != $_GET['gradeIdDesired'])
-						unset($users[$i]);
-				}else{
-					unset($users[$i]);
-				}
-				$i++;
-			}
-			$users = array_values($users);
-		}else{
-			$gradeDesired = null;
-		}
-		$this->SchbasAccountingInterface->showAllUsers($gradesAll,$gradeDesired,$users);
-	}
-
-	private function addGradeLabelToUsers ($users) {
-
-		$jointsUsersInGrade = TableMng::query('SELECT * FROM SystemAttendances');
-		$grades = TableMng::query('SELECT * FROM SystemGrades');
-		if (isset($users) && count ($users) && isset($jointsUsersInGrade) && count ($jointsUsersInGrade)) {
-			foreach ($users as & $user) {
-				foreach ($jointsUsersInGrade as $joint) {
-					if ($joint['userId'] == $user['ID']) {
-						foreach ($grades as $grade) {
-							if ($grade['ID'] == $joint['gradeId']) {
-								$user['gradeLabel'] = $grade['gradelevel'] . '-' . $grade['label'];
-							}
-						}
-					}
-				}
-			}
-		}
-		return $users;
-	}
-
-	private function addPayedAmountToUsers ($users) {
-
-		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$query = $this->_em->createQuery(
-			'SELECT a, lc FROM DM:SchbasAccounting a
-				INNER JOIN a.loanChoice lc
-				WHERE a.schoolyear = :schoolyear
-		');
-		$query->setParameter('schoolyear', $schoolyear);
-		$payed = $query->getResult();
-		foreach($users as &$user) {
-			foreach($payed as $pay) {
-				if($pay->getUser()->getId() == $user['ID']) {
-					$user['payedAmount'] = $pay->getPayedAmount();
-					$user['amountToPay'] = $pay->getAmountToPay();
-					$user['loanChoice'] = $pay->getLoanChoice()
-						->getAbbreviation();
-				}
-			}
-		}
-		return $users;
-	}
-
-
-	private function executePayment($UID, $payment) {
-		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$schoolyearId = $schoolyear->getId();
-		$UID = str_replace("Payment", "", $UID);
-		try {
-			TableMng::query(
-				"UPDATE SchbasAccounting
-					SET payedAmount = $payment
-					WHERE userId = $UID AND schoolyearId = $schoolyearId
-			");
-		} catch (Exception $e) {
-
-		}
-
-	}
-
 
 	function userRemoveByID() {
 
@@ -373,16 +245,15 @@ class SchbasAccounting extends Schbas {
 
 		list($userId, $loanChoice) = $formData;
 		if($userId && $loanChoice) {
-			$user = $this->_em->find('DM:SystemUsers', $userId);
+			$user = $this->getUserByID($userId);
 			$prepSchoolyear = $this->preparationSchoolyearGet();
 			if($user) {
-				$accounting = $this->_em->getRepository('DM:SchbasAccounting')
-					->findOneBy(
-						['user' => $user, 'schoolyear' => $prepSchoolyear]
-					);
+                $stmt = $this->_pdo->prepare("SELECT * FROM SchbasAccounting WHERE userId = ? AND schoolyearId = ?");
+                $stmt->execute(array($userId, $prepSchoolyear));
+                $accounting = $stmt->fetch();
 				if($accounting) {
-					$this->_em->remove($accounting);
-					$this->_em->flush();
+					$stmt = $this->_pdo->prepare("DELETE FROM SchbasAccounting WHERE userId = ? AND schoolyearId = ?");
+                    $stmt->execute(array($userId, $prepSchoolyear));
 					$this->SchbasAccountingInterface->showDeleteSuccess();
 				}
 				else {
@@ -406,21 +277,9 @@ class SchbasAccounting extends Schbas {
 
 	protected function preparationSchoolyearGet() {
 
-		$schoolyear = false;
-		$entry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('schbasPreparationSchoolyearId');
-		if($entry) {
-			$schoolyear = $this->_em->find(
-				'DM:SystemSchoolyears', $entry->getValue()
-			);
-		}
-		if(!$schoolyear) {
-			$this->_logger->logO('Could not fetch PreparationSchoolyear',
-				['sev' => 'error']);
-			$this->SchbasAccountingInterface->dieError('Ein Fehler ist ' .
-				'beim Abrufen des Vorbereitungs-Schuljahres aufgetreten.');
-		}
-		return $schoolyear;
+        $loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
+        $prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
+		return $prepSchoolyear;
 	}
 
 	private function remember(){	// function prints lend books
@@ -524,13 +383,6 @@ class SchbasAccounting extends Schbas {
 		return $booklist;
 	}
 
-	private function getBooksOfStudentIdRebmemer($studentId, $class){
-
-
-		return $books;
-	}
-
-
 	private function remember2(){	// function prints lend books
 
 		if(!isset($_GET['class'])){
@@ -593,10 +445,9 @@ class SchbasAccounting extends Schbas {
 			$nrOfStudentIDs = count($studentIDs);	// excluded from for loop to increase speed.... (dont like it? channge it...)
 			$name = $forename = $books = [];
 			foreach($studentIDs as $userId) {
-				$user = $this->_em->getReference('DM:SystemUsers', $userId);
 				$name[] = $this->getNameOfStudentId($userId);
 				$forename[] = $this->getForenameOfStudentId($userId);
-				$books[] = $this->_loanHelper->loanBooksOfUserGet($user);
+				$books[] = $this->_loanHelper->loanBooksOfUserGet(array('ID' => $userId));
 			}
 
 			$listOfClasses = $this->getListOfClasses("rebmemer2");
@@ -620,37 +471,29 @@ class SchbasAccounting extends Schbas {
 	private function bookOverview() {
 
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$schoolyear = $this->_em->getRepository('DM:SystemSchoolyears')
-			->findOneByActive(true);
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE active = 1");
+		$stmt->execute();
+		$schoolyear = $stmt->fetch();
 		$gradeId = filter_input(INPUT_POST, 'grade');
 		if(!$gradeId) {
 			$this->_interface->dieError('Keine Klasse übergeben');
 		}
-		$grade = $this->_em->find('DM:SystemGrades', $gradeId);
-		$query = $this->_em->createQuery(
-			'SELECT u FROM DM:SystemUsers u
-			INNER JOIN u.attendances a
-			INNER JOIN a.schoolyear s WITH s = :schoolyear
-			INNER JOIN a.grade g WITH g = :grade
-			ORDER BY u.name, u.forename
-		');
-		$query->setParameter('grade', $grade);
-		$query->setParameter('schoolyear', $schoolyear);
-		$users = $query->getResult();
+		$stmt = $this->_pdo->prepare("SELECT u.* FROM UserActiveClass u JOIN SystemAttendances a ON (u.ID = a.userId) WHERE gradeId = ? AND schoolyearId = ?");
+		$stmt->execute(array($gradeId, $schoolyear['ID']));
+		$users = $stmt->fetchAll();
 
 		// The only difference between the PDF for booksToReturn and
 		// booksToLoan is the title and the included books
 		$pdfTitle = '';
-		$syName = $schoolyear->getLabel();
-		$gradename = $grade->getGradelevel() . $grade->getLabel();
-		// [{ user: {<userdata>}, books: [{<bookdata>}] }]
+		$syName = $schoolyear['label'];
+		$gradename = $users[0]['gradelevel'] . $users[0]['label'];
 		$usersWithBooks = [];
 
 		if(isset($_POST['booksToReturn'])) {
 			$pdfTitle = "Abzugebende Bücher für $gradename ($syName)";
 			foreach($users as $user) {
 				$books = $loanHelper->lendBooksToReturnOfUserGet(
-					$user, $schoolyear
+					$user, $schoolyear['ID']
 				);
 				$usersWithBooks[] = [
 					'user' => $user,
@@ -662,7 +505,7 @@ class SchbasAccounting extends Schbas {
 			$pdfTitle = "Noch auszuleihende Bücher für $gradename ($syName)";
 			foreach($users as $user) {
 				$books = $loanHelper->loanBooksOfUserGet(
-					$user, ['schoolyear' => $schoolyear]
+					$user, ['schoolyear' => $schoolyear['ID']]
 				);
 				$usersWithBooks[] = [
 					'user' => $user,
@@ -671,7 +514,6 @@ class SchbasAccounting extends Schbas {
 			}
 		}
 		$date = date('d.m.Y H:i:s');
-		$this->_smarty->assign('grade', $grade);
 		$this->_smarty->assign('date', $date);
 		$this->_smarty->assign('usersWithBooks', $usersWithBooks);
 		$this->_smarty->assign('pdfTitle', $pdfTitle);
@@ -681,6 +523,13 @@ class SchbasAccounting extends Schbas {
 		$pdf = new GeneralPdf($this->_pdo);
 		$pdf->create($pdfTitle, $pdfContent);
 		$pdf->output();
+	}
+
+	private function getUserByID($uid){
+        $stmt = $this->_pdo->prepare("SELECT * FROM SystemUsers WHERE ID = ?");
+        $stmt->execute(array($uid));
+        $user = $stmt->fetch();
+        return $user;
 	}
 
 
