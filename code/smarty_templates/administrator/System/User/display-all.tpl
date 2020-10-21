@@ -32,6 +32,10 @@
 				title="Nutzer löschen">
 				<span class="fa fa-trash-o"></span>
 			</a>
+			<a class="btn btn-xs btn-info user-action-dsgvo" href="index.php?module=administrator|System|User&action=DSGVO&id=<%= ID %>"
+			   title="DSGVO">
+				<span class="fa fa-info"></span>
+			</a>
 		</div>
 	</td>
 </script>

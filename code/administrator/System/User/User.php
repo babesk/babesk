@@ -11,6 +11,7 @@ require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_INCLUDE . '/ArrayFunctions.php';
 require_once PATH_ADMIN . '/System/System.php';
 require_once PATH_INCLUDE . '/System/UserGroupsManager.php';
+require_once PATH_INCLUDE . '/pdf/GeneralPdf.php';
 
 class User extends System {
 
@@ -33,26 +34,34 @@ class User extends System {
 	public function execute($dataContainer) {
 
 		$this->entryPoint($dataContainer);
-
 		//hotfix, to be reworked
-		if(isset($_GET['showPdfOfDeletedUser'])) {
-			TableMng::sqlEscape($_GET['pdfId']);
-			$fileId = $_GET['pdfId'];
-			$deleter = new UserDelete($this->_smarty);
-			$deleter->showPdfOfDeletedUser($fileId);
-			die();
-		}
-		//Another hotfix, to be removed when UserDisplayAll gets reworked to a
-		//client-based app (something like angular.js)
+		if(isset($_GET['action'])){
+			switch ($_GET['action']){
+				case 'DSGVO':
+					$this->showDSGVO($_GET['id']);
+			}
+		}else{
+            if(isset($_GET['showPdfOfDeletedUser'])) {
+                TableMng::sqlEscape($_GET['pdfId']);
+                $fileId = $_GET['pdfId'];
+                $deleter = new UserDelete($this->_smarty);
+                $deleter->showPdfOfDeletedUser($fileId);
+                die();
+            }
+            //Another hotfix, to be removed when UserDisplayAll gets reworked to a
+            //client-based app (something like angular.js)
 
-		$execReq = $dataContainer->getExecutionCommand()->pathGet();
-		if($this->submoduleCountGet($execReq)) {
-			$this->submoduleExecuteAsMethod($execReq);
+            $execReq = $dataContainer->getExecutionCommand()->pathGet();
+            if($this->submoduleCountGet($execReq)) {
+                $this->submoduleExecuteAsMethod($execReq);
+            }
+            else {
+                // $this->actionSwitch();
+                $this->userInterface->ShowSelectionFunctionality();
+            }
 		}
-		else {
-			// $this->actionSwitch();
-			$this->userInterface->ShowSelectionFunctionality();
-		}
+
+
 	}
 	///////////////////////////////////////////////////////////////////////
 	//Implementations
@@ -95,6 +104,15 @@ class User extends System {
 		$deleter = new UserDelete($this->_smarty);
 		$deleter->deleteFromDb();
 	}
+
+    protected function showDSGVO($userId) {
+        $pdfContent = $this->_smarty->fetch(
+            PATH_SMARTY_TPL . '/pdf/schbas-books-overview.pdf.tpl'
+        );
+        $pdf = new GeneralPdf($this->_pdo);
+        $pdf->create("Test", $pdfContent);
+        $pdf->output();
+    }
 
 	/**
 	 * Registers a user. Requests should come from Ajax
