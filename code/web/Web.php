@@ -393,11 +393,11 @@ class Web {
 
 	private function checkForMaintenance() {
 
-		$settings = $this->_em->getRepository(
-				'DM:SystemGlobalSettings'
-			)->findOneByName('siteIsUnderMaintenance');
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemGlobalSettings WHERE name = 'siteIsUnderMaintenance'");
+		$stmt->execute();
+		$settings = $stmt->fetch();
 		if($settings) {
-			if($settings->getValue() == 1) {
+			if($settings['value'] == 1) {
 				$this->_interface->setBacklink(false);
 				$this->_interface->dieMessage(
 					'Die Seite wird momentan überarbeitet. Versuche es ' .

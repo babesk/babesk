@@ -2,7 +2,7 @@
 	Übersicht der Leih- und Kaufexemplare
 </h2>
 <p align="center">
-	Für {$user->getForename()} {$user->getName()} in {$schoolyear->getLabel()}
+	Für {$user['forename']} {$user['name']} in {$schoolyear['label']}
 </p>
 <p align="center">
 	Erstellt am {$letterDate}
@@ -26,19 +26,19 @@
 			{foreach $booksToLoan as $book}
 			<tr>
 				<td width="40">
-					{$book->getSubject()->getName()}
+					{$book['subject']}
 				</td>
 				<td width="270">
-					{$book->getTitle()}
+					{$book['title']}
 				</td>
 				<td>
-					{$book->getPublisher()}
+					{$book['publisher']}
 				</td>
 				<td>
-					{$book->getIsbn()}
+					{$book['isbn']}
 				</td>
 				<td align="right" width="50">
-					{number_format($book->getPrice(), 2)} €
+					{number_format($book['price'], 2)} €
 				</td>
 			</tr>
 			{/foreach}

@@ -16,19 +16,8 @@ class Account extends \Settings {
 		$this->entryPoint($dataContainer);
 		$lockAccount = filter_input(INPUT_GET, 'lockAccount');
 		if($lockAccount == 'lockAccount') {
-			$user = $this->_em->getReference(
-				'DM:SystemUsers', $_SESSION['uid']
-			);
-			if($user) {
-				$this->lockUserAccount($user);
-				header('Location: index.php?action=logout');
-			}
-			else {
-				$this->_logger->logO('Could not find the user to lock', [
-					'sev' => 'notice', 'moreJson' => ['user' => $user->getId()]
-				]);
-				$this->_interface->dieError('Benutzer nicht gefunden.');
-			}
+			$this->lockUserAccount($_SESSION['uid']);
+			header('Location: index.php?action=logout');
 		}
 		else if($lockAccount == 'confirm') {
 			$this->displayTpl('lockConfirmation.tpl');
@@ -50,9 +39,8 @@ class Account extends \Settings {
 
 	protected function lockUserAccount($user) {
 
-		$user->setLocked(true);
-		$this->_em->persist($user);
-		$this->_em->flush();
+		$stmt = $this->_pdo->prepare("UPDATE SystemUsers SET locked = 1 WHERE id = ?");
+		$stmt->execute(array($user));
 	}
 
 	/////////////////////////////////////////////////////////////////////

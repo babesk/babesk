@@ -173,7 +173,8 @@ class Loan {
 			// Default to subtracting the selfpaid books
 			$subtractSelfpay = (empty($opt['includeSelfpay']));
 			$includeAlreadyLend = (!empty($opt['includeAlreadyLend']));
-			$query = "SELECT * FROM SchbasBooks b 
+			$query = "SELECT b.*, usb.*, u.*, sub.name as subject FROM SchbasBooks b 
+					  JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
 					  JOIN SchbasUsersShouldLendBooks usb ON (b.id = usb.bookId)
 					  JOIN SystemUsers u ON (u.ID = usb.userId) 
 					  WHERE usb.schoolyearId = :syid
@@ -182,7 +183,7 @@ class Loan {
 				$query = $query . " AND usb.bookId NOT IN (SELECT BID FROM SchbasSelfpayer WHERE UID = :uid)";
 			}
 			$stmt = $this->_pdo->prepare($query);
-			$stmt->execute(array(':syid' => $schoolyear,
+			$stmt->execute(array(':syid' => $schoolyear['ID'],
 								 ':uid' => $user['ID']));
 
 			$books = $stmt->fetchAll();
@@ -251,16 +252,12 @@ class Loan {
 		if(!$schoolyear) {
 			$schoolyear = $this->schbasPreparationSchoolyearGet();
 		}
-		$query = $this->_em->createQuery(
-			'SELECT b FROM DM:SchbasBook b
-			INNER JOIN b.usersShouldLend usb
-				WITH usb.user = :user AND usb.schoolyear = :schoolyear
-			INNER JOIN usb.user u
-			INNER JOIN u.selfpayingBookEntities sbe WITH sbe.book = b
-		');
-		$query->setParameter('user', $user);
-		$query->setParameter('schoolyear', $schoolyear);
-		$books = $query->getResult();
+		$stmt = $this->_pdo->prepare("SELECT b.*, sub.name as subject FROM SchbasBooks b
+										JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
+										JOIN SchbasSelfpayer sp ON (sp.BID = b.id)
+										WHERE sp.UID = ?");
+		$stmt->execute(array($user['ID']));
+		$books = $stmt->fetchAll();
 		return $books;
 	}
 

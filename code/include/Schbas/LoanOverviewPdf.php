@@ -16,8 +16,8 @@ class LoanOverviewPdf {
 
 	public function __construct($dataContainer) {
 
-		$this->_em = $dataContainer->getEntityManager();
 		$this->_smarty = $dataContainer->getSmarty();
+		$this->_pdo = $dataContainer->getPdo();
 		$this->_dataContainer = $dataContainer;
 		$this->_loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 	}
@@ -29,6 +29,9 @@ class LoanOverviewPdf {
 	public function showPdf($user) {
 
 		$schoolyear = $this->_loanHelper->schbasPreparationSchoolyearGet();
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+		$stmt->execute(array($schoolyear));
+		$schoolyear = $stmt->fetch();
 		$booksToLoan = $this->_loanHelper->loanBooksOfUserGet(
 			$user, ['schoolyear' => $schoolyear, 'includeAlreadyLend' => true]
 		);
@@ -48,7 +51,7 @@ class LoanOverviewPdf {
 			PATH_SMARTY_TPL . '/pdf/schbas-loan-overview.pdf.tpl'
 		);
 		$schbasPdf = new \Babesk\Schbas\SchbasPdf(
-			$user->getId(), ''
+			$user['ID'], ''
 		);
 		$schbasPdf->create($html);
 		$schbasPdf->output();
@@ -62,8 +65,8 @@ class LoanOverviewPdf {
 	//Attributes
 	/////////////////////////////////////////////////////////////////////
 
-	protected $_em;
 	protected $_smarty;
+	protected $_pdo;
 	protected $_dataContainer;
 	protected $_loanHelper;
 }

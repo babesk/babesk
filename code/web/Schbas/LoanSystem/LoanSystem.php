@@ -1,7 +1,5 @@
 <?php
 
-use Doctrine\Common\Collections\ArrayCollection;
-
 require_once PATH_INCLUDE . '/Module.php';
 require_once PATH_INCLUDE . '/Schbas/Loan.php';
 require_once PATH_WEB . '/WebInterface.php';
@@ -29,8 +27,7 @@ class LoanSystem extends Schbas {
 
 		$this->init($dataContainer);
 
-		$schbasEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('isSchbasClaimEnabled');
+		$schbasEnabled = $this->_pdo->query("SELECT * FROM SystemGlobalSettings WHERE name = 'isSchbasClaimEnabled'")->fetch();
 
 		if(
 			isset($_GET['action']) && $_GET['action'] == 'showLoanOverviewPdf'
@@ -39,7 +36,7 @@ class LoanSystem extends Schbas {
 			// enabled at the moment
 			$this->showLoanOverviewPdf();
 		}
-		if($schbasEnabled->getValue() === '0') {
+		if($schbasEnabled['value'] === '0') {
 			$this->showLoanList();
 		}
 		else {
@@ -80,18 +77,6 @@ class LoanSystem extends Schbas {
 
 	}
 
-	private function searchInMultiDimArray($search, $array)
-	{
-		foreach($array as $key => $values)
-		{
-			if(in_array($search, $values))
-			{
-				return $key;
-			}
-		}
-		return false;
-	}
-
 	private function showMainMenu() {
 
 		$prepSchoolyear = $this->preparationSchoolyearGet();
@@ -114,7 +99,7 @@ class LoanSystem extends Schbas {
 		}
 
 
-		$loanHelper = new \Babesk\Schbas\Loan($this->_dgit addataContainer);
+		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$fees = $loanHelper->loanPriceOfAllBookAssignmentsForUserCalculate(
 			$user
 		);
@@ -320,7 +305,9 @@ class LoanSystem extends Schbas {
 
 		require_once PATH_INCLUDE . '/Schbas/LoanOverviewPdf.php';
 		$pdf = new \Babesk\Schbas\LoanOverviewPdf($this->_dataContainer);
-		$user = $this->_em->find('DM:SystemUsers', $_SESSION['uid']);
+		$stmt = $this->_pdo->prepare("SELECT * FROM SystemUsers WHERE ID = ?");
+		$stmt->execute(array($_SESSION['uid']));
+		$user = $stmt->fetch();
 		$pdf->showPdf($user);
 	}
 }
