@@ -12,17 +12,17 @@
 				<th>Bezeichnung</th>
 			</tr>
 			{foreach $rooms as $room}
-				<form action="index.php?module=administrator|System|Rooms&action=4" method="post" id="form{$room->getId()}">
+				<form action="index.php?module=administrator|System|Rooms&action=4" method="post" id="form{$room['id']}">
 					<tr>
-						<td><input type="hidden" name="id" value="{$room->getId()}">{$room->getId()}</td>
-						<td><input type="text" class="{$room->getId()}" name="name" value="{$room->getName()}" disabled></td>
+						<td><input type="hidden" name="id" value="{$room['id']}">{$room['id']}</td>
+						<td><input type="text" class="{$room['id']}" name="name" value="{$room['name']}" disabled></td>
 						<td>
-							<button type="button" class="btn btn-info btn-xs edit-room" id="{$room->getId()}">
-									<span class="fa fa-edit fa-fw edit{$room->getId()}"></span>
+							<button type="button" class="btn btn-info btn-xs edit-room" id="{$room['id']}">
+									<span class="fa fa-edit fa-fw edit{$room['id']}"></span>
 							</button>
-							{if !$elawaEnabled->getValue()}
+							{if !$elawaEnabled['value']}
 							<button type="button"
-								class="btn btn-danger btn-xs delete-room" id="{$room->getId()}">
+								class="btn btn-danger btn-xs delete-room" id="{$room['id']}">
 								<span class="fa fa-trash-o"></span>
 							</button>
 							{/if}

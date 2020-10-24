@@ -10,7 +10,6 @@ class PatchUser {
 
 	public function __construct($dataContainer) {
 		$this->_dataContainer = $dataContainer;
-		$this->_em = $dataContainer->getEntityManager();
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -81,7 +80,6 @@ class PatchUser {
 	/////////////////////////////////////////////////////////////////////
 
 	protected $_dataContainer;
-	protected $_em;
 
 	protected $_user;
 }

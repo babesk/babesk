@@ -148,6 +148,7 @@ class Grade extends System {
 				'SELECT g.*, st.name AS schooltypeName
 				FROM SystemGrades g
 				LEFT JOIN SystemSchooltypes st ON g.schooltypeId = st.ID
+				ORDER BY gradelevel, label
 				');
 
 		} catch (Exception $e) {

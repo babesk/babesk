@@ -2,7 +2,6 @@
 
 namespace administrator\System\Rooms;
 
-use Babesk\ORM\SystemRoom;
 require_once PATH_ADMIN . '/System/System.php';
 require_once PATH_INCLUDE . '/Module.php';
 
@@ -37,34 +36,26 @@ class Rooms extends \System {
 	}
 
 	public function showRooms(){
-		$rooms = $this->_em->getRepository("DM:SystemRoom")->findAll();
+	    $rooms = $this->_pdo->query("SELECT * FROM SystemRooms")->fetchAll();
 		$this->_smarty->assign('rooms', $rooms);
-		$elawaEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName('elawaSelectionsEnabled');
+		$elawaEnabled = $this->_pdo->query("SELECT * FROM SystemGlobalSettings WHERE name = 'elawaSelectionsEnabled'")->fetch();
 		$this->_smarty->assign('elawaEnabled', $elawaEnabled);
 		$this->displayTpl('main.tpl');
 	}
 	
 	protected function deleteRoom($id){
-		$room = $this->_em->getRepository("DM:SystemRoom")->find($id);
-		if(isset($room)){
-			$this->_em->remove($room);
-			$this->_em->flush();
-		}
+	    $stmt = $this->_pdo->prepare("DELETE FROM SystemRooms WHERE id = ?");
+	    $stmt->execute(array($id));
 	}
 	
 	protected function addRoom($name){
-		$room = new SystemRoom();
-		$room->setName($name);
-		
-		$this->_em->persist($room);
-		$this->_em->flush();
+		$stmt = $this->_pdo->prepare("INSERT INTO SystemRooms(name) VALUES (?)");
+		$stmt->execute(array($name));
 	}
 	
 	protected function editRoom($id, $name){
-		$room = $this->_em->getRepository("DM:SystemRoom")->findOneById($id);
-		$room->setName($name);
-		$this->_em->persist($room);
-		$this->_em->flush();
+	    $stmt = $this->_pdo->prepare("UPDATE SystemRooms SET name = ? WHERE id = ?");
+	    $stmt->execute(array($name, $id));
 	}
 }
 
