@@ -41,20 +41,20 @@ class SpecialCourse extends System {
 			case 3: //edit the users
 
 				$userID = null;
-				if (isset ($_POST['user_search'])) {
-					try {
-						$userID = $this->cardManager->getUserID($_POST['user_search']);
-					} catch (Exception $e) {
-						$userID =  $e->getMessage();
-					}
-					if ($userID == 'MySQL returned no data!') {
-						try {
-							$userID = $this->userManager->getUserID($_POST['user_search']);
-						} catch (Exception $e) {
-							$SpecialCourseInterface->dieError("Benutzer nicht gefunden!");
-						}
+                if (isset ($_POST['user'])) {
+                    try {
+                        $userID = $this->cardManager->getUserID($_POST['user']);
+                    } catch (Exception $e) {
+                        $userID =  $e->getMessage();
+                    }
+                    if ($userID == 'MySQL returned no data!') {
+                        try {
+                            $userID = $this->userManager->getUserID($_POST['user']);
+                        } catch (Exception $e) {
+                            dieJson(json_encode(array('user' => [], 'subjects' => [])));
+                        }
 
-					}
+                    }
 
 					$SpecialCourseProcessing->ShowSingleUser($userID);
 
@@ -69,6 +69,9 @@ class SpecialCourse extends System {
 			case 4: //save the users
 				$SpecialCourseProcessing->SaveUsers($_POST);
 				break;
+            case 5:
+                $SpecialCourseProcessing->ShowUserByGradelevelAjax($_POST['gradelevel'], $_POST['filter'], $_POST['activePage']);
+                break;
 			default:
                 $SpecialCourseInterface->ShowSelectionFunctionality();
 				break;

@@ -22,8 +22,7 @@
                                         <option value="PH">PH</option>
                                         <option value="BI">BI</option>
                                         <option value="CH">CH</option>
-                                        <option value="FK">FK</option>
-                                        <option value="NF">NF</option>
+                                        <option value="IF">IF</option>
                                         
 			</select>
 		</label>

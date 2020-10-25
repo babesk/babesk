@@ -5,6 +5,7 @@
 	<thead>
 		<tr>
 			<th>Kartennummer</th>
+			<th>ID</th>
 			<th>Vorname</th>
 			<th><a id="name-table-head">Nachname</a></th>
 			<th>Benutzername</th>
@@ -20,24 +21,26 @@
 		<% for(var i = 0; i < users.length; i++) { %>
 			<tr data-user-id="<%= users[i].ID %>" tabindex="1">
 				<td class="cardnumber"> <%= users[i].cardnumber %> </td>
+				<td class="id"><%= users[i].id %></td>
 				<td class="forename"> <%= users[i].forename %> </td>
 				<td class="name"> <%= users[i].name %> </td>
 				<td class="username"> <%= users[i].username %> </td>
 				<td class="active-grade"> <%= users[i].activeGrade %> </td>
+				<% if(users[i].loanChoiceAbbreviation != 'ls') { %>
 				<td class="payment-missing">
 					<% users[i].missingAmount = parseFloat(users[i].missingAmount); %>
 					<% if(users[i].missingAmount > 0) { %>
-						<span class="text-warning">
-							<%= users[i].missingAmount.toFixed(2) %> €
-						</span>
+					<span class="text-warning">
+								<%= users[i].missingAmount.toFixed(2) %> €
+							</span>
 					<% } else if(users[i].missingAmount == 0) { %>
-						<span class="text-success">
-							<%= users[i].missingAmount.toFixed(2) %> €
-						</span>
+					<span class="text-success">
+								<%= users[i].missingAmount.toFixed(2) %> €
+							</span>
 					<% } else { %>
-						<span class="text-danger">Überschuss!
-							<%= users[i].missingAmount.toFixed(2) %> €
-						</span>
+					<span class="text-danger">Überschuss!
+								<%= users[i].missingAmount.toFixed(2) %> €
+							</span>
 					<% } %>
 				</td>
 				<td class="payment-payed">
@@ -46,6 +49,15 @@
 				<td class="payment-to-pay">
 					<%= parseFloat(users[i].amountToPay).toFixed(2) %> €
 				</td>
+				<% } else { %>
+				<td class="returned" colspan="3" style="text-align: center" data-value=<%=users[i].formReturned %> >
+					<% if (users[i].formReturned == 1){ %>
+					<span class="text-success">Leistungsbescheid abgegeben</span>
+					<% }else{ %>
+					<span class="text-danger">Leistungsbescheid liegt nicht vor</span>
+					<% } %>
+				</td>
+				<% } %>
 				<td class="loan-choice-type">
 					<%
 						var col = '';
@@ -101,40 +113,10 @@
 							</div>
 							<input type="text" id="credits-change-input" class="form-control"
 								placeholder="Guthaben eingeben..." />
-							<!--<div class="input-group-addon">
-								Zu zahlen: <span class="credits-before"></span>
-							</div>-->
+
 						</div>
 					</div>
-					<!--<div class="form-group row">
-						<div class="col-sm-12">
-							<label for="credits-add-input">
-								Optional: Obrigen Wert verändern
-							</label>
-						</div>
-						<div class="col-sm-12 col-md-7">
-							<span class="input-group">
-								<div class="input-group-addon">
-									<span class="fa fa-plus"></span>
-								</div>
-								<input type="text" id="credits-add-input" class="form-control"
-									placeholder="Guthaben zu addieren hier eingeben">
-							</span>
-						</div>
-						<div class="col-sm-12 col-md-5">
-							<div class="btn-group pull-right">
-								<button class="btn btn-default preset-credit-change">
-									+5€
-								</button>
-								<button class="btn btn-default preset-credit-change">
-									+10€
-								</button>
-								<button class="btn btn-default preset-credit-change">
-									+20€
-								</button>
-							</div>
-						</div>
-					</div> -->
+
 					<label for="to-pay-change-input">
 						Soll-Betrag verändern:
 					</label>
@@ -164,6 +146,36 @@
 		</div>
 	</div>
 </div>
+
+	<div class="modal fade" id="form-change-modal" aria-hidden="true"
+		 tabindex="-1" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form id="form-change-form" class="simpleForm">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+								aria-hidden="true">&times;</button>
+						<h4 class="modal-title">Leistungsbescheid registrieren</h4>
+					</div>
+					<div class="modal-body">
+						<div class="simpleForm">
+							<input id="formReturnedSwitch" type="checkbox"
+								   name="formReturnedSwitch" data-on-text="Ja"
+								   data-off-text="Nein" data-on-color="success"
+								   data-off-color="danger" class="bootstrap-switch">
+						</div>
+						<div class="clearfix"></div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">
+							Abbrechen
+						</button>
+						<input type="submit" class="btn btn-primary apply" id="submit" value="Speichern">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 
 {/block}
 
@@ -247,6 +259,12 @@
 									Zu viel bezahlt
 								</a>
 							</li>
+							<li>
+								<a id="show-missing-amount-only" class="special-filter-item"
+								   data-name="showFormNotReturned">
+									Leistungsbescheid nicht abgegeben
+								</a>
+							</li>
 						</ul>
 					</div>
 				</div>
@@ -276,6 +294,8 @@
 
 {block name=style_include append}
 <link rel="stylesheet" href="{$path_css}/bootstrap-multiselect.css" type="text/css" />
+	<link rel="stylesheet" href="{$path_css}/bootstrap-switch.min.css" type="text/css" />
+
 {/block}
 
 {block name=js_include append}
@@ -288,7 +308,11 @@
 	src="{$path_js}/vendor/bootbox.min.js">
 </script>
 
-<script type="text/javascript" src="{$path_js}/vendor/bootstrap-multiselect.min.js"></script>
+	<script type="text/javascript" src="{$path_js}/vendor/bootstrap-switch.min.js"></script>
+
+
+
+	<script type="text/javascript" src="{$path_js}/vendor/bootstrap-multiselect.min.js"></script>
 
 <script type="text/javascript"
 	src="{$path_js}/administrator/Schbas/SchbasAccounting/RecordReceipt/record-receipt.js">

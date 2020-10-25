@@ -30,9 +30,9 @@ class AdminSpecialCourseInterface extends AdminInterface{
 		$this->smarty->display($this->tplFilePath.'show_specialCourses_set.tpl');
 	}
 	
-	function ShowUsers($users,$SpecialCourses,$navbar) {
+	function ShowUsers($users,$gradelevel,$navbar) {
 		$this->smarty->assign('users', $users);
-		$this->smarty->assign('SpecialCourses', $SpecialCourses);
+		$this->smarty->assign('gradelevel', $gradelevel);
 		$this->smarty->assign('navbar', $navbar);
 		$this->smarty->display($this->tplFilePath.'show_users.tpl');
 	

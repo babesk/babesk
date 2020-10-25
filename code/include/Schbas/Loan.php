@@ -93,7 +93,7 @@ class Loan {
 
 		if(isset($this->_classToPriceFactor[$class])) {
 			$factor = $this->_classToPriceFactor[$class];
-			$loanPrice = $flatPrice / $factor / 3;
+			$loanPrice = $flatPrice * $factor;
 			return $loanPrice;
 		}
 		else {
@@ -111,7 +111,7 @@ class Loan {
 
 		if(isset($this->_classToPriceFactor[$class])) {
 			$factor = $this->_classToPriceFactor[$class];
-			$loanPrice = $flatPrice / $factor / 3 * 0.8;
+			$loanPrice = $flatPrice * $factor * 0.8;
 			return $loanPrice;
 		}
 		else {
@@ -411,13 +411,13 @@ class Loan {
 	protected $_gradelevelIsbnIdentAssoc = array(
 		'5'  => array('05', '56'),
 		'6'  => array('56', '06', '69', '67'),
-		'7'  => array('78', '07', '69', '79', '67', '70'),
-		'8'  => array('78', '08', '69', '79', '89', '70'),
-		'9'  => array('90', '91', '09', '92', '69', '79', '89', '70'),
-		'10' => array('90', '91', '10', '92', '70'),
-		'11' => array('12', '92', '13', '11'),
-		'12' => array('12', '92', '13'),
-		'13' => array('13','23')
+        '7'  => array('78', '07', '69', '79', '67', '70'),
+        '8'  => array('78', '08', '69', '79', '89', '70'),
+        '9'  => array('90', '91', '09', '92', '69', '79', '89', '70'),
+        '10' => array('90', '91', '10', '92', '70'),
+        '11' => array('91', '12', '92', '13', '11'),
+        '12' => array('12', '92', '13', '23'),
+        '13' => array('13', '23')
 	);
 
 	protected $_isbnIdentSchoolyearRange = [
@@ -425,30 +425,32 @@ class Loan {
 		'56' => 2, '67' => 2, '78' => 2, '89' => 2, '90' => 2, '12' => 2,
 			'13' => 2,
 		'79' => 3, '91' => 3,
-		'69' => 4, '92' => 4,
+        '69' => 4, '92' => 4, '70' => 4, '11' => 1, '23' => 2
 	];
 
 	//Maps the book-classes to the pricefactor with which the flatPrice to
 	//divide. Corresponds to the amount of years the user is lend the book.
 	protected $_classToPriceFactor = array(
-		"05" => 1,
-		"06" => 1,
-		"07" => 1,
-		"08" => 1,
-		"09" => 1,
-		"10" => 1,
-		"56" => 2,
-		"67" => 2,
-		"78" => 2,
-		"89" => 2,
-		"90" => 2,
-		"12" => 2,
-		"13" => 2,
-		"79" => 3,
-		"91" => 3,
-		"69" => 4,
-		"92" => 4,
-		"70" => 4
+        "05" => (1/3),
+        "06" => (1/3),
+        "07" => (1/3),
+        "08" => (1/3),
+        "09" => (1/3),
+        "10" => (1/3),
+        "56" => 0.2,
+        "67" => 0.2,
+        "78" => 0.2,
+        "89" => 0.2,
+        "90" => 0.2,
+        "12" => 0.2,
+        "13" => 0.2,
+        "79" => (2/15),
+        "91" => (2/15),
+        "69" => 0.1,
+        "92" => 0.1,
+        '70' => 0.1,
+        '11' => (1/3),
+        '23' => 0.2
 	);
 
 	protected $_pdo;

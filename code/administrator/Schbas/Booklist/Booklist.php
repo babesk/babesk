@@ -290,12 +290,13 @@ class Booklist extends Schbas {
             // arbeiten, in der wertzuw.
             '6'=>'56,06,69,67',		// alle kombinationen auflisten
             // sql-abfrage:
-            '7'=>'78,07,69,79,67',	// SELECT * FROM `schbas_books` WHERE `class` IN (werte-array pro klasse)
-            '8'=>'78,08,69,79,89',
-            '9'=>'90,91,09,92,69,79,89',
-            '10'=>'90,91,10,92',
-            '11'=>'12,92,13',
-            '12'=>'12,92,13'
+            '7'=>'78,07,69,79,67,70',	// SELECT * FROM `schbas_books` WHERE `class` IN (werte-array pro klasse)
+            '8'=>'78,08,69,79,89,70',
+            '9'=>'90,91,09,92,69,79,89,70',
+            '10'=>'90,91,10,92,70',
+            '11'=>'12,92,13,11',
+            '12'=>'12,92,13,23',
+            '13'=>'23'
         );
         foreach ($booklist as $book) {
             $classKey="";

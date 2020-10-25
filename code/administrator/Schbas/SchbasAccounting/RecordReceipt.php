@@ -53,6 +53,9 @@ class RecordReceipt extends \SchbasAccounting {
 		else if(isset($_POST['userId'], $_POST['amount'], $_POST['to-pay'])) {
 			$this->paidAmountChange($_POST['userId'], $_POST['amount'], $_POST['to-pay']);
 		}
+		else if(isset($_POST['userId'], $_POST['returned'])){
+            $this->formReturnedChange($_POST['userId'], $_POST['returned']);
+        }
 		else {
 			$this->displayTpl('record-receipt.tpl');
 		}
@@ -140,6 +143,10 @@ class RecordReceipt extends \SchbasAccounting {
             $user['loanChoiceAbbreviation'] =
                 $page['loanChoiceAbbreviation'];
             $user['activeGrade'] = $page['activeGrade'];
+            if (isset($page['accID'])){
+                $user['formReturned'] = \TableMng::query(sprintf("SELECT formReturned FROM SchbasAccounting WHERE id = %s", $page['accID']))[0]['formReturned'];
+                $user['accID'] = $page['accID'];
+            }
             $users[] = $user;
         }*/
         return array('users' => $data, 'pagecount' => $pagecount);
@@ -263,6 +270,14 @@ class RecordReceipt extends \SchbasAccounting {
 			http_response_code(500);
 		}
 	}
+
+    private function formReturnedChange($userId, $returned){
+        $loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
+        $schoolyear = \TableMng::query("SELECT value FROM SystemGlobalSettings WHERE name = 'schbasPreparationSchoolyearId'")[0]['value'];
+        \TableMng::query(sprintf("UPDATE SchbasAccounting SET formReturned = %s WHERE userId = %s AND schoolyearId= %s ", $returned, $userId, $schoolyear));
+
+        die(json_encode("Erfolgreich"));
+    }
 
 	/**
 	 * Sends a pdf with an overview over the fetched users to the client

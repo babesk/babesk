@@ -111,6 +111,7 @@ class View extends \administrator\Schbas\BookAssignments\BookAssignments {
 			INNER JOIN SystemGrades g ON g.ID = a.gradeId
 			WHERE usb.schoolyearId = :schoolyearId
 			GROUP BY b.id, g.ID
+			ORDER BY b.subjectId, g.gradelevel
 		');
 		$stmt->execute(['schoolyearId' => $schoolyearId]);
 		$data = $stmt->fetchAll();

@@ -78,6 +78,14 @@ class AdminSchbasSettingsInterface extends AdminInterface{
 	    $this->smarty->assign('sy', $sy);
 	    $this->smarty->display($this->tplFilePath . 'moveUserConfirm.tpl');
     }
+
+    public function showEditCourses($grades, $courses, $coreSubjects, $success = 0){
+        $this->smarty->assign('grades', $grades);
+        $this->smarty->assign('courses', $courses);
+        $this->smarty->assign('coreSubjects', $coreSubjects);
+        $this->smarty->assign('success', $success);
+        $this->smarty->display($this->tplFilePath . 'editCourses.tpl');
+    }
 	
 	/**
 	 * The Path to the Smarty-Parent-Templatefile

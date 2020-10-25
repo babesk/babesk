@@ -9,6 +9,8 @@ $(document).ready(function() {
 		33: 1, 34: 2, 167: 3, 36: 4, 37: 5, 38: 6, 47: 7, 40: 8, 41: 9, 61: 0
 	};
 
+    var userIDForm;
+
 	dataFetch();
 	var $pagination = $('#page-select');
 
@@ -39,6 +41,8 @@ $(document).ready(function() {
 	$('table#user-table').on('click', 'tbody tr', userClicked);
 
 	$('#credits-change-form').on('submit', paidAmountChange);
+
+    $('#form-change-form').on('submit', formReturnedChange);
 
 	$('#credits-change-input').enterKey(function(event) {
 		event.preventDefault();
@@ -90,7 +94,6 @@ $(document).ready(function() {
 		);
 
 		function success(res, textStatus, jqXHR) {
-			console.log(res);
 			if(jqXHR.status == 200) {
 				if(typeof res.value !== 'undefined' && res.value == 'error') {
 					toastr.error('Ein Fehler ist aufgetreten!');
@@ -139,19 +142,33 @@ $(document).ready(function() {
 
 	function userClicked(event) {
 
-		var $row = $(event.target).closest('tr');
-		var $modal = $('#credits-change-modal');
-		var userId = $row.data('user-id');
-		var username = $row.children('td.username').text();
-		var paid = parseFloat($row.children('td.payment-payed').text());
-		var toPay = parseFloat($row.children('td.payment-to-pay').text());
-		$modal.find('.username').html(username);
-		$modal.find('.credits-before').html(toPay.toFixed(2) + '€');
-		$modal.find('input#to-pay-change-input').val(toPay.toFixed(2));
-		var $input = $modal.find('input#credits-change-input');
-		$input.val(paid.toFixed(2));
-		$input.data('user-id', userId);
-		$('#credits-change-modal').modal();
+        var $row = $(event.target).closest('tr');
+        var userId = $row.data('user-id');
+        userIDForm = userId;
+
+        if ($row.children('td.loan-choice-type').text().includes('Von Zahlung befreit')) {
+            var $modal = $('#form-change-modal');
+            var returned = $row.children('td.returned').data('value');
+            if(returned == 1){
+                console.log("Test");
+                $modal.find('input#formReturnedSwitch').prop('checked', true)
+            }else{
+                $modal.find('input#formReturnedSwitch').prop('checked', false)
+            }
+            $('#form-change-modal').modal();
+        } else {
+            var $modal = $('#credits-change-modal');
+            var username = $row.children('td.username').text();
+            var paid = parseFloat($row.children('td.payment-payed').text());
+            var toPay = parseFloat($row.children('td.payment-to-pay').text());
+            $modal.find('.username').html(username);
+            $modal.find('.credits-before').html(toPay.toFixed(2) + '€');
+            $modal.find('input#to-pay-change-input').val(toPay.toFixed(2));
+            var $input = $modal.find('input#credits-change-input');
+            $input.val(paid.toFixed(2));
+            $input.data('user-id', userId);
+            $('#credits-change-modal').modal();
+        }
 	};
 
 	function paidAmountChange(event) {
@@ -226,6 +243,50 @@ $(document).ready(function() {
 			}
 		};
 	};
+
+    function formReturnedChange(event) {
+
+        event.preventDefault();
+        var $modal = $('#form-change-modal');
+        var returned = $modal.find('input#formReturnedSwitch').prop('checked');
+        console.log(userIDForm);
+
+        $.ajax({
+            'type': 'POST',
+            'url': 'index.php?module=administrator|Schbas|SchbasAccounting|\
+				RecordReceipt',
+            'data': {
+                "userId": userIDForm,
+                "returned": returned
+            },
+            'success': success,
+            'error': error,
+            'dataType': 'json'
+        });
+
+        function success(res) {
+            toastr.success('Änderungen erfolgreich gespeichert');
+            $modal.modal('hide');
+            dataFetch();
+        };
+
+        function error(jqXHR) {
+
+            console.log(jqXHR);
+            if(jqXHR.status == 500) {
+                if(typeof jqXHR.responseJSON !== 'undefined' &&
+                    typeof jqXHR.responseJSON.message !== 'undefined') {
+                    toastr.error(jqXHR.responseJSON.message, 'Fehler');
+                }
+                else {
+                    toastr.error('Ein Fehler ist beim Ändern aufgetreten');
+                }
+            }
+            else {
+                toastr.error('Konnte die Serverantwort nicht lesen!', 'Fehler');
+            }
+        };
+    };
 
 	function executeSelectorKey(event) {
 
