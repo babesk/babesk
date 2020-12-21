@@ -183,7 +183,7 @@ class Loan {
 				$query = $query . " AND usb.bookId NOT IN (SELECT BID FROM SchbasSelfpayer WHERE UID = :uid)";
 			}
 			$stmt = $this->_pdo->prepare($query);
-			$stmt->execute(array(':syid' => $schoolyear['ID'],
+			$stmt->execute(array(':syid' => $schoolyear,
 								 ':uid' => $user['ID']));
 
 			$books = $stmt->fetchAll();

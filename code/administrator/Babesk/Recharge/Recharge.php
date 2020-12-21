@@ -268,9 +268,9 @@ class Recharge extends Babesk {
 
 		try {
 			$stmt = $this->_pdo->prepare('INSERT INTO BabeskUsercreditsRecharges
-				(userId, rechargingUserId, rechargeAmount, datetime, isSoli)
+				(userId, rechargingUserId, rechargeAmount, datetime, soli, isSoli)
 				VALUES (:userId, :rechargingUserId, :rechargeAmount,
-					:datetime, :isSoli
+					:datetime, :isSoli, :isSoli
 				)');
 			$stmt->execute(array(
 				'userId' => $userId,

@@ -254,6 +254,7 @@ $(document).ready(function() {
 					}
 				},
 				error: function(data) {
+					console.log(data)
 					toastr['error']('Nope!');
 					$('#form-submit').button('error');
 				}

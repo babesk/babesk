@@ -20,7 +20,7 @@ NProgress = require('nprogress');
 Settings = require('./lib/DisplaySingle/Settings');
 
 confirmExit = function() {
-  return 'Wollen sie die Seite wirklich verlassen? Sie haben Veränderungengemacht, die noch nicht gespeichert wurden';
+  return 'Wollen sie die Seite wirklich verlassen? Sie haben Veränderungen gemacht, die noch nicht gespeichert wurden';
 };
 
 noConfirmExit = function() {

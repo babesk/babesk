@@ -164,7 +164,7 @@ class RecordReceipt extends \SchbasAccounting {
 
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$prepSchoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$query = "SELECT u.*, c.cardnumber, lc.name AS loanChoice, lc.abbreviation AS loanChoiceAbbreviation, lc.id AS loanChoiceId, CONCAT(u.gradelevel, u.label) AS activeGrade, a.amountToPay, a.payedAmount, a.amountToPay - a.payedAmount AS missingAmount 
+		$query = "SELECT u.*, c.cardnumber, lc.name AS loanChoice, lc.abbreviation AS loanChoiceAbbreviation, lc.id AS loanChoiceId, CONCAT(u.gradelevel, u.label) AS activeGrade, a.amountToPay, a.payedAmount, a.amountToPay - a.payedAmount AS missingAmount, a.formReturned 
                   FROM UserActiveClass u
                   JOIN BabeskCards c ON (c.UID = u.ID)
                   LEFT JOIN (SELECT * FROM SchbasAccounting WHERE schoolyearId = :syID) a ON (u.ID = a.userId)
@@ -217,10 +217,11 @@ class RecordReceipt extends \SchbasAccounting {
 			}
 		}
 
+
 		$stmt = $this->_pdo->prepare($query);
 		$stmt->execute(array(
 		    'syID' => $prepSchoolyear,
-            'filter' => $filter
+            'filter' => "%".$filter."%"
         ));
 		$res = $stmt->fetchAll();
 

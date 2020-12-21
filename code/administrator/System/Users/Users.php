@@ -120,10 +120,10 @@ class Users extends \System {
 
 		try {
 			$stmt = $this->_pdo->prepare(
-				'SELECT usb.id, b.id, b.title, sy.id, sy.label
+				'SELECT usb.id as usbid, b.id as bid, b.title, sy.id as syid, sy.label
 				FROM SchbasUsersShouldLendBooks usb
-				INNER JOIN SchbasBooks b
-				INNER JOIN SystemSchoolyears sy
+				INNER JOIN SchbasBooks b ON (b.id = usb.bookId)
+				INNER JOIN SystemSchoolyears sy ON (usb.schoolyearId = sy.ID)
 				WHERE usb.userId = ?
 			');
 			$stmt->execute(array($user['ID']));
@@ -140,7 +140,7 @@ class Users extends \System {
 	protected function getSingleUserSchoolyears() {
 
 		try {
-		    $stmt = $this->_pdo->prepare('SELECT * FROM SystemSchoolyears s');
+		    $stmt = $this->_pdo->prepare('SELECT s.ID as id, s.label FROM SystemSchoolyears s');
 			$stmt->execute();
 			$res = $stmt->fetchAll();
 			return $res;

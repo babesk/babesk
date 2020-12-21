@@ -222,7 +222,7 @@
 	Nächster Benutzer
 </a>
 
-<input type="hidden" id="user-id" value="{$userdata['UID']}" />
+<input type="hidden" id="user-id" value="{$userdata['ID']}" />
 
 {/block}
 

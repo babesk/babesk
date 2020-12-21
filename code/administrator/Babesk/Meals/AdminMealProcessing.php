@@ -238,8 +238,6 @@ class AdminMealProcessing {
 			$user_manager = new UserManager();
 			$groupManager = new GroupManager();
 
-			$mysql_orders = array();
-			$order = array();
 
 			if ($_POST['ordering_day'] > 31 or $_POST['ordering_month'] > 12 or $_POST['ordering_year'] < 2000 or $_POST
 				['ordering_year'] > 3000) {
@@ -338,7 +336,7 @@ class AdminMealProcessing {
 
 				foreach ($temp as $temp_name) {
 					foreach ($meal as & $order) {
-						if ($order['user_name'] == $temp_name) {
+						if ($order && $order['user_name'] == $temp_name) {
 							$sorted_orders[] = $order;
 							$order = NULL; //to avoid bugs with multiple orders from one user
 							break;

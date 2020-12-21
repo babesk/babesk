@@ -120,49 +120,35 @@ $('#barcode').enterKey(function(ev) {
 	ajaxFunction();
 });
 
-<!--
-//Browser Support Code
-function ajaxFunction(){
-	var ajaxRequest;  // The variable that makes Ajax possible!
+function ajaxFunction() {
+    var barcode = document.getElementById('barcode').value;
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?section=Schbas|Retour',
+        data: {
+            'inventarnr': barcode,
+            'card_ID': "{$cardid}",
+            'uid': {$uid}
+        },
+        success: function(data) {
+            console.log(data);
+            try {
+                var barcodeField = document.getElementById('barcode');
+                barcodeField.value = '';
 
-	try{
-		// Opera 8.0+, Firefox, Safari
-		ajaxRequest = new XMLHttpRequest();
-	} catch (e){
-		// Internet Explorer Browsers
-		try{
-			ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-		} catch (e) {
-			try{
-				ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-			} catch (e){
-				// Something went wrong
-				alert("Your browser broke!");
-				return false;
-			}
-		}
-	}
-	// Create a function that will receive data sent from the server
-	ajaxRequest.onreadystatechange = function(){
-		if(ajaxRequest.readyState == 4){
-
-			var barcodeField = document.getElementById('barcode');
-			barcodeField.value = '';
-
-			var ajaxDisplay = document.getElementById('booklist');
-			ajaxDisplay.innerHTML = ajaxRequest.responseText;
-		}
-	}
-
-	var barcode = document.getElementById('barcode').value;
-	var queryString = "inventarnr=" + encodeURIComponent(barcode) + "&card_ID={$cardid}&uid={$uid}&ajax=1";
-
-	ajaxRequest.open("GET", "http://{$adress}" + queryString, true);
-
-	ajaxRequest.send(null);
+                var ajaxDisplay = document.getElementById('booklist');
+                ajaxDisplay.innerHTML = data;
+            } catch(e) {
+                toastr['error']('Konnte die Serverantwort nicht parsen');
+                return;
+            }
+        },
+        error: function(data) {
+            console.log(data)
+            toastr['error']('Fehler!');
+        }
+    });
 }
-
-//-->
 </script>
 
 {/block}

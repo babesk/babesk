@@ -40,9 +40,9 @@ class Retour extends Schbas {
 							'err_card_id' => 'Die Karten-ID ist fehlerhaft!',
 							'err_usr_locked' =>'Der Benutzer ist gesperrt!');
 
-		if ('GET' == $_SERVER['REQUEST_METHOD'] && isset($_GET['inventarnr'])) {
+		if ('POST' == $_SERVER['REQUEST_METHOD'] && isset($_POST['inventarnr'])) {
 			try {
-				$res = $this->RetourBook(urldecode(trim($_GET['inventarnr'])), $_GET['uid']);
+				$res = $this->RetourBook($_POST['inventarnr'], $_POST['uid']);
 			} catch (Exception $e) {
 				$this->_logger->logO('Could not retour book', ['sev' => 'error', 'moreJson' => $e->getMessage()]);
 				$res = false;
@@ -50,7 +50,7 @@ class Retour extends Schbas {
 			if(!$res) {
 				die('Konnte das Buch nicht zurückgeben. Möglicherweise falsch eingescannt?');
 			}
-			$this->RetourTableDataAjax($_GET['card_ID']);
+			$this->RetourTableDataAjax($_POST['card_ID']);
 		}
 		else if ('POST' == $_SERVER['REQUEST_METHOD'] && isset($_POST['card_ID'])) {
 			$this->RetourTableData($_POST['card_ID']);
@@ -85,7 +85,7 @@ class Retour extends Schbas {
 		$stmt = $this->_pdo->prepare("SELECT b.*, i.exemplar, i.year_of_purchase, sub.name AS subName FROM SchbasLending l
 												JOIN SchbasInventory i ON (l.inventory_id = i.id)
 												JOIN SchbasBooks b ON (i.book_id = b.id)
-												LEFT JOIN SystemSchoolsubjects sub ON (sub.ID = b.subjectId)
+												LEFT JOIN SystemSchoolSubjects sub ON (sub.ID = b.subjectId)
 												WHERE l.user_id = ?");
 		$stmt->execute(array($uid));
 		$loanbooks = $stmt->fetchAll();
@@ -119,7 +119,7 @@ class Retour extends Schbas {
             $stmt = $this->_pdo->prepare("SELECT b.*, i.exemplar, i.year_of_purchase, sub.name AS subName FROM SchbasLending l
 												JOIN SchbasInventory i ON (l.inventory_id = i.id)
 												JOIN SchbasBooks b ON (i.book_id = b.id)
-												LEFT JOIN SystemSchoolsubjects sub ON (sub.ID = b.subjectId)
+												LEFT JOIN SystemSchoolSubjects sub ON (sub.ID = b.subjectId)
 												WHERE l.user_id = ?");
             $stmt->execute(array($uid));
             $loanbooks = $stmt->fetchAll();

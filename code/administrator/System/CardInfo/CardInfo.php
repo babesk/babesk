@@ -79,7 +79,7 @@ class CardInfo extends System {
 	private function cardinfoDisplay($cardnumber) {
 
 		$stmt = $this->_pdo->prepare("SELECT * FROM BabeskCards c
-												JOIN useractiveclass u ON (u.ID = c.UID)
+												JOIN UserActiveClass u ON (u.ID = c.UID)
 												WHERE cardnumber = ?");
 		$stmt->execute(array($cardnumber));
 		$user = $stmt->fetch();

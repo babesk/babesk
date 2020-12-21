@@ -54,7 +54,7 @@ class GChangeCard extends Gnissel {
 		$stmt->execute(array($_POST['username']));
 		$user = $stmt->fetch();
 
-		$stmt = $this->_pdo->prepare("SELECT g.gradelevel, g.label FROM systemgrades g
+		$stmt = $this->_pdo->prepare("SELECT g.gradelevel, g.label FROM SystemGrades g
 												JOIN SystemAttendances a ON (a.gradeId = g.ID)
 												JOIN SystemSchoolyears s ON (s.ID = a.schoolyearId)
 												WHERE s.active = 1 AND a.userId=?");
