@@ -9,10 +9,10 @@
 	<div class="panel-body">
 		<div class="list-group">
 			{foreach $hosts as $hostData}
-				<a {if $hostData.selectable}href="index.php?module=web|Elawa|Selection&amp;hostId={$hostData.host->getId()}"{/if}
+				<a {if $hostData.selectable}href="index.php?module=web|Elawa|Selection&amp;hostId={$hostData.host['ID']}"{/if}
 				class="list-group-item {if !$hostData.selectable}disabled{/if}">
-					{$hostData.host->getName()},
-					{$hostData.host->getForename()}
+					{$hostData.host['name']},
+					{$hostData.host['forename']}
 					{if !empty($hostData.statusText)}
 						<span class="badge">
 							{$hostData.statusText}

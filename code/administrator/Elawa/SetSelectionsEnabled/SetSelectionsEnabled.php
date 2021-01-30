@@ -32,35 +32,19 @@ class SetSelectionsEnabled extends \administrator\Elawa\Elawa {
 	/////////////////////////////////////////////////////////////////////
 
 	protected function setSelectionsEnabled($areSelEnabled) {
+	    $currentSel = $this->isElawaEnabled();
 
-		$selection = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('elawaSelectionsEnabled');
-		if(!$selection) {
-			$selection = $this->createSelectionEntry($areSelEnabled);
-		}
-		$currentSel = ($selection->getValue() != '0');
 		if($currentSel == $areSelEnabled) {
 			//Nothing changed
 			die(json_encode($currentSel));
 		}
 		else {
 			$newSel = ($areSelEnabled) ? '1' : '0';
-			$selection->setValue($newSel);
-			$this->_em->persist($selection);
-			$this->_em->flush();
+            $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value = ? WHERE name = 'elawaSelectionsEnabled'")->execute(array($areSelEnabled));
 			die(json_encode($newSel));
 		}
 	}
 
-	protected function createSelectionEntry($areSelEnabled) {
-
-		$sel = ($areSelEnabled) ? '1' : '0';
-		$selection = new \Babesk\ORM\SystemGlobalSettings();
-		$selection->setName('elawaSelectionsEnabled')
-			->setValue($sel);
-		$this->_em->persist($value);
-		$this->_em->flush();
-	}
 
 	/////////////////////////////////////////////////////////////////////
 	//Attributes

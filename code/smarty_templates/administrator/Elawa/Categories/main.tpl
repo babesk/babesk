@@ -12,17 +12,17 @@
 				<th>Bezeichnung</th>
 			</tr>
 			{foreach $categories as $category}
-				<form action="index.php?module=administrator|Elawa|Categories&action=4" method="post" id="form{$category->getId()}">
+				<form action="index.php?module=administrator|Elawa|Categories&action=4" method="post" id="form{$category['id']}">
 					<tr>
-						<td><input type="hidden" name="id" value="{$category->getId()}">{$category->getId()}</td>
-						<td><input type="text" class="{$category->getId()}" name="name" value="{$category->getName()}" disabled></td>
+						<td><input type="hidden" name="id" value="{$category['id']}">{$category['id']}</td>
+						<td><input type="text" class="{$category['id']}" name="name" value="{$category['name']}" disabled></td>
 						<td>
-							<button type="button" class="btn btn-info btn-xs edit-category" id="{$category->getId()}">
-									<span class="fa fa-edit fa-fw edit{$category->getId()}"></span>
+							<button type="button" class="btn btn-info btn-xs edit-category" id="{$category['id']}">
+									<span class="fa fa-edit fa-fw edit{$category['id']}"></span>
 							</button>
-							{if !$elawaEnabled->getValue()}
+							{if !$elawaEnabled}
 							<button type="button"
-								class="btn btn-danger btn-xs delete-category" id="{$category->getId()}">
+								class="btn btn-danger btn-xs delete-category" id="{$category['id']}">
 								<span class="fa fa-trash-o"></span>
 							</button>
 							{/if}

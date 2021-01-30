@@ -5,8 +5,8 @@
 <div class="text-center">
 	<select id="hosts-select">
 		{foreach $hosts as $host}
-			<option value="{$host->getId()}">
-				{$host->getForename()} {$host->getName()}
+			<option value="{$host['ID']}">
+				{$host['forename']} {$host['name']}
 			</option>
 		{/foreach}
 	</select>

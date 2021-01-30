@@ -99,7 +99,12 @@ $(document).ready(function() {
 				name: 'activeGrade',
 				displayName: 'aktive Klasse',
 				isDisplayed: false
-			}
+			},
+            {
+                name: 'groups',
+                displayName: 'Benutzergruppen',
+                isDisplayed: false
+            }
 		];
 
 		var activePage = 1;

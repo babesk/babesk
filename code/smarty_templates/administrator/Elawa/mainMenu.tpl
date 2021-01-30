@@ -6,7 +6,7 @@
 	<div class="col-md-6">
 		{if $hostGroup}
 			Lehrergruppe:
-			{$hostGroup->getName()}
+			{$hostGroup['name']}
 		{else}
 			Keine Lehrergruppe definiert!
 		{/if}

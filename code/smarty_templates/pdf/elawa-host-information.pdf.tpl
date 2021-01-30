@@ -1,6 +1,6 @@
 <html>
 
-<h3>Zeitraster für den Elternsprechtag am {$category->getName()}</h3>
+<h3>Zeitraster für den Elternsprechtag am {$category['name']}</h3>
 {*Try to extract the room from the meetings. Should be ok since the room is
  *the same for a host and category
  *}
@@ -14,7 +14,7 @@
 					<tbody>
 						<tr>
 							<td colspan="2">
-								Lehrkraft: {$host->getForename()} {$host->getName()}
+								Lehrkraft: {$host['forename']} {$host['name']}
 							</td>
 						</tr>
 						{*First 20 Meetings go on the left-handed Column*}

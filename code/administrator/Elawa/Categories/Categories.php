@@ -2,7 +2,6 @@
 
 namespace administrator\Elawa\Categories;
 
-use Babesk\ORM\ElawaCategory;
 require_once PATH_ADMIN . '/Elawa/Elawa.php';
 
 class Categories extends \administrator\Elawa\Elawa {
@@ -35,46 +34,26 @@ class Categories extends \administrator\Elawa\Elawa {
 	}
 
 	public function showCategories(){
-		$categories = $this->_em->getRepository("DM:ElawaCategory")->findAll();
-		$elawaEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName('elawaSelectionsEnabled');
-		$this->_smarty->assign('elawaEnabled', $elawaEnabled);
+		$categories = $this->_pdo->query("SELECT * FROM ElawaCategories")->fetchAll();
+		$this->_smarty->assign('elawaEnabled', $this->isElawaEnabled());
 		$this->_smarty->assign('categories', $categories);
 		$this->displayTpl('main.tpl');
 	}
 	
 	protected function deleteCategory($id){
-		$category = $this->_em->getRepository("DM:ElawaCategory")->find($id);
-		if(isset($category)){
-			$defaultMeetings = $this->_em->getRepository("DM:ElawaDefaultMeetingTime")->findByCategory($category);
-			if(isset($defaultMeetings)){
-				foreach ($defaultMeetings as $defaultMeeting){
-					$this->_em->remove($defaultMeeting);
-				}
-			}
-			$meetings = $this->_em->getRepository("DM:ElawaMeeting")->findByCategory($category);
-			if(isset($meetings)){
-				foreach ($meetings as $meeting){
-					$this->_em->remove($meeting);
-				}
-			}
-			$this->_em->remove($category);
-			$this->_em->flush();
-		}
+	    $this->_pdo->prepare("DELETE FROM ElawaDefaultMeetingTimes WHERE categoryId = ?")->execute(array($id));
+        $this->_pdo->prepare("DELETE FROM ElawaDefaultMeetingRooms WHERE categoryId = ?")->execute(array($id));
+	    $this->_pdo->prepare("DELETE FROM ElawaMeetings WHERE categoryId = ?")->execute(array($id));
+        $this->_pdo->prepare("DELETE FROM ElawaCategories WHERE id = ?")->execute(array($id));
+
 	}
 	
 	protected function addCategory($name){
-		$category = new ElawaCategory();
-		$category->setName($name);
-		
-		$this->_em->persist($category);
-		$this->_em->flush();
+	    $this->_pdo->prepare("INSERT INTO ElawaCategories (name) VALUES (?)")->execute(array($name));
 	}
 	
 	protected function editCategory($id, $name){
-		$cat = $this->_em->getRepository("DM:ElawaCategory")->findOneById($id);
-		$cat->setName($name);
-		$this->_em->persist($cat);
-		$this->_em->flush();
+	    $this->_pdo->prepare("UPDATE ElawaCategories SET name = ? WHERE id = ?")->execute(array($name, $id));
 	}
 }
 

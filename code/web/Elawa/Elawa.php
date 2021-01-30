@@ -28,25 +28,52 @@ class Elawa extends \Module {
 
 	protected function displayOverview() {
 
-		$user = $this->_em->find('DM:SystemUsers', $_SESSION['uid']);
-		if(!$user) {
-			$this->_interface->dieError('Konnte die Daten nicht abrufen');
-			$this->_logger->log('Error fetching userdata', 'error', Null,
-				json_encode(array('userId' => $_SESSION['uid'])));
-		}
-		$query = $this->_em->createQuery(
-			'SELECT m, r, c, h FROM DM:ElawaMeeting m
-			LEFT JOIN m.room r
-			LEFT JOIN m.category c
-			INNER JOIN m.host h
-			WHERE m.visitor = :user
-		');
-		$query->setParameter('user', $user);
-		$meetings = $query->getResult();
+
+		$query = $this->_pdo->prepare("SELECT m.*, r.name as roomname, c.name as catname, u.name, u.forename FROM ElawaMeetings m
+                                                LEFT JOIN SystemRooms r ON (r.id = m.roomId)
+                                                JOIN ElawaCategories c ON (c.id = m.categoryId)
+                                                JOIN SystemUsers u ON (u.ID = m.hostId)
+                                                WHERE m.visitorId = ?");
+		$query->execute(array($_SESSION['uid']));
+		$meetings = $query->fetchAll();
 		$this->_smarty->assign('meetings', $meetings);
 		$this->displayTpl('overview.tpl');
 	}
 
+    protected function isElawaEnabled(){
+        return $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'elawaSelectionsEnabled'")->fetch()[0];
+    }
+
+    protected function getHostGroup() {
+
+        $hostGroup = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'elawaHostGroupId'")->fetch();
+        if($hostGroup) {
+            return $hostGroup['value'];
+        }
+        else {
+            $this->_interface->dieError('Keine Hostgroup definiert!');
+        }
+    }
+
+    protected function getHosts() {
+
+        $group = $this->getHostGroup();
+        $query = $this->_pdo->prepare("SELECT u.*,r.* FROM SystemUsers u 
+                                                JOIN SystemUsersInGroups g ON (u.ID = g.userId)
+                                                LEFT JOIN ElawaDefaultMeetingRooms r ON (u.ID = r.hostId)
+                                                WHERE g.groupId = ?
+                                                ORDER BY u.name");
+        $query->execute(array($group));
+        $users = $query->fetchAll();
+        if($users && count($users)) {
+            return $users;
+        }
+        else {
+            $this->_interface->dieMsg(
+                'Keine Benutzer für die Hostgroup gefunden.'
+            );
+        }
+    }
 	/////////////////////////////////////////////////////////////////////
 	//Attributes
 	/////////////////////////////////////////////////////////////////////

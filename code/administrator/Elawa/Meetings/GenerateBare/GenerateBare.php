@@ -32,19 +32,15 @@ class GenerateBare extends \administrator\Elawa\Meetings\Meetings {
 	 */
 	protected function clearMeetings() {
 
-		$query = $this->_em->createQuery(
-			'DELETE FROM DM:ElawaMeeting m
-		');
+		$query = $this->_pdo->prepare('DELETE FROM ElawaMeetings');
 		$numDeleted = $query->execute();
-		return $numDeleted;
+		return $query->rowCount();
 	}
 
 	protected function generate() {
 
-		$this->_noVisitor = $this->_em->getReference('DM:SystemUsers', 0);
-		$this->_noRoom = $this->_em->getReference('DM:SystemRoom', 0);
-		$users = $this->getHostGroupUsers();
-		$defaultTimes = $this->getDefaultMeetingTimes();
+		$users = $this->getHosts();
+		$defaultTimes = $this->_pdo->query("SELECT * FROM ElawaDefaultMeetingTimes")->fetchAll();
 		$countCreated = 0;
 		foreach($users as $user) {
 			foreach($defaultTimes as $defaultTime) {
@@ -52,104 +48,32 @@ class GenerateBare extends \administrator\Elawa\Meetings\Meetings {
 				$countCreated++;
 			}
 		}
-		$this->_em->flush();
 		return $countCreated;
 	}
 
-	/**
-	 * Fetches and returns the group of the users that are hosts in meetings
-	 * @return \Babesk\ORM\SystemGroups
-	 */
-	protected function getHostGroup() {
-
-		$gsEntry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('elawaHostGroupId');
-		if($gsEntry) {
-			$group = $this->_em->getRepository('DM:SystemGroups')
-				->findOneById(intval($gsEntry->getValue()));
-			if($group) {
-				return $group;
-			}
-			else {
-				$this->_interface->dieError(
-					'Hostgroup konnte nicht gefunden werden!'
-				);
-			}
-		}
-		else {
-			$this->_interface->dieError('Keine Hostgroup definiert!');
-		}
-	}
-
-	protected function getHostGroupUsers() {
-
-		$group = $this->getHostGroup();
-		$query = $this->_em->createQuery(
-			'SELECT u, g, r
-			FROM DM:SystemUsers u
-			INNER JOIN u.groups g
-			LEFT JOIN u.elawaDefaultMeetingRooms r
-			WHERE g = :group
-		');
-		$query->setParameter('group', $group);
-		$users = $query->getResult();
-		if($users && count($users)) {
-			return $users;
-		}
-		else {
-			$this->_interface->dieMsg(
-				'Keine Benutzer für die Hostgroup gefunden.'
-			);
-		}
-	}
-
-	protected function getDefaultMeetingTimes() {
-
-		$times = $this->_em->getRepository('DM:ElawaDefaultMeetingTime')
-			->findAll();
-		if($times) {
-			return $times;
-		}
-		else {
-			$this->_interface->dieError('Keine Standard-Zeiten definiert!');
-		}
-	}
 
 	protected function persistNewMeeting($user, $defaultTime) {
 
-		$room = $this->_noRoom;
-		$defaultRooms = $user->getElawaDefaultMeetingRooms();
+		$room = 0;
+        $query = $this->_pdo->prepare("SELECT * FROM ElawaDefaultMeetingRooms WHERE hostId = ?");
+        $query->execute(array($user['ID']));
+        $defaultRooms = $query->fetchAll();
 		if($defaultRooms && count($defaultRooms)) {
 			foreach($defaultRooms as $defRoom) {
-				if($defRoom->getCategory() == $defaultTime->getCategory()) {
-					$room = $defRoom->getRoom();
+				if($defRoom['categoryId'] == $defaultTime['categoryId']) {
+					$room = $defRoom['roomId'];
 				}
 			}
 		}
-		$meeting = new \Babesk\ORM\ElawaMeeting();
-		$meeting->setVisitor($this->_noVisitor)
-			->setHost($user)
-			->setTime($defaultTime->getTime())
-			->setLength($defaultTime->getLength())
-			->setCategory($defaultTime->getCategory())
-			->setRoom($room)
-			->setIsDisabled(false);
-		$this->_em->persist($meeting);
+		$query = $this->_pdo->prepare("INSERT INTO ElawaMeetings (visitorId, hostId, categoryId, roomId, time, length, isDisabled) 
+                                                VALUES ('0', ?, ?, ?, ?, ?, '0')");
+		$query->execute(array($user['ID'], $defaultTime['categoryId'], $room, $defaultTime['time'], $defaultTime['length']));
 	}
 
 	/////////////////////////////////////////////////////////////////////
 	//Attributes
 	/////////////////////////////////////////////////////////////////////
 
-	/**
-	 * Represents the absence of a visitor
-	 */
-	protected $_noVisitor;
-
-	/**
-	 * Represents the absence of a room
-	 */
-	protected $_noRoom;
 }
 
 ?>

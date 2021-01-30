@@ -4,6 +4,8 @@ namespace administrator\Elawa\MeetingTimes;
 
 use Babesk\ORM\ElawaDefaultMeetingTime;
 use Babesk\ORM\ElawaCategory;
+use MongoDB\Driver\Query;
+
 require_once PATH_ADMIN . '/Elawa/Elawa.php';
 
 class MeetingTimes extends \administrator\Elawa\Elawa {
@@ -38,17 +40,18 @@ class MeetingTimes extends \administrator\Elawa\Elawa {
 	}
 	
 	public function showTimes($catId = NULL){
-		$categories = $this->_em->getRepository("DM:ElawaCategory")->findAll();
+		$categories = $this->_pdo->query("SELECT * FROM ElawaCategories")->fetchAll();
 		if(!count($categories))
 			$this->_interface->dieError("Es sind keine Kategorien vorhanden!");
 		if (!isset($catId))
-			$catId = $categories[0]->getId();
-		$query = $this->_em->createQuery("
-				SELECT t FROM DM:ElawaDefaultMeetingTime t 
-				WHERE t.category = :category");
-		$query->setParameter('category', $catId);
-		$times = $query->getResult();
-		$elawaEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName('elawaSelectionsEnabled');
+			$catId = $categories[0]['id'];
+
+		$times = $this->_pdo->prepare("SELECT * FROM ElawaDefaultMeetingTimes WHERE categoryId = ?");
+		$times->execute(array($catId));
+		$times = $times->fetchAll();
+
+		$elawaEnabled = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'elawaSelectionsEnabled'")->fetch();
+
 		$this->_smarty->assign('elawaEnabled', $elawaEnabled);
 		$this->_smarty->assign('times', $times);
 		$this->_smarty->assign('categories', $categories);
@@ -57,30 +60,21 @@ class MeetingTimes extends \administrator\Elawa\Elawa {
 	}
 	
 	protected function addMeetingTime($categoryId, $start, $length){
-		$category = $this->_em->getRepository("DM:ElawaCategory")->findOneById($categoryId);
-		$meetingTime = new ElawaDefaultMeetingTime();
-		$meetingTime->setCategory($category);
-		$meetingTime->setLength(new \DateTime($length));
-		$meetingTime->setTime(new \DateTime($start));
-		$this->_em->persist($meetingTime);
-		$this->_em->flush();
+		$query = $this->_pdo->prepare("INSERT INTO ElawaDefaultMeetingTimes(categoryId, time, length) VALUES (?,?,?)");
+		$query->execute(array($categoryId, $start, $length));
 	}
 	
 	protected function deleteMeetingTime($id) {
-		$time = $this->_em->getRepository("DM:ElawaDefaultMeetingTime")->find($id);
-		$categoryId = $time->getCategory()->getId();
-		if(isset($time)){
-			$this->_em->remove($time);
-			$this->_em->flush();
-		}
-		$this->showTimes($categoryId);
+		$query = $this->_pdo->prepare("SELECT categoryId FROM ElawaDefaultMeetingTimes WHERE id = ?");
+		$query->execute(array($id));
+		$categoryId = $query->fetch();
+		$query = $this->_pdo->prepare("DELETE FROM ElawaDefaultMeetingTimes WHERE id = ?");
+		$query->execute(array($id));
+		$this->showTimes($categoryId['categoryId']);
 	}
 	
 	protected function editMeetingTime($id, $start, $length){
-		$time = $this->_em->getRepository("DM:ElawaDefaultMeetingTime")->findOneById($id);
-		$time->setTime(new \DateTime($start));
-		$time->setLength(new \DateTime($length));
-		$this->_em->persist($time);
-		$this->_em->flush();
+		$query = $this->_pdo->prepare("UPDATE ElawaDefaultMeetingTimes SET time = ?, length = ? WHERE id = ?");
+		$query->execute(array($start, $length, $id));
 	}
 }

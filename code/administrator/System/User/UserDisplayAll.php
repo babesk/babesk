@@ -263,7 +263,8 @@ class UserDisplayAll {
 		'grades' => 'Klassen',
 		'activeGrade' => 'aktive Klasse',
 		'birthday' => 'Geburtstag',
-		'first_passwd' => 'ist erstes Passwort'
+		'first_passwd' => 'ist erstes Passwort',
+		'groups' => 'Benutzergruppen'
 	);
 
 	protected $_pdo;
@@ -310,7 +311,6 @@ class UserDisplayAllQueryCreator {
 
 		$this->preQuery($columns, $toSortFor, $toFilterValue);
 		$this->concatQuery($toFilterValue);
-
 		return $this->_query;
 	}
 
@@ -359,6 +359,9 @@ class UserDisplayAllQueryCreator {
 			case 'classes':
 				$this->classesQuery();
 				break;
+			case 'groups':
+				$this->groupsQuery();
+				break;
 			default:   //Else guess that its a field in the users-table
 				$this->addSelectStatement('u.' . $this->quoteIdentifier($col));
 				break;
@@ -393,7 +396,6 @@ class UserDisplayAllQueryCreator {
 	}
 
 	protected function filterForQuery($columns, $value) {
-
 		if(!empty($columns) && !isBlank($value)) {
 			$searches = array();
 			$query = '';
@@ -448,7 +450,7 @@ class UserDisplayAllQueryCreator {
 		if(!$this->_gradeQueryDone) {
 			$this->addSelectStatement('GROUP_CONCAT( DISTINCT
 				CONCAT(g.gradelevel, "-", g.label)
-				SEPARATOR "<br />") AS grades');
+				SEPARATOR "<br />") AS `grades`');
 
 			$this->addJoinStatement('
 				LEFT JOIN SystemGrades g ON uigs.gradeId = g.ID
@@ -509,6 +511,20 @@ class UserDisplayAllQueryCreator {
 		}
 	}
 
+    protected function groupsQuery() {
+
+        if(!$this->_groupQueryDone) {
+            $this->addSelectStatement('GROUP_CONCAT( DISTINCT sysgroup.name
+				SEPARATOR "<br />") AS `groups`');
+
+            $this->addJoinStatement('
+				LEFT JOIN SystemUsersInGroups uig ON uig.userId = u.ID
+				JOIN SystemGroups sysgroup ON sysgroup.ID = uig.groupId
+			');
+            $this->_groupQueryDone = true;
+        }
+    }
+
 	protected function addSelectStatement($st) {
 
 		if(in_array($st, $this->_selectors) === false) {
@@ -562,6 +578,7 @@ class UserDisplayAllQueryCreator {
 	protected $_cardsQueryDone = false;
 	protected $_classesQueryDone = false;
 	protected $_usersInGradesAndSchoolyearsQueryDone = false;
+    protected $_groupQueryDone = false;
 
 	protected $_sortFor;
 	protected $_filterForColumns;

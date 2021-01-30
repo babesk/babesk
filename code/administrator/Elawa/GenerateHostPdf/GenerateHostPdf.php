@@ -3,7 +3,6 @@
 namespace administrator\Elawa\GenerateHostPdf;
 
 require_once PATH_ADMIN . '/Elawa/Elawa.php';
-require_once PATH_INCLUDE .'/pdf/tcpdf/config/lang/ger.php';
 require_once PATH_INCLUDE . '/pdf/tcpdf/tcpdf.php';
 
 /**
@@ -33,8 +32,8 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 	 */
 	protected function generate($skipWarning = false) {
 
-		$hosts = $this->fetchHosts();
-		$this->_categories = $this->fetchCategories();
+		$hosts = $this->getHosts();
+		$this->_categories = $this->_pdo->query("SELECT * FROM ElawaCategories")->fetchAll();
 		foreach($hosts as $host) {
 			$this->generatePdf($host);
 		}
@@ -45,35 +44,18 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 		$str = "";
 		$warning = false;
 		$inString = array();
-		foreach ($this->_em->getRepository("DM:ElawaMeeting")->findAll() as $meeting){
-			if($meeting->getRoom()->getId() == 0 && !in_array($meeting->getHost()->getId(), $inString)){
-				$str .="Für ".$meeting->getHost()->getForename()." ".$meeting->getHost()->getName()." wurde noch kein Raum ausgewählt.<br>";
+		$meetings = $this->_pdo->query("SELECT m.*, u.forename, u.name FROM ElawaMeetings m JOIN SystemUsers u ON (m.hostId = u.ID)")->fetchAll();
+		foreach ( $meetings as $meeting){
+			if($meeting['roomId'] == 0 && !in_array($meeting['hostId'], $inString)){
+				$str .="Für ".$meeting['forename']." ".$meeting['name']." wurde noch kein Raum ausgewählt.<br>";
 				$warning = true;
-				$inString[] = $meeting->getHost()->getId();
+				$inString[] = $meeting['hostId'];
 			}
 		}
 		$str .= "Trotzdem fortfahren?";
 		dieJson(array($warning, $str));
 	}
 
-	/**
-	 * Fetches all users that are hosts of meetings
-	 * @return array of \Babesk\ORM\SystemUsers
-	 */
-	protected function fetchHosts() {
-
-		$query = $this->_em->createQuery(
-			'SELECT u FROM DM:SystemUsers u
-				INNER JOIN u.elawaMeetingsHosting
-		');
-		$hosts = $query->getResult();
-		if(!$hosts) {
-			$this->_interface->dieError(
-				'Es wurden keine Gastgeber mit Einträgen gefunden.'
-			);
-		}
-		return $hosts;
-	}
 
 	/**
 	 * Fetches the meetings and some related data of a host
@@ -85,32 +67,21 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 	protected function fetchMeetingsForHost($host) {
 
 		if(!$this->_meetingQueryStmt) {
-			$this->_meetingQueryStmt = $this->_em->getConnection()->prepare(
+			$this->_meetingQueryStmt = $this->_pdo->prepare(
 				'SELECT u.forename AS userForename, u.name AS userName,
 					m.time AS meetingTime, m.categoryId AS categoryId,
 					m.isDisabled AS isDisabled, r.name AS roomName
 				FROM ElawaMeetings m
 				LEFT JOIN SystemUsers u ON u.ID = m.visitorId
 				LEFT JOIN SystemRooms r ON r.id = m.roomId
-				WHERE m.hostId = :hostId
+				WHERE m.hostId = ?
 			');
 		}
-		$this->_meetingQueryStmt->bindValue('hostId', $host->getId());
-		$this->_meetingQueryStmt->execute();
+		$this->_meetingQueryStmt->execute(array($host['ID']));
 		$meetings = $this->_meetingQueryStmt->fetchAll();
 		return $meetings;
 	}
 
-	/**
-	 * Fetches all existing Elawa Categories and returns them
-	 * @return array of \Babesk\ORM\ElawaCategory
-	 */
-	protected function fetchCategories() {
-
-		$categories = $this->_em->getRepository('DM:ElawaCategory')
-			->findAll();
-		return $categories;
-	}
 
 	/**
 	 * Generates the PDF for a host and saves it locally
@@ -165,7 +136,7 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 		foreach($this->_categories as $category) {
 			$meetingsOfCategory = array();
 			foreach($meetings as $meeting) {
-				if($meeting['categoryId'] == $category->getId()) {
+				if($meeting['categoryId'] == $category['id']) {
 					$meetingsOfCategory[] = $meeting;
 				}
 			}
@@ -194,7 +165,7 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 			mkdir($this->_pdfTempDir);
 		}
 		$name = 'elawa-host-information-' .
-			"{$host->getForename()}-{$host->getName()}.pdf";
+			"{$host['forename']}-{$host['name']}.pdf";
 		$pdf->output("{$this->_pdfTempDir}/$name", 'F');
 	}
 
@@ -204,10 +175,10 @@ class GenerateHostPdf extends \administrator\Elawa\Elawa {
 	private function provideDownload() {
 
 		$zip = new \ZipArchive();
-		$zipfile = "elawa-host-information-" . date('Y-m-d_H:i:s') . '.zip';
+		$zipfile = "elawa-host-information.zip";
 		$zipdir = "{$this->_pdfTempDir}/$zipfile";
 		if($zip->open($zipdir, \ZipArchive::CREATE) !== true) {
-			$this->_interface->dieError('Kann Zipdatei nicht schreiben.');
+			$this->_interface->dieError('Kann Zipdatei nicht schreiben.'.$this->_pdfTempDir);
 		}
 		$pdfFiles = scandir($this->_pdfTempDir);
 		$zip->addEmptyDir('elawa-host-information');

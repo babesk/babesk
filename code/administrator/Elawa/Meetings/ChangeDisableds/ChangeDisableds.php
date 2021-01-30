@@ -18,30 +18,22 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 
 		parent::entryPoint($dataContainer);
 		if(isset($_POST['room']) && isset($_POST['host']) && isset($_POST['category'])){
-			$room = $this->_em->getRepository("DM:SystemRoom")->findOneByName($_POST['room']);
-			$host = $this->_em->getRepository("DM:SystemUsers")->findOneById($_POST['host']);
-			$cat = $this->_em->getRepository("DM:ElawaCategory")->findOneByName($_POST['category']);
-			$times = $this->_em->getRepository("DM:ElawaMeeting")->findAll();
-			foreach ($times as $time){
-				if($time->getHost() == $host && $time->getCategory()==$cat)
-					$time->setRoom($room);
-				$this->_em->persist($time);
-			}
-			$this->_em->flush();
+		    if($_POST['room'] == "---"){
+                $query = $this->_pdo->prepare("UPDATE ElawaMeetings SET roomId = 0
+                                                        WHERE hostId = ? AND categoryId = ?");
+                $query->execute(array($_POST['host'], $_POST['category']));
+
+            }else {
+                $query = $this->_pdo->prepare("UPDATE ElawaMeetings SET roomId = (SELECT id FROM SystemRooms WHERE name = ?)
+                                                        WHERE hostId = ? AND categoryId = ?");
+                $query->execute(array($_POST['room'], $_POST['host'], $_POST['category']));
+            }
 		}else if(isset($_POST['hostId'])) {
-			$host = $this->_em->getReference(
-				'DM:SystemUsers', $_POST['hostId']
-			);
-			$this->sendHostMeetingData($host);
+			$this->sendHostMeetingData($_POST['hostId']);
 		}
 		else if(isset($_POST['meetingId'])) {
-			$meeting = $this->_em->getReference(
-				'DM:ElawaMeeting', $_POST['meetingId']
-			);
-			$isDisabled = $_POST['isDisabled'] == 'true';
-			$meeting->setIsDisabled($isDisabled);
-			$this->_em->persist($meeting);
-			$this->_em->flush();
+		    $query = $this->_pdo->prepare("UPDATE ElawaMeetings SET isDisabled = ? WHERE id = ?");
+		    $query->execute(array($_POST['isDisabled'] == "true" ? 1 : 0, $_POST['meetingId']));
 		}
 		else {
 			$hosts = $this->getHosts();
@@ -54,84 +46,49 @@ class ChangeDisableds extends \administrator\Elawa\Meetings\Meetings {
 	//Implements
 	/////////////////////////////////////////////////////////////////////
 
-	protected function getHosts() {
-		
-		$query = $this->_em->createQuery(
-			'SELECT u, m FROM DM:SystemUsers u
-			INNER JOIN u.elawaMeetingsHosting m
-		');
-		$users = $query->getResult();
-		if($users && count($users)) {
-			return $users;
-		}
-		else {
-			$this->_interface->dieError(
-				'Es gibt keine Benutzer, die Sprechzeiten haben.'
-			);
-		}
-	}
-	
-	protected function getRooms() {
-	
-		$query = $this->_em->createQuery(
-				'SELECT u FROM DM:SystemRoom u
-		');
-		$rooms = $query->getResult();
-		if($rooms && count($rooms)) {
-			return $rooms;
-		}
-	}
 
 	protected function sendHostMeetingData($host) {
 
-		$query = $this->_em->createQuery(
-			'SELECT m, c FROM DM:ElawaMeeting m
-			INNER JOIN m.category c
-			WHERE m.host = :host
-			ORDER BY m.time ASC
-		');
-		$query->setParameter('host', $host);
-		$meetings = $query->getResult();
+
+		$query = $this->_pdo->prepare("SELECT m.*, c.name FROM ElawaMeetings m
+                                                JOIN ElawaCategories c ON (m.categoryId = c.id)
+                                                WHERE m.hostId = ?
+                                                ORDER BY m.time ASC");
+		$query->execute(array($host));
+		$meetings = $query->fetchAll();
 		if($meetings && count($meetings)) {
-			$meetingAr = array();
-			foreach($meetings as $meeting) {
-				$meetingAr[] = array(
-					'id' => $meeting->getId(),
-					'time' => $meeting->getTime()->format('H:i:s'),
-					'length' => $meeting->getLength()->format('H:i:s'),
-					'category' => $meeting->getCategory()->getName(),
-					'isDisabled' => $meeting->getIsDisabled()
-				);
-			}
 			$roomArr = array();
 			$roomArr[] = array(
 					'id' => 0,
 					'name' => "---"
 			);
-			$rooms = $this->getRooms();
+			$rooms = $this->_pdo->query("SELECT * FROM SystemRooms")->fetchAll();
 			if(isset($rooms)){
 				foreach ($rooms as $room){
 					$roomArr[] = array(
-						'id' => $room->getId(),
-						'name' => $room->getName()
+						'id' => $room['id'],
+						'name' => $room['name']
 					);
 				}
 			}else{
 				$this->_interface->showWarning("Es sind keine Räume vorhanden");
 			}
 			$selectedArr = array();
-			$categories = $this->_em->getRepository("DM:ElawaCategory")->findAll();
+			$categories = $this->_pdo->query("SELECT * FROM ElawaCategories")->fetchAll();
+
 			foreach ($categories as $category){
-				$selectedRoom = $this->_em->getRepository("DM:ElawaMeeting")->findOneBy(array('host' => $host,
-																								'category' => $category
-				));
-				if(isset($selectedRoom)){
-					if($selectedRoom->getRoom()->getId() != 0)
-						$selectedArr[$category->getName()] = $selectedRoom->getRoom()->getName();
+				$query = $this->_pdo->prepare("SELECT r.* FROM ElawaMeetings m 
+                                                        JOIN SystemRooms r ON (m.roomId = r.id)
+                                                        WHERE hostId = ? AND categoryId = ?");
+				$query->execute(array($host, $category['id']));
+				$selectedRoom = $query->fetch();
+				if($selectedRoom){
+					if($selectedRoom['id'] != 0)
+						$selectedArr[$category['name']] = $selectedRoom['name'];
 				}
 			}
-			$elawaEnabled = $this->_em->getRepository('DM:SystemGlobalSettings')->findOneByName('elawaSelectionsEnabled');
-			$sendingArr = array($meetingAr, $roomArr, $selectedArr, $elawaEnabled->getValue() != "0");
+			$elawaEnabled = $this->isElawaEnabled();
+			$sendingArr = array($meetings, $roomArr, $selectedArr, $elawaEnabled, $categories);
 			die(json_encode($sendingArr));
 		}
 		else {

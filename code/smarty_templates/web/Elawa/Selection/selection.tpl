@@ -6,12 +6,12 @@
 {$categories = array()}
 {$times = array()}
 {foreach $meetings as $meeting}
-	{$time = $meeting->getTime()->format('H:i:s')}
-	{$length = $meeting->getLength()->format('H:i:s')}
-	{$catId = $meeting->getCategory()->getId()}
+	{$time = $meeting['time']}
+	{$length = $meeting['length']}
+	{$catId = $meeting['categoryId']}
 	{$meetingAr[$time][$length][$catId] = $meeting}
-	{if !in_array($meeting->getCategory()->getName(), $categories)}
-		{$categories[$catId] = $meeting->getCategory()->getName()}
+	{if !in_array($meeting['CategoryName'], $categories)}
+		{$categories[$catId] = $meeting['CategoryName']}
 	{/if}
 {/foreach}
 {foreach $meetingAr as $time => $lengths}
@@ -27,7 +27,7 @@
 
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<p>Hier können sie eine Sprechzeit von {$host->getForename()} {$host->getName()} auswählen, um daran teilzunehmen.
+			<p>Hier können sie eine Sprechzeit von {$host['forename']} {$host['name']} auswählen, um daran teilzunehmen.
 			Nachdem sie die gewünschte Sprechzeit ausgewählt haben, gehen sie bitte auf "Anmeldung bestätigen".
 			</p>
 			<b class="text-danger">Bitte beachten sie:</b>
@@ -61,10 +61,10 @@
 									{if isset($rowCategories[$categoryId])}
 										{$meeting = $rowCategories[$categoryId]}
 										<td class="category-row">
-											{if $meeting->getIsDisabled()}
+											{if $meeting['isDisabled']}
 												{*Meeting is deactivated*}
 												<span class="text-muted">deaktiviert</span>
-											{else if $meeting->getVisitor()->getId()}
+											{else if $meeting['visitorId']}
 												{*Meeting already has an applicant*}
 												<label class="btn btn-default" disabled>
 													Vergeben
@@ -74,8 +74,8 @@
 													<label class="btn btn-default meeting-status-button">
 														<span class="status-text">anmelden</span>
 														<input type="radio" name="meetingId"
-															id="meetingId-{$meeting->getId()}"
-															class="meetings" value="{$meeting->getId()}">
+															id="meetingId-{$meeting['id']}"
+															class="meetings" value="{$meeting['id']}">
 													</label>
 													<label class="btn btn-success meeting-status-button">
 														<span class="status-text">Frei</span>

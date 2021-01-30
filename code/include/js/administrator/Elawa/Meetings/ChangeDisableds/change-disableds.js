@@ -13,7 +13,7 @@ $(document).ready(function() {
         dataType: 'json',
         success: function(data, statusText, jqXHR) {
           if (jqXHR.status === 200) {
-            return insertStatuses(data[0], data[1], data[2], data[3]);
+            return insertStatuses(data[0], data[1], data[2], data[3], data[4]);
           } else if (jqXHR.status === 204) {
             return toastr.info('Es sind keine Sprechzeiten für diesen Benutzer eingetragen', 'Keine Sprechzeiten');
           }
@@ -24,21 +24,11 @@ $(document).ready(function() {
         }
       });
     };
-    insertStatuses = function(data, roomData, selectedData, elawaEnabled) {
-      var $tbody, $thead, categories, fillTableBody, getAllCategories, setTableHeaders, updateSwitches, rooms;
+    insertStatuses = function(data, roomData, selectedData, elawaEnabled, categories) {
+      var $tbody, $thead, fillTableBody, setTableHeaders, updateSwitches;
       $tbody = $('table#meeting-statuses > tbody');
       $thead = $('table#meeting-statuses > thead');
-      getAllCategories = function(data) {
-        var categories, index, val;
-        categories = [];
-        for (index in data) {
-          val = data[index];
-          if ($.inArray(val['category'], categories) === -1) {
-            categories.push(val['category']);
-          }
-        }
-        return categories;
-      };
+
       setTableHeaders = function(categories) {
         var $globalSwitches, $headRow, category, index, row;
         row = "";
@@ -47,15 +37,15 @@ $(document).ready(function() {
         $headRow.append("<th class='length'>Länge</th>");
         for (index in categories) {
           category = categories[index];
-          row += "<th class='category' data-name='" + category + "'> " + category + " <input type='checkbox' class='global-category-switch' data-category='" + category + "' checked";
-          if(elawaEnabled){
+          row += "<th class='category' data-name='" + category['name'] + "'> " + category['name'] + " <input type='checkbox' class='global-category-switch' data-category='" + category['id'] + "' checked";
+          if(elawaEnabled == "1"){
         	  row += " disabled";
           }
           row += "> ";
           row += '<select name="room" class="rooms-select">';
           roomData.forEach(function(c, i, a){
-        	  row += "<option data-cat='"+category+"' data-host='"+hostId+"'";
-        	  if(selectedData[category] == c.name){
+        	  row += "<option data-cat='"+category['id']+"' data-host='"+hostId+"'";
+        	  if(selectedData[category['name']] == c.name){
         		  row += " selected";
         	  }
         	  row+= ">";
@@ -115,14 +105,14 @@ $(document).ready(function() {
             $row = $("<tr data-time='" + val['time'] + "' data-length='" + val['length'] + "'> <td class='time'>" + val['time'] + "</td> <td class='length'>" + val['length'] + "</td> </tr>");
             for (_i = 0, _len = categories.length; _i < _len; _i++) {
               category = categories[_i];
-              $row.append("<td class='category' data-name='" + category + "'></td>");
+              $row.append("<td class='category' data-name='" + category['id'] + "'></td>");
             }
             $tbody.append($row);
           }
           $toggle = $("<input type='checkbox' data-meeting-id='" + val['id'] + "'>");
-          $toggle.prop('checked', !val['isDisabled']);
-          $toggle.prop('disabled', elawaEnabled);
-          _results.push($row.children("td[data-name='" + val['category'] + "']").append($toggle));
+          $toggle.prop('checked', val['isDisabled'] == 0);
+          $toggle.prop('disabled', elawaEnabled == "1");
+          _results.push($row.children("td[data-name='" + val['categoryId'] + "']").append($toggle));
         }
         return _results;
       };
@@ -140,7 +130,6 @@ $(document).ready(function() {
           return switchChanged($(this), event, status);
         });
       };
-      categories = getAllCategories(data);
       setTableHeaders(categories);
       fillTableBody(categories, data);
       return updateSwitches();

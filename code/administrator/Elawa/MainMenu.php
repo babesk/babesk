@@ -27,29 +27,27 @@ class MainMenu extends Elawa {
 	}
 
 	private function display() {
-		$settingsRep = $this->_em->getRepository('DM:SystemGlobalSettings');
-		$groupsRep = $this->_em->getRepository('DM:SystemGroups');
 		if(isset($_GET['action']) && $_GET['action'] == 1){ // changeHostGroup
-				$settingsRep->setSetting('elawaHostGroupId', $_POST['host-group-select']);
+            $query = $this->_pdo->prepare("UPDATE SystemGlobalSettings SET value = ? WHERE name = 'elawaHostGroupId'");
+            $query->execute(array($_POST['host-group-select']));
 		}
-		
-		$hostGroupId = $settingsRep->findOneByName('elawaHostGroupId');
-		$selectionsEnabledObj = $settingsRep->findOneByName(
-			'elawaSelectionsEnabled'
-		);
+		$hostGroup = $this->_pdo->query("SELECT ID, name FROM SystemGroups WHERE id = 
+                                                    (SELECT value FROM SystemGlobalSettings WHERE name = 'elawaHostGroupId')
+                                                    ")->fetch();
+        $selectionsEnabledObj = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'elawaSelectionsEnabled'")->fetch()[0];
 		if($selectionsEnabledObj) {
-			$selectionsEnabled = $selectionsEnabledObj->getValue() != "0";
+			$selectionsEnabled = $selectionsEnabledObj != "0";
 		}
 		else {
 			$selectionsEnabled = false;
 		}
-		
-		$groups = $groupsRep->findAll();
+
+		$groups = $this->_pdo->query("SELECT ID, name FROM SystemGroups")->fetchAll();
 		$groupArr = array();
 		foreach ($groups as &$group){
-			$row['ID'] = $group->getId();
-			$row['name'] = $group->getName();
-			if($group->getId() == $hostGroupId->getValue())
+			$row['ID'] = $group['ID'];
+			$row['name'] = $group['name'];
+			if($group['ID'] == $hostGroup['ID'])
 				$row['selected'] = true;
 			else 
 				$row['selected'] = false;
@@ -57,10 +55,10 @@ class MainMenu extends Elawa {
 		}
 		$groupArr = json_encode($groupArr);
 		
-		$group = $this->_em->find('DM:SystemGroups', $hostGroupId->getValue());
+		//$group = $this->_em->find('DM:SystemGroups', $hostGroupId);
 		$this->_smarty->assign('allGroups', $groupArr);
 		$this->_smarty->assign('selectionsEnabled', $selectionsEnabled);
-		$this->_smarty->assign('hostGroup', $group);
+		$this->_smarty->assign('hostGroup', $hostGroup);
 		$this->displayTpl('mainMenu.tpl');
 	}
 

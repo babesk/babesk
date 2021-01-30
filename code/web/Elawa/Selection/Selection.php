@@ -18,10 +18,7 @@ class Selection extends \web\Elawa\Elawa {
 				$this->registerSelection($_POST['meetingId']);
 			}
 			else if(isset($_GET['hostId'])) {
-				$host = $this->_em->getReference(
-					'DM:SystemUsers', $_GET['hostId']
-				);
-				$this->displaySelection($host);
+				$this->displaySelection($_GET['hostId']);
 			}
 			else {
 				$this->displayHostSelection();
@@ -38,17 +35,19 @@ class Selection extends \web\Elawa\Elawa {
 	//Implements
 	/////////////////////////////////////////////////////////////////////
 
-	protected function displaySelection($host) {
+	protected function displaySelection($hostId) {
+        $query = $this->_pdo->prepare("SELECT m.*, c.name as CategoryName FROM ElawaMeetings m 
+                                                JOIN ElawaCategories c ON (m.categoryId = c.id)
+                                                LEFT JOIN SystemRooms r ON (m.roomId = r.id)
+                                                WHERE m.hostId = ?
+                                                ORDER BY m.time ASC");
+        $query->execute(array($hostId));
+		$meetings = $query->fetchAll();
 
-		$query = $this->_em->createQuery(
-			'SELECT m, r, c FROM DM:ElawaMeeting m
-			LEFT JOIN m.category c
-			LEFT JOIN m.room r
-			WHERE m.host = :host
-			ORDER BY m.time ASC
-		');
-		$query->setParameter('host', $host);
-		$meetings = $query->getResult();
+		$query = $this->_pdo->prepare("SELECT ID, name, forename FROM SystemUsers WHERE ID = ?");
+		$query->execute(array($hostId));
+		$host = $query->fetch();
+
 		$this->_smarty->assign('meetings', $meetings);
 		$this->_smarty->assign('host', $host);
 		$this->displayTpl('selection.tpl');
@@ -56,24 +55,19 @@ class Selection extends \web\Elawa\Elawa {
 
 	protected function registerSelection($meetingId) {
 
-		$meeting = $this->_em->getReference('DM:ElawaMeeting', $meetingId);
-		$query = $this->_em->createQuery(
-			'SELECT m, h FROM DM:ElawaMeeting m
-			LEFT JOIN m.host h
-			WHERE m = :meeting
-		');
-		$query->setParameter('meeting', $meeting);
-		$meeting = $query->getOneOrNullResult();
+		$query = $this->_pdo->prepare("SELECT * FROM ElawaMeetings WHERE id = ?");
+		$query->execute(array($meetingId));
+		$meeting = $query->fetch();
+
 		$this->_interface->moduleBacklink('web|Elawa');
 		if(!$meeting) {
 			$this->_interface->dieError('Diese Sprechzeit existiert nicht!');
 		}
-		$user = $this->_em->getReference('DM:SystemUsers', $_SESSION['uid']);
-		$this->checkRegisterSelectionValid($meeting, $user);
+		$this->checkRegisterSelectionValid($meeting, $_SESSION['uid']);
 
-		$meeting->setVisitor($user);
-		$this->_em->persist($meeting);
-		$this->_em->flush();
+		$query = $this->_pdo->prepare("UPDATE ElawaMeetings SET visitorId = ? WHERE id = ?");
+		$query->execute(array($_SESSION['uid'], $meetingId));
+
 		$this->_interface->dieSuccess(
 			'Die Sprechzeit wurde erfolgreich angemeldet'
 		);
@@ -81,27 +75,20 @@ class Selection extends \web\Elawa\Elawa {
 
 	protected function checkRegisterSelectionValid($meeting, $user) {
 
-		$countQuery = $this->_em->createQuery(
-			'SELECT COUNT(m.id) FROM DM:ElawaMeeting m
-			INNER JOIN m.visitor v
-			INNER JOIN m.host h
-			WHERE v = :visitor AND h = :host
-		');
-		$countQuery->setParameter('visitor', $user);
-		$countQuery->setParameter('host', $meeting->getHost());
-		$count = $countQuery->getSingleScalarResult();
+		$countQuery = $this->_pdo->prepare("SELECT COUNT(id) FROM ElawaMeetings WHERE visitorId = ? AND hostId = ?");
+		$countQuery->execute(array($user, $meeting['hostId']));
+		$count = $countQuery->fetch()[0];
 		if($count) {
 			$this->_interface->dieError(
 				'Sie sind bereits bei dieser Person angemeldet!'
 			);
 		}
-		if($meeting->getIsDisabled()) {
+		if($meeting['isDisabled']) {
 			$this->_interface->dieError('Diese Sprechzeit ist deaktiviert!');
 		}
-		if($meeting->getVisitor()->getId() != 0) {
+		if($meeting['visitorId'] != 0) {
 			$this->_interface->dieError(
-				'Diese Sprechzeit ist leider schon vergeben. ' .
-				'Da war wohl jemand schneller.'
+				'Diese Sprechzeit ist leider schon vergeben. '
 			);
 		}
 	}
@@ -111,33 +98,23 @@ class Selection extends \web\Elawa\Elawa {
 	 */
 	protected function displayHostSelection() {
 
-		$userSelf = $this->_em->getReference(
-			'DM:SystemUsers', $_SESSION['uid']
-		);
-		$hostsQuery = $this->_em->createQuery(
-			'SELECT u FROM DM:SystemUsers u
-			INNER JOIN u.elawaMeetingsHosting h
-			ORDER BY u.name
-		');
-		$hosts = $hostsQuery->getResult();
+
+		$hosts = $this->getHosts();
 		//Get all hosts for which the user already has made a selection
-		$votedHostsQuery = $this->_em->createQuery(
-			'SELECT m FROM DM:ElawaMeeting m
-			WHERE m.visitor = :user
-			GROUP BY m.host
-		');
-		$votedHostsQuery->setParameter('user', $userSelf);
-		$meetingsOfVotedHosts = $votedHostsQuery->getResult();
+		$votedHostsQuery = $this->_pdo->prepare("SELECT m.* FROM ElawaMeetings m WHERE m.visitorId = ? GROUP BY hostId");
+		$votedHostsQuery->execute(array($_SESSION['uid']));
+		$meetingsOfVotedHosts = $votedHostsQuery->fetchAll();
+
 		$hostsAr = array();
 		foreach($hosts as $host) {
 			$status = "";
 			$selectable = true;
-			if($host == $userSelf) {
+			if($host['ID'] == $_SESSION['uid']) {
 				$status = "Du selbst";
 				$selectable = false;
 			}
 			foreach($meetingsOfVotedHosts as $meetingOfVotedHost) {
-				if($host == $meetingOfVotedHost->getHost()) {
+				if($host['ID'] == $meetingOfVotedHost['hostId']) {
 					$status = "Bereits Termin gewählt";
 					$selectable = false;
 				}
@@ -159,10 +136,9 @@ class Selection extends \web\Elawa\Elawa {
 	 */
 	protected function checkIsSelectionGloballyEnabled() {
 
-		$enabledRow = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('elawaSelectionsEnabled');
+		$enabledRow = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'elawaSelectionsEnabled'")->fetch()[0];
 		if($enabledRow) {
-			if($enabledRow->getValue() != '0') {
+			if($enabledRow != '0') {
 				return true;
 			}
 		}

@@ -16,27 +16,18 @@
 					{foreach $meetings as $meeting}
 						<tr>
 							<td>
-								{$category = $meeting->getCategory()}
-								{if $category}
-									{$category->getName()}
-								{else}
-									---
-								{/if}
+								{$meeting['catname']}
+
 							</td>
 							<td>
-								{$meeting->getTime()->format('H:i:s')}
+								{$meeting['time']}
 							</td>
 							<td>
-								{$meeting->getHost()->getName()},
-								{$meeting->getHost()->getForename()}
+								{$meeting['name']},
+								{$meeting['forename']}
 							</td>
 							<td>
-								{$room = $meeting->getRoom()}
-								{if $room}
-									{$room->getName()}
-								{else}
-									---
-								{/if}
+								{$meeting['roomname']}
 							</td>
 						</tr>
 					{/foreach}

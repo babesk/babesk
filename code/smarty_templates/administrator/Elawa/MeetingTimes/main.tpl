@@ -6,8 +6,8 @@
 	<form action="index.php?module=administrator|Elawa|MeetingTimes" method="post" id="catForm">
 		<select id="category-select" name="category">
 			{foreach $categories as $category}
-				<option value="{$category->getId()}" {if $catId==$category->getId()} selected {/if}>
-					{$category->getName()}
+				<option value="{$category['id']}" {if $catId==$category['id']} selected {/if}>
+					{$category['name']}
 				</option>
 			{/foreach}
 		</select>
@@ -25,17 +25,17 @@
 				<th>L&auml;nge</th>
 			</tr>
 			{foreach $times as $time}
-				<form action="index.php?module=administrator|Elawa|MeetingTimes&action=4" method="post" id="form{$time->getId()}">
+				<form action="index.php?module=administrator|Elawa|MeetingTimes&action=4" method="post" id="form{$time['id']}">
 					<tr>
-						<td><input type="hidden" name="id" value="{$time->getId()}">{$time->getId()}</td>
-						<td><input type="text" class="{$time->getId()}" name="start" value="{$time->getTime()->format('H:i')}" disabled></td>
-						<td><input type="text" class="{$time->getId()}" name="length" value="{$time->getLength()->format('H:i')}" disabled></td>
+						<td><input type="hidden" name="id" value="{$time['id']}">{$time['id']}</td>
+						<td><input type="text" class="{$time['id']}" name="start" value="{$time['time']}" disabled></td>
+						<td><input type="text" class="{$time['id']}" name="length" value="{$time['length']}" disabled></td>
 						<td>
-							<button type="button" class="btn btn-info btn-xs edit-category" id="{$time->getId()}">
-								<span class="fa fa-edit fa-fw edit{$time->getId()}"></span>
+							<button type="button" class="btn btn-info btn-xs edit-category" id="{$time['id']}">
+								<span class="fa fa-edit fa-fw edit{$time['id']}"></span>
 							</button>
-							{if !$elawaEnabled->getValue()}
-							<button type="button" class="btn btn-danger btn-xs delete-category" id="{$time->getId()}">
+							{if !$elawaEnabled['value']}
+							<button type="button" class="btn btn-danger btn-xs delete-category" id="{$time['id']}">
 								<span class="fa fa-trash-o"></span>
 							</button>
 							{/if}
