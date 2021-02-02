@@ -172,9 +172,9 @@ class ShowBooklist extends Booklist {
         $loan = new \Babesk\Schbas\Loan($this->_dataContainer);
         $invNums = array();
         foreach($paginator as $book) {
-            $grades = $loan->isbnIdent2Gradelevel($book->getClass());
+            $grades = $loan->isbnIdent2Gradelevel($book['class']);
 
-            $query = TableMng::query("SELECT gradelevel, count(*) cnt, sum(CASE WHEN s.special_course LIKE '%".$book->getSubject()->getAbbreviation()."%' OR s.religion LIKE '%".$book->getSubject()->getAbbreviation()."%' OR s.foreign_language LIKE '%".$book->getSubject()->getAbbreviation()."%' THEN 1 ELSE 0 END) sc
+            $query = TableMng::query("SELECT gradelevel, count(*) cnt, sum(CASE WHEN s.special_course LIKE '%".$book['abbreviation']."%' OR s.religion LIKE '%".$book['abbreviation']."%' OR s.foreign_language LIKE '%".$book['abbreviation']."%' THEN 1 ELSE 0 END) sc
 		                                    FROM SystemUsers s
 		                                    JOIN SystemAttendances a ON s.id=a.userId
 		                                    JOIN SystemSchoolyears y ON a.schoolyearId = y.ID
@@ -189,7 +189,7 @@ class ShowBooklist extends Booklist {
                                             JOIN SystemSchoolSubjects s ON c.subject_id = s.ID
                                             WHERE gradelevel = ".$grade['gradelevel']);
                 if (in_array($grade['gradelevel']+1, $grades)) { //benÃ¶tigt der SchÃ¼ler das Buch nÃ¤chstes Jahr
-                    if (in_array($book->getSubject()->getAbbreviation(), array_column($coreSub, 'abbreviation'))){ //ist es ein Pflichtfach
+                    if (in_array($book['abbreviation'], array_column($coreSub, 'abbreviation'))){ //ist es ein Pflichtfach
                         $sum += $grade['cnt'];
                         $tooltip = "" . $tooltip . "Jahrgang " . $grade['gradelevel'] . ": " . $grade['cnt'] . "<br>";
                     }else{
@@ -199,8 +199,8 @@ class ShowBooklist extends Booklist {
                 }
             }
             $tooltip .= "'";
-            $invNums[$book->getId()]['usersInSystem'] = $sum;
-            $invNums[$book->getId()]['usersInSystemByGrade'] = $tooltip;
+            $invNums[$book['id']]['usersInSystem'] = $sum;
+            $invNums[$book['id']]['usersInSystemByGrade'] = $tooltip;
         }
         return $invNums;
     }
@@ -219,14 +219,14 @@ class ShowBooklist extends Booklist {
         $loan = new \Babesk\Schbas\Loan($this->_dataContainer);
         $booksLent = array();
         foreach($paginator as $book) {
-            $grades = $loan->isbnIdent2Gradelevel($book->getClass());
+            $grades = $loan->isbnIdent2Gradelevel($book['class']);
             $query = TableMng::query("SELECT gradelevel, COUNT(1) cnt
 		                            FROM SchbasLending l 
 		                            JOIN SchbasInventory i ON l.inventory_id = i.id
 		                            JOIN SystemAttendances a ON l.user_id = a.userId
 		                            JOIN SystemGrades g ON a.gradeId = g.ID
 		                            JOIN SystemSchoolyears s ON a.schoolyearId = s.ID 
-		                            WHERE s.active = 1 AND i.book_id = ".$book->getId()
+		                            WHERE s.active = 1 AND i.book_id = ".$book['id']
                 ." GROUP BY gradelevel");
             $sum = 0;
             $notReturning = 0;
@@ -239,9 +239,9 @@ class ShowBooklist extends Booklist {
                 $tooltip = "".$tooltip."Jahrgang ".$grade['gradelevel'].": ".$grade['cnt']."<br>";
             }
             $tooltip .= "'";
-            $booksLent[$book->getId()]['exemplarsLent'] = $sum;
-            $booksLent[$book->getId()]['exemplarsLentNotReturning'] = $notReturning;
-            $booksLent[$book->getId()]['exemplarsLentByGrade'] = $tooltip;
+            $booksLent[$book['id']]['exemplarsLent'] = $sum;
+            $booksLent[$book['id']]['exemplarsLentNotReturning'] = $notReturning;
+            $booksLent[$book['id']]['exemplarsLentByGrade'] = $tooltip;
         }
 
         return $booksLent;
@@ -311,8 +311,8 @@ class ShowBooklist extends Booklist {
             $query = TableMng::query("SELECT COUNT(1) cnt
 		                                    FROM SchbasUsersShouldLendBooks s
 		                                    JOIN SystemSchoolyears y ON s.schoolyearID=y.ID
-		                                    WHERE y.active = 1 AND s.bookId = ".$book->getId());
-            $booksNeeded[$book->getId()]['exemplarsNeeded'] = $query[0]['cnt'];
+		                                    WHERE y.active = 1 AND s.bookId = ".$book['id']);
+            $booksNeeded[$book['id']]['exemplarsNeeded'] = $query[0]['cnt'];
         }
         return $booksNeeded;
     }
@@ -338,7 +338,7 @@ class ShowBooklist extends Booklist {
                                     JOIN SystemAttendances a ON p.UID = a.userId
 		                            JOIN SystemGrades g ON a.gradeId = g.ID
 		                            JOIN SystemSchoolyears s ON a.schoolyearId = s.ID
-				                    WHERE s.active = 1 AND BID = '.$book->getId());
+				                    WHERE s.active = 1 AND BID = '.$book['id']);
             $sum = 0;
             $tooltip = "'";
             foreach ($query as $grade){
@@ -347,8 +347,8 @@ class ShowBooklist extends Booklist {
             }
             $tooltip .= "'";
 
-            $booksSelfpayed[$book->getId()]['exemplarsSelfpayed'] = $sum;
-            $booksSelfpayed[$book->getId()]['exemplarsSelfpayedByGrade'] = $tooltip;
+            $booksSelfpayed[$book['id']]['exemplarsSelfpayed'] = $sum;
+            $booksSelfpayed[$book['id']]['exemplarsSelfpayedByGrade'] = $tooltip;
         }
         return $booksSelfpayed;
     }

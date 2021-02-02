@@ -138,22 +138,18 @@ class Generate extends \administrator\Schbas\BookAssignments\BookAssignments {
 
 	protected function assignmentsForSingleUserCreate($userId) {
 
-		$user = $this->_em->find('DM:SystemUsers', $userId);
-		if(!$user) { dieJson('Benutzer nicht gefunden', 400); }
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
 		$loanGenerator = new \Babesk\Schbas\ShouldLendGeneration(
 			$this->_dataContainer
 		);
 		$schoolyear = $loanHelper->schbasPreparationSchoolyearGet();
-		$bookAssignments = $this->_em
-			->getRepository('DM:SchbasUserShouldLendBook')
-			->findBy(['user' => $user, 'schoolyear' => $schoolyear]);
-		if(count($bookAssignments)) {
-			foreach($bookAssignments as $bookAssignment) {
-				$this->_em->remove($bookAssignment);
-			}
-			$this->_em->flush();
-		}
+
+		$user = $this->_pdo->prepare("SELECT * FROM SystemUsers WHERE ID = ?");
+		$user->execute(array($userId));
+		$user = $user->fetch();
+
+		$deleteQuery = $this->_pdo->prepare("DELETE FROM SchbasUsersShouldLendBooks WHERE userId = ? AND schoolyearId = ?");
+		$deleteQuery->execute(array($userId, $schoolyear));
 		$res = $loanGenerator->generate(
 			['onlyForUsers' => [$user], 'schoolyear' => $schoolyear]
 		);

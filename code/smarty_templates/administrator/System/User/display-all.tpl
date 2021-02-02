@@ -24,7 +24,7 @@
 				<span class="fa fa-cog"></span>
 			</a>
 			<a class="btn btn-xs btn-default user-action-settings"
-				href="index.php?module=administrator|System|Users&id=<%= ID %>" title="Nutzerübersicht"
+				href="index.php?module=administrator|Schbas|BookAssignments|View&userId=<%= ID %>" title="Schbas-Zuweisungen"
 				>
 				<span class="fa fa-eye"></span>
 			</a>

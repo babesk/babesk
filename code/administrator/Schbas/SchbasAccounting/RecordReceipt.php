@@ -188,6 +188,9 @@ class RecordReceipt extends \SchbasAccounting {
 			else if($options['specialFilter'] == 'showPayedTooMuch') {
                 $query .= "AND a.amountToPay - a.payedAmount < 0 ";
             }
+            else if($options['specialFilter'] == 'showFormNotReturned') {
+                $query .= "AND lc.abbreviation = 'ls' AND a.formReturned != 1 ";
+            }
 		}
 		if(!empty($filter) && !empty($filterForCol)) {
 		    $queryOr = "AND (0 ";

@@ -17,13 +17,20 @@ class View extends \administrator\Schbas\BookAssignments\BookAssignments {
 	public function execute($dataContainer) {
 
 		$this->entryPoint($dataContainer);
-		$schoolyearId = filter_input(INPUT_GET, 'schoolyearId');
-		if(isset($_GET['jsonData'])) {
-			$this->bookDataSend($schoolyearId);
-		}
-		else {
-			$this->displayTpl('main.tpl');
-		}
+		if(isset($_GET['userId'])){
+            if(isset($_GET['schoolyearId'])){
+                $this->showSingleUser($_GET['userId'], $_GET['schoolyearId']);
+            }else{
+                $this->showSingleUser($_GET['userId']);
+            }
+        }else {
+            $schoolyearId = filter_input(INPUT_GET, 'schoolyearId');
+            if (isset($_GET['jsonData'])) {
+                $this->bookDataSend($schoolyearId);
+            } else {
+                $this->displayTpl('main.tpl');
+            }
+        }
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -175,6 +182,59 @@ class View extends \administrator\Schbas\BookAssignments\BookAssignments {
 		$sort = array_values($sort);
 		return $sort;
 	}
+
+    protected function getSingleUserBookAssignments($user) {
+
+        try {
+            $stmt = $this->_pdo->prepare(
+                'SELECT usb.id as usbid, b.id as bid, b.title, sy.id as syid, sy.label
+				FROM SchbasUsersShouldLendBooks usb
+				INNER JOIN SchbasBooks b ON (b.id = usb.bookId)
+				INNER JOIN SystemSchoolyears sy ON (usb.schoolyearId = sy.ID)
+				WHERE usb.userId = ?
+			');
+            $stmt->execute(array($user));
+            $res = $stmt->fetchAll();
+            return $res;
+
+        } catch(\Exception $e) {
+            $this->_logger->logO('Could not fetch book-assignments for user',
+                ['sev' => 'error', 'moreJson' => $e->getMessage()]);
+            dieHttp('Konnte Buchzuweisungen nicht abrufen', 500);
+        }
+    }
+
+    protected function showSingleUser($userId, $schoolyearId = null){
+	    $prepSyId = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'schbasPreparationSchoolyearId'")->fetch()['value'];
+	    if($schoolyearId == null){
+	        $schoolyearId = $prepSyId;
+        }
+
+	    $user = $this->_pdo->prepare("SELECT ID, name, forename FROM SystemUsers WHERE ID = ?");
+	    $user->execute(array($userId));
+	    $user = $user->fetch();
+
+        $assignments = $this->_pdo->prepare("SELECT b.*, usb.id as AssignmentID FROM SchbasUsersShouldLendBooks usb
+                                                      JOIN SchbasBooks b ON (usb.bookId = b.id)
+                                                      WHERE userId = ? AND schoolyearId = ?");
+        $assignments->execute(array($userId, $schoolyearId));
+        $assignments = $assignments->fetchAll();
+
+        $schoolyears = $this->_pdo->query("SELECT * FROM SystemSchoolyears")->fetchAll();
+
+        $activeSy = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = ?");
+        $activeSy->execute(array($schoolyearId));
+        $activeSy = $activeSy->fetch()['label'];
+
+        $this->_smarty->assign('showGeneration', $prepSyId==$schoolyearId);
+        $this->_smarty->assign('activeSyName', $activeSy);
+        $this->_smarty->assign('schoolyears', $schoolyears);
+        $this->_smarty->assign('assignments', $assignments);
+        $this->_smarty->assign('userId',$userId);
+        $this->_smarty->assign('user',$user);
+
+        $this->displayTpl('single_user.tpl');
+    }
 
 	/////////////////////////////////////////////////////////////////////
 	//Attributes

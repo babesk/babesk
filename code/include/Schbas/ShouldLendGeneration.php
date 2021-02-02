@@ -31,7 +31,7 @@ class ShouldLendGeneration {
 	/**
 	 * Generates the ShouldLendAssignments
 	 * @param  array  $opt An array with optional options
-	 *                     'onlyForUsers': An array of DM:SystemUsers.
+	 *                     'onlyForUsers': An array of SystemUsers (rows).
 	 *                         If given, will only generate the
 	 *                         assignments for these users.
 	 *                         If not, will generate for all users of the
@@ -44,7 +44,6 @@ class ShouldLendGeneration {
 	public function generate(array $opt = []) {
 
 		if(isset($opt['onlyForUsers'])) {
-			$this->_isExternalUsers = true;
 			$this->_users = $opt['onlyForUsers'];
 		}
 		if(isset($opt['schoolyear'])) {
@@ -160,23 +159,10 @@ class ShouldLendGeneration {
 
 	protected function gradelevelGet($user) {
 
-		if(!$this->_isExternalUsers) {
-		    $stmt = $this->_pdo->prepare("SELECT gradelevel FROM SystemGrades g JOIN SystemAttendances a ON (g.ID = a.gradeId) WHERE userId = ? AND schoolyearId = ?");
-		    $stmt->execute(array($user['ID'], $this->_schoolyear));
-			$grade = $stmt->fetch();
-		}
-		else {
-			// When given external users, they may wont have hydrated the
-			// attendances like we do internally. We need to test for the
-			// schoolyears, too.
-			$attendances = $user->getAttendances();
-			foreach($attendances as $attendance) {
-				if($attendance->getSchoolyear() == $this->_schoolyear) {
-					$grade = $attendance->getGrade();
-					break;
-				}
-			}
-		}
+        $stmt = $this->_pdo->prepare("SELECT gradelevel FROM SystemGrades g JOIN SystemAttendances a ON (g.ID = a.gradeId) WHERE userId = ? AND schoolyearId = ?");
+        $stmt->execute(array($user['ID'], $this->_schoolyear));
+        $grade = $stmt->fetch();
+
 		if(!$grade) {
 			return false;
 		}
@@ -247,7 +233,6 @@ class ShouldLendGeneration {
 
 	protected $_schoolyear;
 	protected $_users;
-	protected $_isExternalUsers = false;
 	protected $_books;
 
 	/**
