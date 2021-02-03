@@ -174,7 +174,7 @@ class ShowBooklist extends Booklist {
         foreach($paginator as $book) {
             $grades = $loan->isbnIdent2Gradelevel($book['class']);
 
-            $query = TableMng::query("SELECT gradelevel, count(*) cnt, sum(CASE WHEN s.special_course LIKE '%".$book['abbreviation']."%' OR s.religion LIKE '%".$book['abbreviation']."%' OR s.foreign_language LIKE '%".$book['abbreviation']."%' THEN 1 ELSE 0 END) sc
+            $query = TableMng::query("SELECT gradelevel, count(*) cnt, sum(CASE WHEN s.special_course LIKE '%".$book['abbreviation']."%' THEN 1 ELSE 0 END) sc
 		                                    FROM SystemUsers s
 		                                    JOIN SystemAttendances a ON s.id=a.userId
 		                                    JOIN SystemSchoolyears y ON a.schoolyearId = y.ID
@@ -187,7 +187,7 @@ class ShowBooklist extends Booklist {
                 $coreSub = TableMng::query("SELECT abbreviation
                                             FROM SchbasCoreSubjects c
                                             JOIN SystemSchoolSubjects s ON c.subject_id = s.ID
-                                            WHERE gradelevel = ".$grade['gradelevel']);
+                                            WHERE gradelevel = ".($grade['gradelevel']+1));
                 if (in_array($grade['gradelevel']+1, $grades)) { //benÃ¶tigt der SchÃ¼ler das Buch nÃ¤chstes Jahr
                     if (in_array($book['abbreviation'], array_column($coreSub, 'abbreviation'))){ //ist es ein Pflichtfach
                         $sum += $grade['cnt'];
@@ -368,10 +368,11 @@ class ShowBooklist extends Booklist {
 
         $toBuy = array();
         foreach ($bookData as $bookId => $data) {
-            $res = ($data['exemplarsNeeded']
+            /*$res = ($data['exemplarsNeeded']
                 - $data['exemplarsSelfpayed']
                 - $data['exemplarsInStock']
-                - $data['exemplarsLentNotReturning']);
+                - $data['exemplarsLentNotReturning']);*/
+            $res = $data['usersInSystem']-$data['allExemplars'];
             $toBuy[$bookId]['exemplarsToBuy'] = ($res > 0) ? "<span style='color:red'>".$res."</span>" : 0 ;
         }
         return $toBuy;

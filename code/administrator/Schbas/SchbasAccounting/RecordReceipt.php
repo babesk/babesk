@@ -189,7 +189,7 @@ class RecordReceipt extends \SchbasAccounting {
                 $query .= "AND a.amountToPay - a.payedAmount < 0 ";
             }
             else if($options['specialFilter'] == 'showFormNotReturned') {
-                $query .= "AND lc.abbreviation = 'ls' AND a.formReturned != 1 ";
+                $query .= "AND lc.abbreviation = 'ls' AND (a.formReturned != 1 OR a.formReturned IS NULL) ";
             }
 		}
 		if(!empty($filter) && !empty($filterForCol)) {
@@ -219,8 +219,6 @@ class RecordReceipt extends \SchbasAccounting {
 					'Notice', Null, json_encode(array('col' => $sortColumn)));
 			}
 		}
-
-
 		$stmt = $this->_pdo->prepare($query);
 		$stmt->execute(array(
 		    'syID' => $prepSchoolyear,

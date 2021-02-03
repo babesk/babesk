@@ -13,7 +13,7 @@
 		<td><%= price %></td>
 		<td><%= bundle %></td>
 		<td><a data-toggle="tooltip" data-html="true" title=<%= usersInSystemByGrade%>><%= usersInSystem %></a></td>
-		<td><%= exemplarsInStock %></td>
+		<td><%= allExemplars %></td>
 		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsLentByGrade%>><%= exemplarsLent %></a></td>
 		<td><a data-toggle="tooltip" data-html="true", title=<%= exemplarsSelfpayedByGrade%>><%= exemplarsSelfpayed %></a></td>
 		<td><%= exemplarsNeeded %></td>
@@ -41,15 +41,7 @@
 
 {block name=filling_content}
 
-<div class="alert alert-info alert-dismissable">
-	<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-	<strong>Benötigte Bücher</strong><br>
-	Die Anzahl der benötigten Bücher basiert auf den im Dashboard erzeugten Zuordnungen.<br>
-	Die Zahlen gelten daher für das Schbas-Vorbereitungsschuljahr, momentan also für
-	<span class="label label-info">
-		{$preparationSchoolyear}
-	</span>
-</div>
+
 
 <div class="row">
 	<div class="center-block">
@@ -92,12 +84,12 @@
 				<th>ISBN</th>
 				<th>Preis</th>
 				<th>Bundle</th>
-				<th>Nutzer im System</th>
-				<th>Auf Lager</th>
-				<th>Verliehen</th>
-				<th>Selbstzahler</th>
-				<th>Benötigt</th>
-				<th>Fehlend</th>
+				<th><a data-toggle="tooltip" data-html="true" title="Theoretische Anzahl für das kommende Schuljahr. Ergibt sich aus der Gesamtzahl (falls Pflichtfach) bzw. Anzahl an Schülern mit diesem Wahlfach pro Jahrgang">Nutzer im System</a></th>
+				<th><a data-toggle="tooltip" data-html="true" title="Anzahl Inventareinträge (incl. verliehener Exepmlare)">Anzahl Exemplare</a></th>
+				<th><a data-toggle="tooltip" data-html="true" title="Aktuell verliehene Exemplare">Davon verliehen</a></th>
+				<th><a data-toggle="tooltip" data-html="true" title="Anzahl Personen, die dieses Buch aktuell selbst bezahlt haben">Selbstzahler</a></th>
+				<th><a data-toggle="tooltip" data-html="true" title="Anzahl an Zuweisungen für dieses Buch im aktuellen Schuljahr">Zuweisungen im aktuellen Schuljahr</a></th>
+				<th><a data-toggle="tooltip" data-html="true" title="Nutzer im System - Anzahl Exemplare">Fehlend</a></th>
 				<th>Optionen</th>
 			</tr>
 		</thead>
