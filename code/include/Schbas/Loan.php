@@ -63,11 +63,11 @@ class Loan {
 		$classes = $this->gradelevel2IsbnIdent($gradelevel);
 		if($classes) {
 			try {
+                $classesString = str_repeat('?, ', count($classes)-1) . '?';
 				$stmt = $this->_pdo->prepare("SELECT * FROM SchbasBooks b 
 											  LEFT JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
-											  WHERE b.class IN ?");
-				$classesString = "(". implode(",", $classes) .")";
-				$stmt->execute(array($classesString));
+											  WHERE b.class IN (" .$classesString . ")");
+				$stmt->execute($classes);
 				$books = $stmt->fetchAll();
 				return $books;
 			}

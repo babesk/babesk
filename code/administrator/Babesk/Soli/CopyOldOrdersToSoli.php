@@ -11,9 +11,8 @@ class CopyOldOrdersToSoli {
 	//Constructor
 	/////////////////////////////////////////////////////////////////////
 
-	public static function init($interface, $em) {
-
-		self::$_em = $em;
+	public static function init($interface, $pdo) {
+		self::$_pdo = $pdo;
 		self::$_interface = $interface;
 
 		self::$_errors = array();
@@ -144,18 +143,20 @@ class CopyOldOrdersToSoli {
                     throw new Exception(
                         'Could not execute an upload successfully');
                 }
-				
-				$userRep = self::$_em->getRepository("DM:SystemUsers");
-				$user = $userRep->findOneById($order['userId']);
-				$curAmount = $user->getCredit();
+
+				$user = self::$_pdo->prepare("SELECT ID, name, forename, credit FROM SystemUsers WHERE ID = ?");
+				$user->execute(array($order['userId']));
+				$user = $user->fetch();
+				$curAmount = $user['credit'];
 				$diff = $order['price'] - $price;
-				$user->setCredit($curAmount + $diff);
+				$upload = self::$_pdo->prepare("UPDATE SystemUsers SET credit = ? WHERE ID = ?");
+				$upload->execute(array($curAmount+$diff, $order['userId']));
 				if(isset($chargeArr[$order['userId']])) {
                     $chargeArr[$order['userId']]['amount'] += $diff;
 				}else {
                     $chargeArr[$order['userId']]['amount'] = $diff;
                 }
-                $chargeArr[$order['userId']]['name'] = $user->getForename() . " " . $user->getName();
+                $chargeArr[$order['userId']]['name'] = $user['forename'] . " " . $user['name'];
 			}
 		}
 		/**
@@ -166,10 +167,7 @@ class CopyOldOrdersToSoli {
 		*}
 		*/
         $stmt->close();
-		if($user) {
-            self::$_em->persist($user);
-            self::$_em->flush();
-        }
+
 		TableMng::getDb()->autocommit(true);
 		self::$_interface->ResultsCopyOldOrdersToSoli($changedMeals, $chargeArr);
 	}
@@ -270,8 +268,8 @@ class CopyOldOrdersToSoli {
 	/////////////////////////////////////////////////////////////////////
 
 	protected static $_interface;
-	
-	protected static $_em;
+
+	protected static $_pdo;
 
 	/**
 	 * All orders ordered by Soli-Users

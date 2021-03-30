@@ -20,7 +20,7 @@ class Booklist extends Schbas {
 		parent::entryPoint($dataContainer);
 		parent::moduleTemplatePathSet();
 
-		$BookInterface = new AdminBooklistInterface($this->relPath);
+		$this->BookInterface = new AdminBooklistInterface($this->relPath);
 
 		if (isset($_GET['action'])) {
 			$action = $_GET['action'];
@@ -44,7 +44,7 @@ class Booklist extends Schbas {
 			}
 		}
 		else {
-			$BookInterface->ShowSelectionFunctionality();
+			$this->BookInterface->ShowSelectionFunctionality();
 		}
 	}
 
@@ -230,7 +230,9 @@ class Booklist extends Schbas {
             // Only books that are both in this gradelevel and next gradelevel
             // will be displayed
             if(!empty($booksThisYear) && !empty($booksNextYear))
-                $books = array_intersect($booksThisYear, $booksNextYear);
+                $books = array_uintersect($booksThisYear, $booksNextYear, function ($book1, $book2){
+                    return strcmp($book1['id'], $book2['id']);
+                });
             else
                 $books = array();
             $this->showPdf($books);
@@ -239,6 +241,8 @@ class Booklist extends Schbas {
             $this->BookInterface->ShowSelectionForBooksToKeep();
         }
     }
+
+
 
     /**
      * Show list of books by topics.
@@ -265,7 +269,7 @@ class Booklist extends Schbas {
 			<tr style="font-weight:bold; text-align:center;"><th>Fach</th><th>Titel</th><th>Verlag</th><th>ISBN-Nr.</th><th>Preis</th></tr>';
         foreach ($booklist as $book) {
             // $bookPrices += $book['price'];
-            $books .= '<tr><td>' . $book->getSubject()->getName() . '</td><td>' . $book->getTitle() . '</td><td>' . $book->getPublisher() . '</td><td>' . $book->getIsbn() . '</td><td align="right">' . $book->getPrice() . ' &euro;</td></tr>';
+            $books .= '<tr><td>' . $book['name'] . '</td><td>' . $book['title'] . '</td><td>' . $book['publisher'] . '</td><td>' . $book['isbn'] . '</td><td align="right">' . $book['price'] . ' &euro;</td></tr>';
         }
         //$books .= '<tr><td></td><td></td><td></td><td style="font-weight:bold; text-align:center;">Summe:</td><td align="right">'.$bookPrices.' &euro;</td></tr>';
         $books .= '</table>';
@@ -342,6 +346,7 @@ class Booklist extends Schbas {
 	//Attributes
 	/////////////////////////////////////////////////////////////////////
 
+    protected $BookInterface;
 }
 
 ?>
