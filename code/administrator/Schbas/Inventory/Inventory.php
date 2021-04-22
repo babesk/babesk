@@ -64,7 +64,7 @@ class Inventory extends Schbas {
 	protected function booksForBarcodesSend($barcodeStrings) {
 
 		$extractIdsFromBooks = function($book) {
-			return $book->getId();
+			return $book['id'];
 		};
 
 		$uniqueBarcodes = [];
@@ -73,11 +73,11 @@ class Inventory extends Schbas {
 			$barcode = new \Babesk\Schbas\Barcode();
 			if($barcode->initByBarcodeString($barcodeStr)) {
 				// SQL-Request for every barcode, dont request too many :P
-				$books = $barcode->getMatchingBooks($this->_em);
+				$books = $barcode->getMatchingBooks($this->_pdo);
 				if(count($books) == 1) {
 					$uniqueBarcodes[] = [
 						'barcode' => $barcodeStr,
-						'bookId' => $books[0]->getId()
+						'bookId' => $books[0]['id']
 					];
 				}
 				else {
@@ -93,8 +93,8 @@ class Inventory extends Schbas {
 						];
 						foreach($books as $book) {
 							$duplicatedBarcodes[$key]['books'][] = [
-								'id' => $book->getId(),
-								'title' => $book->getTitle()
+								'id' => $book['id'],
+								'title' => $book['title']
 							];
 						}
 					}

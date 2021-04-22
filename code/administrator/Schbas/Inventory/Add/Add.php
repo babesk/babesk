@@ -78,37 +78,29 @@ class Add extends \Inventory {
 
 		$barcodes = [];
 		foreach($barcodeContainers as $container) {
-			if(!isset($container['bookId']) || !isset($container['barcode'])) {
-				dieHttp('Inkorrekte Daten wurden übergeben.', 400);
-			}
-			$bookId = $container['bookId'];
-			$barcodeStr = $container['barcode'];
-			$barcode = new \Babesk\Schbas\Barcode();
-			if($barcode->initByBarcodeString($barcodeStr)) {
-				$barcodes[] = $barcode;
-			}
-			else {
-				dieHttp("Der Barcode '$barcodeStr' ist nicht korrekt", 400);
-			}
-			$book = $this->_em->getReference('DM:SchbasBook', $bookId);
-			$inventory = new \Babesk\ORM\SchbasInventory();
-			$inventory->setBook($book);
-			$inventory->setYearOfPurchase($barcode->getPurchaseYear());
-			$inventory->setExemplar($barcode->getExemplar());
-			$this->_em->persist($inventory);
-		}
-		try {
-			$this->_em->flush();
-		}
-		catch(\Doctrine\DBAL\DBALException $e) {
-			if($e->getPrevious()->getCode() === '23000') {
-				dieHttp('Ein oder mehrere angegebene Barcodes gibt es schon!',
-					400);
-			}
-			else {
-				throw $e;
-			}
-		}
+            if (!isset($container['bookId']) || !isset($container['barcode'])) {
+                dieHttp('Inkorrekte Daten wurden übergeben.', 400);
+            }
+            $bookId = $container['bookId'];
+            $barcodeStr = $container['barcode'];
+            $barcode = new \Babesk\Schbas\Barcode();
+            if ($barcode->initByBarcodeString($barcodeStr)) {
+                $barcodes[] = $barcode;
+            } else {
+                dieHttp("Der Barcode '$barcodeStr' ist nicht korrekt", 400);
+            }
+            $query = $this->_pdo->prepare("SELECT * FROM SchbasInventory WHERE book_id = ? AND year_of_purchase = ? AND exemplar = ?");
+            $query->execute(array($bookId, $barcode->getPurchaseYear(), $barcode->getExemplar()));
+            $existing = $query->fetch();
+            if ($existing) {
+                dieHttp('Ein oder mehrere angegebene Barcodes gibt es schon!',
+                    400);
+            } else {
+                $query = $this->_pdo->prepare("INSERT INTO SchbasInventory(book_id, year_of_purchase, exemplar) VALUES (?,?,?)");
+                $query->execute(array($bookId, $barcode->getPurchaseYear(), $barcode->getExemplar()));
+            }
+
+        }
 		die('Die Buch-Exemplare wurden erfolgreich hinzugefügt.');
 	}
 

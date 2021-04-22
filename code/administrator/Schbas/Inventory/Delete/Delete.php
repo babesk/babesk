@@ -30,19 +30,20 @@ class Delete extends \Inventory {
 			if(!$barcode->initByBarcodeString($barcodeStr)) {
 				dieHttp("Der Barcode '$barcodeStr' ist nicht korrekt", 400);
 			}
-			$bookCopy = $barcode->getMatchingBookExemplar($this->_em);
+			$bookCopy = $barcode->getMatchingBookExemplar($this->_pdo);
 			if($bookCopy) {
-				foreach($bookCopy->getLending() as $lending) {
-					$this->_em->remove($lending);
-				}
-				$this->_em->remove($bookCopy);
+			    $query = $this->_pdo->prepare("DELETE FROM SchbasLending WHERE inventory_id = ?");
+			    $query->execute(array($bookCopy['id']));
+
+                $query = $this->_pdo->prepare("DELETE FROM SchbasInventory WHERE id = ?");
+                $query->execut-e(array($bookCopy['id']));
+
 			}
 			else {
 				echo "<p>Kein Buchexemplar zu Barcode $barcodeStr gefunden. " .
 					"</p>";
 			}
 		}
-		$this->_em->flush();
 		die('Die Exemplare wurden erfolgreich gelöscht');
 	}
 

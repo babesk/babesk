@@ -119,17 +119,11 @@ class Barcode {
 		return $stmt->fetch();
 	}
 
-	public function getMatchingBooks($em) {
-
-		$query = $em->createQuery(
-			'SELECT b FROM DM:SchbasBook b
-			INNER JOIN b.subject s WITH s.abbreviation = :subject
-			WHERE b.class = :class AND b.bundle = :bundle
-		');
-		$query->setParameter('class', $this->_class)
-			->setParameter('bundle', $this->_bundle)
-			->setParameter('subject', $this->_subject);
-		return $query->getResult();
+	public function getMatchingBooks($pdo) {
+		$query = $pdo->prepare("SELECT b.* FROM SchbasBooks b JOIN SystemSchoolSubjects s ON (b.subjectId = s.ID)
+                                WHERE b.class = ? AND b.bundle = ? AND s.abbreviation = ?");
+		$query->execute(array($this->_class, $this->_bundle, $this->_subject));
+		return $query->fetchAll();
 	}
 
 
