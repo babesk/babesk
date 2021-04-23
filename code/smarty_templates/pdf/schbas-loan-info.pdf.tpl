@@ -1,11 +1,11 @@
 <div style="page-break-inside:avoid">
 	<h2 align="center">
-		{$coverLetter->getTitle()}
+		{$coverLetter['title']}
 	</h2>
 	<p style="text-align: right;">
 		{$letterDate}
 	</p>
-	{$coverLetter->getText()}
+	{$coverLetter['text']}
 </div>
 
 <div style="page-break-inside:avoid">
@@ -23,19 +23,19 @@
 		{foreach $books as $book}
 			<tr>
 				<td>
-					{$book->getSubject()->getName()}
+					{$book['subject']}
 				</td>
 				<td>
-					{$book->getTitle()}
+					{$book['title']}
 				</td>
 				<td>
-					{$book->getPublisher()}
+					{$book['publisher']}
 				</td>
 				<td>
-					{$book->getIsbn()}
+					{$book['isbn']}
 				</td>
 				<td align="right">
-					{number_format($book->getPrice(), 2)} €
+					{number_format($book['price'], 2)} €
 				</td>
 			</tr>
 		{/foreach}
@@ -69,28 +69,28 @@
 	</table>
 </div>
 
-{if $textTwo->getText() || $textThree->getText()}
+{if $textTwo['text'] || $textThree['text']}
 <div style="page-break-inside:avoid">
 	<h2 align="center">
 		Weitere Informationen
 	</h2>
-	{if $textOne->getText()}
+	{if $textOne['text']}
 		<h3>
-			{$textOne->getTitle()}
+			{$textOne['title']}
 		</h3>
-		{$textOne->getText()}
+		{$textOne['text']}
 	{/if}
-	{if $textTwo->getText()}
+	{if $textTwo['text']}
 		<h3>
-			{$textTwo->getTitle()}
+			{$textTwo['title']}
 		</h3>
-		{$textTwo->getText()}
+		{$textTwo['text']}
 	{/if}
-	{if $textThree->getText()}
+	{if $textThree['text']}
 		<h3>
-			{$textThree->getTitle()}
+			{$textThree['title']}
 		</h3>
-		{$textThree->getText()}
+		{$textThree['text']}
 	{/if}
 </div>
 {/if}

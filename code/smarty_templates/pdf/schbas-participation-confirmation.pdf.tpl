@@ -41,11 +41,11 @@
 	<tr>
 		<td colspan="2">
 			Name, Vorname des Sch&uuml;lers / der Sch&uuml;lerin:<br>
-			{$user->getName()}, {$user->getForename()}
+			{$user['name']}, {$user['forename']}
 		</td>
 		<td>
 			<b>
-				Jahrgangsstufe: {$grade->getGradelevel()}
+				Jahrgangsstufe: {$grade['gradelevel']}
 			</b>
 		</td>
 	</tr>
@@ -87,8 +87,8 @@ An der entgeltlichen Ausleihe von Lernmitteln im Schuljahr {$schoolyear}
 		<tr>
 			<td>Verwendungszeck:</td>
 			<td>
-				{$user->getUsername()}
-				JG {$grade->getGradelevel()}
+				{$user['username']}
+				JG {$grade['gradelevel']}
 				SJ {$schoolyear}
 			</td>
 		</tr>

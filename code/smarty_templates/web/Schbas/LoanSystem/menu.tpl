@@ -1,6 +1,6 @@
 {extends file=$inh_path}{block name=content}
 
-<h2>Schulbuchausleihsystem f&uuml;r das Schuljahr {$prepSchoolyear->getLabel()}</h2>
+<h2>Schulbuchausleihsystem f&uuml;r das Schuljahr {$prepSchoolyear['label']}</h2>
 {if $BaBeSkTerminal}
 	Hinweis: Schbas kann nicht am BaBeSK-Terminal <br>ge&ouml;ffnet werden!
 {else}
@@ -54,16 +54,16 @@
 					{$book = $bookWithStatus.book}
 					{$isSelfpaying = $bookWithStatus.selfpaying}
 					<div class="form-group">
-						<input type="checkbox" id="bookselector-{$book->getId()}"
-							class="fancy-check" name="bookID[]" value="{$book->getId()}"
+						<input type="checkbox" id="bookselector-{$book['id']}"
+							class="fancy-check" name="bookID[]" value="{$book['id']}"
 							{if $isSelfpaying}checked{/if}>
-						<label for="bookselector-{$book->getId()}">
+						<label for="bookselector-{$book['id']}">
 							<span class="booklist-heading">
-								{$book->getSubject()->getName()}: {$book->getTitle()}
+								{$book['subject']}: {$book['title']}
 							</span>
 						</label>
 						<p class="help-block">
-							({$book->getAuthor()}, {$book->getPublisher()}. ISBN: {$book->getIsbn()}. {$book->getPrice()} &euro;)
+							({$book['author']}, {$book['publisher']}. ISBN: {$book['isbn']}. {$book['price']} &euro;)
 						</p>
 					</div>
 				{/foreach}
@@ -99,7 +99,7 @@
 				<p>
 					In diesem Bereich m&uuml;ssen Sie eine Auswahl treffen! Ihre Entscheidung erscheint im erstellten R&uuml;ckmeldedokument als Strichcode.<br/>
 				</p>
-					An der entgeltlichen Ausleihe von Lernmitteln im Schuljahr {$prepSchoolyear->getLabel()}<br/>
+					An der entgeltlichen Ausleihe von Lernmitteln im Schuljahr {$prepSchoolyear['label']}<br/>
 					<input type="radio" name="loanChoice" value="noLoan" id="radio1" required /> nehmen wir nicht teil<br />
 					<input type="radio" name="loanChoice" value="loan" id="radio2" checked/> nehmen wir teil und melden uns hiermit verbindlich zu den im oben abrufbaren Schreiben genannten Bedingungen an.
 				<div id="loan-amount-container" >
@@ -115,7 +115,7 @@
 				<div>
 					<p>Die Eingaben in diesem Bereich sind freiwillig. Sie werden direkt in das R&uuml;ckmeldedokument ausgegeben und nicht abgespeichert.
 					Entweder geben Sie diese Daten hier online oder nach dem Ausdrucken des erstellten R&uuml;ckmeldedokuments handschriftlich ein.<br/>
-					Weitere schulpflichtige Kinder im Haushalt (Schuljahr {$prepSchoolyear->getLabel()}).<br/> Bitte pro Zeile den Namen, Vornamen und die Schule angeben, auf der das jeweilige Kind geht.</p>
+					Weitere schulpflichtige Kinder im Haushalt (Schuljahr {$prepSchoolyear['label']}).<br/> Bitte pro Zeile den Namen, Vornamen und die Schule angeben, auf der das jeweilige Kind geht.</p>
 					<textarea name="siblings" rows=5 cols=80></textarea>
 				</div>
 			</fieldset>

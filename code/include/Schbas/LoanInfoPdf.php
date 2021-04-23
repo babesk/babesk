@@ -13,7 +13,7 @@ class LoanInfoPdf {
 
 	public function __construct($dataContainer) {
 
-		$this->_em = $dataContainer->getEntityManager();
+	    $this->_pdo = $dataContainer->getPdo();
 		$this->_interface = $dataContainer->getInterface();
 		$this->_smarty = $dataContainer->getSmarty();
 		$this->_dataContainer = $dataContainer;
@@ -40,16 +40,14 @@ class LoanInfoPdf {
 		}
 
 		$this->_loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
-		$settingsRepo = $this->_em->getRepository('DM:SystemGlobalSettings');
-		$infoRepo = $this->_em->getRepository('DM:SchbasText');
-		$userId = ($this->_user) ? $this->_user->getId() : 0;
+		$userId = ($this->_user) ? $this->_user['ID'] : 0;
 
 		if(!$this->_gradelevel) {
 			$this->_gradelevel = $this->getGradelevelForUser($this->_user);
 		}
-		$bankAccount = $settingsRepo->findOneByName('bank_details')
-			->getValue();
-		$bankData = explode('|', $bankAccount);
+
+		$bankAccount = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'bank_details'")->fetch();
+		$bankData = explode('|', $bankAccount['value']);
 		// $letterDateIso = $settingsRepo
 		// 	->findOneByName('schbasDateCoverLetter')
 		// 	->getValue();
@@ -61,10 +59,19 @@ class LoanInfoPdf {
 
 
 		$textId = $this->_gradelevel;
-		$coverLetter = $infoRepo->findOneByDescription('coverLetter');
-		$textOne = $infoRepo->findOneByDescription('textOne' . $textId);
-		$textTwo = $infoRepo->findOneByDescription('textTwo' . $textId);
-		$textThree = $infoRepo->findOneByDescription('textThree' . $textId);
+		$textQuery = $this->_pdo->prepare("SELECT * FROM SchbasTexts WHERE description = ?");
+
+		$textQuery->execute(array('coverLetter'));
+		$coverLetter = $textQuery->fetch();
+
+        $textQuery->execute(array('textOne' . $textId));
+        $textOne = $textQuery->fetch();
+
+        $textQuery->execute(array('textTwo' . $textId));
+        $textTwo = $textQuery->fetch();
+
+        $textQuery->execute(array('textThree' . $textId));
+        $textThree = $textQuery->fetch();
 
 		$this->_smarty->assign('books', $books);
 		$this->_smarty->assign('gradelevel', $this->_gradelevel);
@@ -93,21 +100,17 @@ class LoanInfoPdf {
 	protected function getGradelevelForUser($user) {
 
 		$prepSchoolyear = $this->_loanHelper->schbasPreparationSchoolyearGet();
-		$gradeQuery = $this->_em->createQuery(
-			'SELECT g FROM DM:SystemGrades g
-			INNER JOIN g.attendances a
-				WITH a.schoolyear = :schoolyear AND a.user = :user
-		');
-		$gradeQuery->setParameter('schoolyear', $prepSchoolyear);
-		$gradeQuery->setParameter('user', $this->_user);
-		$grade = $gradeQuery->getOneOrNullResult();
+		$gradeQuery = $this->_pdo->prepare("SELECT g.* FROM SystemGrades g JOIN SystemAttendances a ON (a.gradeId = g.ID)
+                                            WHERE a.schoolyearId = ? AND a.userId = ?");
+		$gradeQuery->execute(array($prepSchoolyear, $this->_user['ID']));
+		$grade = $gradeQuery->fetch();
 		if(!$grade) {
 			$this->_interface->dieError(
 				'Der Schüler ist nicht im nächsten Schuljahr eingetragen. ' .
-				'Bitte informieren sie die Schule.'
+				'Bitte informieren Sie die Schule.'
 			);
 		}
-		return $grade->getGradelevel();
+		return $grade['gradelevel'];
 	}
 
 	protected function getFees() {

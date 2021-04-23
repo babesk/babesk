@@ -80,7 +80,8 @@ class LoanSystem extends Schbas {
 	private function showMainMenu() {
 
 		$prepSchoolyear = $this->preparationSchoolyearGet();
-		$user = $this->_em->getReference('DM:SystemUsers', $_SESSION['uid']);
+		$user = array("ID" => $_SESSION['uid']);
+
 		$gradelevelStmt = $this->_pdo->prepare(
 			"SELECT gradelevel FROM SystemGrades g
 				LEFT JOIN SystemAttendances uigs
@@ -108,20 +109,21 @@ class LoanSystem extends Schbas {
 		$loanbooksTest = $loanHelper->loanBooksOfUserGet(
 			$user, ['includeSelfpay' => true, 'includeAlreadyLend' => true]
 		);
-		$query = $this->_em->createQuery(
-			'SELECT b FROM DM:SchbasBook b
-			INNER JOIN b.selfpayingUsers u WITH u = :user
-		');
-		$query->setParameter('user', $user);
-		$selfpayingBooks = $query->getResult();
+		$selfpayingBooks = $this->_pdo->prepare("SELECT b.* FROM SchbasSelfpayer sp JOIN SchbasBooks b ON (sp.BID = b.id) WHERE UID = ?");
+		$selfpayingBooks->execute(array($user['ID']));
+		$selfpayingBooks = $selfpayingBooks->fetchAll();
 		// [ {
 		//     'book': '<book>',
 		//     'selfpaying': '<boolean>'
 		// } ]
 		$booksWithSelfpayingStatus = array();
-		$selfpayingBooksColl = new ArrayCollection($selfpayingBooks);
 		foreach($loanbooksTest as $book) {
-			$isSelfpaying = $selfpayingBooksColl->contains($book);
+			$isSelfpaying = false;
+			foreach ($selfpayingBooks as $selfpayingBook){
+				if($book['id'] == $selfpayingBook['id']){
+					$isSelfpaying = true;
+				}
+			}
 			$booksWithSelfpayingStatus[] = [
 				'book' => $book,
 				'selfpaying' => $isSelfpaying
@@ -185,14 +187,12 @@ class LoanSystem extends Schbas {
 
 	protected function preparationSchoolyearGet() {
 
-		$schoolyear = false;
-		$entry = $this->_em->getRepository('DM:SystemGlobalSettings')
-			->findOneByName('schbasPreparationSchoolyearId');
-		if($entry) {
-			$schoolyear = $this->_em->find(
-				'DM:SystemSchoolyears', $entry->getValue()
-			);
-		}
+
+		$schoolyear = $this->_pdo->prepare("SELECT * FROM SystemSchoolyears WHERE ID = 
+													(SELECT value FROM SystemGlobalSettings WHERE name = 'schbasPreparationSchoolyearId')");
+		$schoolyear->execute();
+		$schoolyear = $schoolyear->fetch();
+
 		if(!$schoolyear) {
 			$this->_logger->logO('Could not fetch PreparationSchoolyear',
 				['sev' => 'error']);
@@ -204,43 +204,35 @@ class LoanSystem extends Schbas {
 
 	private function showParticipationConfirmation() {
 
-		$settingsRepo = $this->_em->getRepository('DM:SystemGlobalSettings');
-		$user = $this->_em->find('DM:SystemUsers', $_SESSION['uid']);
+		$userQuery = $this->_pdo->prepare("SELECT ID, name, forename, username FROM SystemUsers WHERE ID = ?");
+		$userQuery->execute(array($_SESSION['uid']));
+		$user = $userQuery->fetch();
+
 		$prepSchoolyear = $this->preparationSchoolyearGet();
-		$gradeQuery = $this->_em->createQuery(
-			'SELECT g FROM DM:SystemGrades g
-			INNER JOIN g.attendances a
-				WITH a.schoolyear = :schoolyear AND a.user = :user
-		');
-		$gradeQuery->setParameter('schoolyear', $prepSchoolyear);
-		$gradeQuery->setParameter('user', $user);
-		$grade = $gradeQuery->getOneOrNullResult();
+        $gradeQuery = $this->_pdo->prepare("SELECT g.* FROM SystemGrades g JOIN SystemAttendances a ON (a.gradeId = g.ID)
+                                            WHERE a.schoolyearId = ? AND a.userId = ?");
+        $gradeQuery->execute(array($prepSchoolyear['ID'], $user['ID']));
+        $grade = $gradeQuery->fetch();
 		if(!$grade) {
 			$this->_interface->dieError(
 				'Der Schüler ist nicht im nächsten Schuljahr eingetragen. ' .
 				'Bitte informieren sie die Schule.'
 			);
 		}
-		// $letterDateIso = $settingsRepo
-		// 	->findOneByName('schbasDateCoverLetter')
-		// 	->getValue();
-		// $letterDate = date('d.m.Y', strtotime($letterDateIso));
+
 		$letterDate = date('d.m.Y');
-		$schbasDeadlineTransferIso = $settingsRepo
-			->findOneByName('schbasDeadlineTransfer')
-			->getValue();
+
+        $schbasDeadlineTransferIso = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'schbasDeadlineTransfer'")->fetch();
 		$schbasDeadlineTransfer = date(
-			'd.m.Y', strtotime($schbasDeadlineTransferIso)
+			'd.m.Y', strtotime($schbasDeadlineTransferIso['value'])
 		);
-		$schbasDeadlineClaimIso = $settingsRepo
-			->findOneByName('schbasDeadlineClaim')
-			->getValue();
+
+        $schbasDeadlineClaimIso = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'schbasDeadlineClaim'")->fetch();
 		$schbasDeadlineClaim = date(
-			'd.m.Y', strtotime($schbasDeadlineClaimIso)
+			'd.m.Y', strtotime($schbasDeadlineClaimIso['value'])
 		);
-		$bankAccount = $settingsRepo->findOneByName('bank_details')
-			->getValue();
-		$bankData = explode('|', $bankAccount);
+        $bankAccount = $this->_pdo->query("SELECT value FROM SystemGlobalSettings WHERE name = 'bank_details'")->fetch();
+		$bankData = explode('|', $bankAccount['value']);
 
 		//get loan fees
 		$loanHelper = new \Babesk\Schbas\Loan($this->_dataContainer);
@@ -264,7 +256,7 @@ class LoanSystem extends Schbas {
 
 		$this->_smarty->assign('user', $user);
 		$this->_smarty->assign('grade', $grade);
-		$this->_smarty->assign('schoolyear', $prepSchoolyear->getLabel());
+		$this->_smarty->assign('schoolyear', $prepSchoolyear['label']);
 		$this->_smarty->assign('letterDate', $letterDate);
 		$this->_smarty->assign('schbasDeadlineClaim', $schbasDeadlineClaim);
 		$this->_smarty->assign('bankData', $bankData);
@@ -284,9 +276,9 @@ class LoanSystem extends Schbas {
 			PATH_SMARTY_TPL . '/pdf/schbas-participation-confirmation.pdf.tpl'
 		);
 		$schbasPdf = new \Babesk\Schbas\SchbasPdf(
-			$user->getId(), $grade->getGradelevel()
+			$user['ID'], $grade['gradelevel']
 		);
-		$barcode = $user->getId() . ' ' . $feedback;
+		$barcode = $user['ID'] . ' ' . $feedback;
 		$schbasPdf->create($content, $barcode);
 		$schbasPdf->output();
 
@@ -296,7 +288,9 @@ class LoanSystem extends Schbas {
 
 		require_once PATH_INCLUDE . '/Schbas/LoanInfoPdf.php';
 		$pdf = new \Babesk\Schbas\LoanInfoPdf($this->_dataContainer);
-		$user = $this->_em->find('DM:SystemUsers', $_SESSION['uid']);
+		$user = $this->_pdo->prepare("SELECT ID, name, forename FROM SystemUsers WHERE ID = ?");
+		$user->execute(array($_SESSION['uid']));
+		$user = $user->fetch();
 		$pdf->setDataByUser($user);
 		$pdf->showPdf();
 	}

@@ -173,7 +173,7 @@ class Loan {
 			// Default to subtracting the selfpaid books
 			$subtractSelfpay = (empty($opt['includeSelfpay']));
 			$includeAlreadyLend = (!empty($opt['includeAlreadyLend']));
-			$query = "SELECT b.*, usb.*, u.*, sub.name as subject FROM SchbasBooks b 
+			$query = "SELECT b.*, usb.userId, usb.schoolyearId, usb.bookId, u.*, sub.name as subject FROM SchbasBooks b 
 					  JOIN SystemSchoolSubjects sub ON (b.subjectId = sub.ID)
 					  JOIN SchbasUsersShouldLendBooks usb ON (b.id = usb.bookId)
 					  JOIN SystemUsers u ON (u.ID = usb.userId) 
@@ -325,34 +325,7 @@ class Loan {
         return $userSubjects;
 	}
 
-	public function findBookAssignmentsForUserBySubject(
-		$user, $subject, $schoolyear
-	) {
 
-		$books = $this->findBooksForUserBySubject(
-			$user, $subject, $schoolyear
-		);
-		if(!$books || !count($books)) { return false; }
-		$bookAssignments = $this->_em->getRepository(
-			'DM:SchbasUserShouldLendBook'
-		)->findBy(
-			['user' => $user, 'book' => $books, 'schoolyear' => $schoolyear]
-		);
-		return $bookAssignments;
-	}
-
-	public function findBooksForUserBySubject($user, $subject, $schoolyear) {
-
-		$userGrade = $this->_em->getRepository('DM:SystemUsers')
-			->getGradeByUserAndSchoolyear($user, $schoolyear);
-		if(!$userGrade) { return false; }
-		$possibleClasses = $this->_gradelevelIsbnIdentAssoc[
-			$userGrade->getGradelevel()
-		];
-		$books = $this->_em->getRepository('DM:SchbasBook')
-			->findBy(['subject' => $subject, 'class' => $possibleClasses]);
-		return $books;
-	}
 
 	/////////////////////////////////////////////////////////////////////
 	//Implements

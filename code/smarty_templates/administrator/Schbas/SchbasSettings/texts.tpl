@@ -57,74 +57,77 @@
 <script type="text/javascript">
 
 $(function () {
+	function loadData(event) {
+        var templateId = $('#gradeValueSelection').children('option:selected').val();
+        var textIdOne = 'textOne';
+        var textIdTwo = 'textTwo';
+        var textIdThree = 'textThree';
+        $.ajax({
+            type: "POST",
+            url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
+            data: {
+                'templateId': templateId,
+                'textId': textIdOne
+            },
+            success: function(data) {
+                if(data == 'errorFetchTemplate') {
+                    alert('Konnte das Template nicht abrufen!');
+                }
+                templateData = $.parseJSON(data);
+                CKEDITOR.instances['messagetext'].setData(templateData.text);
+                $('#messagetitle').val(templateData.title);
+            },
+            error: function(data) {
+                alert('Konnte das Template nicht abrufen!');
+            }
+        });
 
+
+        $.ajax({
+            type: "POST",
+            url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
+            data: {
+                'templateId': templateId,
+                'textId': textIdTwo
+            },
+            success: function(data) {
+                if(data == 'errorFetchTemplate') {
+                    alert('Konnte das Template nicht abrufen!');
+                }
+                templateData = $.parseJSON(data);
+                CKEDITOR.instances['messagetext2'].setData(templateData.text);
+                $('#messagetitle2').val(templateData.title);
+            },
+            error: function(data) {
+                alert('Konnte das Template nicht abrufen!');
+            }
+        });
+
+        $.ajax({
+            type: "POST",
+            url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
+            data: {
+                'templateId': templateId,
+                'textId': textIdThree
+            },
+            success: function(data) {
+                if(data == 'errorFetchTemplate') {
+                    alert('Konnte das Template nicht abrufen!');
+                }
+                templateData = $.parseJSON(data);
+                CKEDITOR.instances['messagetext3'].setData(templateData.text);
+                $('#messagetitle3').val(templateData.title);
+            },
+            error: function(data) {
+                alert('Konnte das Template nicht abrufen!');
+            }
+        });
+    }
 	$('#gradeValueSelection').on('click', function(event) {
-		var templateId = $(this).children('option:selected').val();
-		var textIdOne = 'textOne';
-		var textIdTwo = 'textTwo';
-		var textIdThree = 'textThree';
-		$.ajax({
-			type: "POST",
-			url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
-			data: {
-				'templateId': templateId,
-				'textId': textIdOne
-			},
-			success: function(data) {
-				if(data == 'errorFetchTemplate') {
-					alert('Konnte das Template nicht abrufen!');
-				}
-				templateData = $.parseJSON(data);
-				CKEDITOR.instances['messagetext'].setData(templateData.text);
-				$('#messagetitle').val(templateData.title);
-			},
-			error: function(data) {
-				alert('Konnte das Template nicht abrufen!');
-			}
-		});
-
-
-		$.ajax({
-			type: "POST",
-			url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
-			data: {
-				'templateId': templateId,
-				'textId': textIdTwo
-			},
-			success: function(data) {
-				if(data == 'errorFetchTemplate') {
-					alert('Konnte das Template nicht abrufen!');
-				}
-				templateData = $.parseJSON(data);
-				CKEDITOR.instances['messagetext2'].setData(templateData.text);
-				$('#messagetitle2').val(templateData.title);
-			},
-			error: function(data) {
-				alert('Konnte das Template nicht abrufen!');
-			}
-		});
-
-		$.ajax({
-			type: "POST",
-			url: 'index.php?section=Schbas|SchbasSettings&action=fetchTextsAjax',
-			data: {
-				'templateId': templateId,
-				'textId': textIdThree
-			},
-			success: function(data) {
-				if(data == 'errorFetchTemplate') {
-					alert('Konnte das Template nicht abrufen!');
-				}
-				templateData = $.parseJSON(data);
-				CKEDITOR.instances['messagetext3'].setData(templateData.text);
-				$('#messagetitle3').val(templateData.title);
-			},
-			error: function(data) {
-				alert('Konnte das Template nicht abrufen!');
-			}
-		});
+		loadData(event)
 
 	});
+    $('document').ready(loadData());
 });
 </script>
 

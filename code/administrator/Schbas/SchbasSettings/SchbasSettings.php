@@ -149,7 +149,7 @@ class SchbasSettings extends Schbas {
         if ($textThreeTitle == '') $textThreeTitle = '&nbsp;';
         if ($textThreeText == '') $textThreeText = '&nbsp;';
 
-        $updateStmt = $this->_em->getConnection()->prepare(
+        $updateStmt = $this->_pdo->prepare(
             'UPDATE SchbasTexts t SET t.title = :title, t.text = :text
 			WHERE description = :description
 		');
