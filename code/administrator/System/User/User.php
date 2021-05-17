@@ -5,6 +5,7 @@ require_once 'AdminUserProcessing.php';
 require_once 'UserDelete.php';
 require_once 'UserDisplayAll.php';
 require_once 'UsernameAutoCreator.php';
+require_once 'DSGVOPDF.php';
 require_once PATH_ACCESS . '/CardManager.php';
 require_once PATH_ACCESS . '/UserManager.php';
 require_once PATH_INCLUDE . '/Module.php';
@@ -106,12 +107,87 @@ class User extends System {
 	}
 
     protected function showDSGVO($userId) {
+		$cardstmt = $this->_pdo->prepare("SELECT * FROM BabeskCards WHERE UID = ?");
+		$cardstmt->execute(array($userId));
+		$card = $cardstmt->fetch();
+		$this->_smarty->assign('card', $card);
+
+        $userstmt = $this->_pdo->prepare("SELECT name, forename, birthday, credit FROM SystemUsers WHERE ID = ?");
+        $userstmt->execute(array($userId));
+        $user = $userstmt->fetch();
+        $this->_smarty->assign('user', $user);
+
+        $groupsstmt = $this->_pdo->prepare("SELECT name FROM SystemGroups g JOIN SystemUsersInGroups uig ON (g.ID = uig.groupId) WHERE uig.userId = ?");
+        $groupsstmt->execute(array($userId));
+        $groups = $groupsstmt->fetchAll();
+        $groupString = "";
+        foreach ($groups as $group){
+			$groupString .= $group['name'] . ", ";
+		}
+        $this->_smarty->assign('groups', substr($groupString, 0, strlen($groupString)-2));
+
+        $orderstmt = $this->_pdo->prepare("SELECT m.name as name, description, m.date, pc.name as pcname, fetched  FROM BabeskMeals m 
+																			JOIN BabeskOrders o ON (m.ID = o.MID) 
+																			JOIN (SELECT distinct name, pc_ID FROM BabeskPriceClasses) pc ON (m.price_class = pc.pc_ID) 
+																		  WHERE o.UID = ?");
+        $orderstmt->execute(array($userId));
+        $order = $orderstmt->fetchAll();
+        $this->_smarty->assign('orders', $order);
+
+        $couponstmt = $this->_pdo->prepare("SELECT startdate, enddate FROM BabeskSoliCoupons WHERE UID = ?");
+        $couponstmt->execute(array($userId));
+        $coupons = $couponstmt->fetchAll();
+        $this->_smarty->assign('coupons', $coupons);
+
+        $rechargestmt = $this->_pdo->prepare("SELECT rechargeAmount as amount, datetime FROM BabeskUsercreditsRecharges WHERE userId = ?");
+        $rechargestmt->execute(array($userId));
+        $recharges = $rechargestmt->fetchAll();
+        $this->_smarty->assign('recharges', $recharges);
+
+        $elawastmt = $this->_pdo->prepare("SELECT coalesce(u.name, 'unbekannt') as hostName, coalesce(c.name, 'unbekannt') as catName, coalesce(r.name, 'unbekannt') as roomName, time, length FROM ElawaMeetings m 
+ 												  LEFT JOIN ElawaCategories c ON (m.categoryId = c.id)
+ 												  LEFT JOIN SystemRooms r ON (m.roomId = r.id) 
+ 												  LEFT JOIN SystemUsers u ON (m.hostId = u.ID) WHERE m.visitorId = ?");
+        $elawastmt->execute(array($userId));
+        $elawas = $elawastmt->fetchAll();
+        $this->_smarty->assign('elawas', $elawas);
+
+        $messagesstmt = $this->_pdo->prepare("SELECT title, text, validFrom, validTo , u.name as author, `return` FROM MessageReceivers r JOIN MessageMessages m ON (r.messageId = m.ID) 
+																											JOIN SystemUsers u ON (m.originUserId = u.ID)
+																											WHERE r.userId = ?");
+        $messagesstmt->execute(array($userId));
+        $messages = $messagesstmt->fetchAll();
+        $this->_smarty->assign('messages', $messages);
+
+        $schbasstmt = $this->_pdo->prepare("SELECT lc.name as loanChoice, payedAmount, amountToPay, sy.label FROM SchbasAccounting a JOIN SchbasLoanChoices lc ON (a.loanChoiceId = lc.ID) JOIN SystemSchoolyears sy ON (a.schoolyearId = sy.ID) WHERE a.userId = ?");
+        $schbasstmt->execute(array($userId));
+        $schbas = $schbasstmt->fetchAll();
+        $this->_smarty->assign('schbas', $schbas);
+
+        $lendingsstmt = $this->_pdo->prepare("SELECT lend_date, year_of_purchase, exemplar, title FROM SchbasLending l JOIN SchbasInventory i ON (l.inventory_id = i.id)
+ 																			JOIN SchbasBooks b ON (i.book_id = b.id) WHERE l.user_id = ?");
+        $lendingsstmt->execute(array($userId));
+        $lendings = $lendingsstmt->fetchAll();
+        $this->_smarty->assign('lendings', $lendings);
+
+        $selfbuystmt = $this->_pdo->prepare("SELECT title FROM SchbasSelfpayer sp JOIN SchbasBooks b ON (sp.BID = b.id) WHERE sp.UID = ?");
+        $selfbuystmt->execute(array($userId));
+        $selfbuy = $selfbuystmt->fetchAll();
+        $this->_smarty->assign('selfbuy', $selfbuy);
+
+        $classesstmt = $this->_pdo->prepare("SELECT gradelevel, g.label, sy.label as sy FROM SystemAttendances a JOIN SystemSchoolyears sy ON (a.schoolyearId = sy.ID) 
+ 																					JOIN SystemGrades g ON (a.gradeId = g.ID) WHERE a.userId = ? ORDER BY sy.ID");
+        $classesstmt->execute(array($userId));
+        $classes = $classesstmt->fetchAll();
+        $this->_smarty->assign('classes', $classes);
+
         $pdfContent = $this->_smarty->fetch(
-            PATH_SMARTY_TPL . '/pdf/schbas-books-overview.pdf.tpl'
+            PATH_SMARTY_TPL . '/pdf/dsgvo.tpl'
         );
-        $pdf = new GeneralPdf($this->_pdo);
-        $pdf->create("Test", $pdfContent);
+        $pdf = new \Babesk\Schbas\DsgvoPDF($userId);
+        $pdf->create($pdfContent);
         $pdf->output();
+
     }
 
 	/**

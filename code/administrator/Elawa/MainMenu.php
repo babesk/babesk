@@ -54,8 +54,7 @@ class MainMenu extends Elawa {
 			$groupArr[] = $row;
 		}
 		$groupArr = json_encode($groupArr);
-		
-		//$group = $this->_em->find('DM:SystemGroups', $hostGroupId);
+
 		$this->_smarty->assign('allGroups', $groupArr);
 		$this->_smarty->assign('selectionsEnabled', $selectionsEnabled);
 		$this->_smarty->assign('hostGroup', $hostGroup);

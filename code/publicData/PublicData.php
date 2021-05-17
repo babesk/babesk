@@ -79,7 +79,6 @@ class PublicData {
 			$this->_interface,
 			$this->_acl,
 			$this->_pdo,
-			$this->_em,
 			$this->_logger
 		);
 	}
